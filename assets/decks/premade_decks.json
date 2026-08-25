@@ -1,0 +1,143 @@
+[
+  {
+    "name": "World Capitals & Flags",
+    "category": "Geography",
+    "is_premade": 1,
+    "cards": [
+      {
+        "prompt": "Capital of France 🇫🇷",
+        "correct_answer": "Paris",
+        "distractors": [
+          "Lyon",
+          "Marseille",
+          "Nice"
+        ],
+        "difficulty": 1
+      },
+      {
+        "prompt": "Capital of Japan 🇯🇵",
+        "correct_answer": "Tokyo",
+        "distractors": [
+          "Kyoto",
+          "Osaka",
+          "Nagoya"
+        ],
+        "difficulty": 1
+      },
+      {
+        "prompt": "Capital of Germany 🇩🇪",
+        "correct_answer": "Berlin",
+        "distractors": [
+          "Munich",
+          "Frankfurt",
+          "Hamburg"
+        ],
+        "difficulty": 1
+      },
+      {
+        "prompt": "Capital of Canada 🇨🇦",
+        "correct_answer": "Ottawa",
+        "distractors": [
+          "Toronto",
+          "Vancouver",
+          "Montreal"
+        ],
+        "difficulty": 2
+      }
+    ]
+  },
+  {
+    "name": "Spanish Vocabulary (A1)",
+    "category": "Language",
+    "is_premade": 1,
+    "cards": [
+      {
+        "prompt": "Translate: 'El perro'",
+        "correct_answer": "The dog",
+        "distractors": [
+          "The cat",
+          "The bird",
+          "The horse"
+        ],
+        "difficulty": 1
+      },
+      {
+        "prompt": "Translate: 'La manzana'",
+        "correct_answer": "The apple",
+        "distractors": [
+          "The orange",
+          "The bread",
+          "The cheese"
+        ],
+        "difficulty": 1
+      },
+      {
+        "prompt": "Translate: 'Gracias'",
+        "correct_answer": "Thank you",
+        "distractors": [
+          "Please",
+          "Hello",
+          "Goodbye"
+        ],
+        "difficulty": 1
+      }
+    ]
+  },
+  {
+    "name": "Quick Mental Math",
+    "category": "Math",
+    "is_premade": 1,
+    "cards": [
+      {
+        "prompt": "Solve: 5 × 4 = ?",
+        "correct_answer": "20",
+        "distractors": [
+          "22",
+          "17",
+          "25"
+        ],
+        "difficulty": 1
+      },
+      {
+        "prompt": "Solve: 8 × 6 = ?",
+        "correct_answer": "48",
+        "distractors": [
+          "50",
+          "45",
+          "53"
+        ],
+        "difficulty": 1
+      },
+      {
+        "prompt": "Solve: 8 × 9 = ?",
+        "correct_answer": "72",
+        "distractors": [
+          "74",
+          "69",
+          "77"
+        ],
+        "difficulty": 1
+      },
+      {
+        "prompt": "Solve: 4 × 12 = ?",
+        "correct_answer": "48",
+        "distractors": [
+          "50",
+          "45",
+          "53"
+        ],
+        "difficulty": 1
+      },
+      {
+        "prompt": "Solve: 8 × 9 = ?",
+        "correct_answer": "72",
+        "distractors": [
+          "74",
+          "69",
+          "77"
+        ],
+        "difficulty": 1
+      }
+    ]
+  }
+]

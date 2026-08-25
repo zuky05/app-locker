@@ -40,15 +40,15 @@ class DatabaseHelper {
       )
     ''');
 
-    // Tabulka pre karticky
+    // Tabulka pre karticky (UŽ BEZ distractors_json)
     await db.execute('''
       CREATE TABLE cards (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         deck_id INTEGER NOT NULL,
         prompt TEXT NOT NULL,
         correct_answer TEXT NOT NULL,
-        distractors_json TEXT NOT NULL,
         difficulty INTEGER NOT NULL,
+        counter INTEGER NOT NULL,
         FOREIGN KEY (deck_id) REFERENCES decks (id) ON DELETE CASCADE
       )
     ''');
@@ -84,8 +84,9 @@ class DatabaseHelper {
             'deck_id': deckId,
             'prompt': c['prompt'],
             'correct_answer': c['correct_answer'],
-            'distractors_json': jsonEncode(c['distractors']),
+            // Zlé odpovede tu už neukladáme!
             'difficulty': c['difficulty'] ?? 1,
+            'counter': 0,
           });
         }
       }
@@ -110,15 +111,16 @@ class DatabaseHelper {
     return deckId;
   }
 
-  Future<void> addNewCard(int deckId, String prompt, String correctAnswer, List<String> wrongAnswers) async {
+  // ZMENA: addNewCard už neberie List<String> wrongAnswers
+  Future<void> addNewCard(int deckId, String prompt, String correctAnswer) async {
     final db = await instance.database;
     
     await db.insert('cards', {
       'deck_id': deckId,
       'prompt': prompt,
       'correct_answer': correctAnswer,
-      'distractors_json': jsonEncode(wrongAnswers), 
       'difficulty': 1,
+      'counter': 0,
     });
   }
 
@@ -126,6 +128,48 @@ class DatabaseHelper {
     final db = await instance.database;
     final result = await db.rawQuery('SELECT COUNT(*) FROM decks WHERE is_premade = 0');
     return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+  // --- TÚTO FUNKCIU PRIDAJ NA KONIEC SÚBORU ---
+  Future<Map<String, dynamic>?> getRandomQuizQuestion() async {
+    final db = await instance.database;
+    
+    // 1. ZMENA: Najprv zoradiť podľa počítadla (najmenej videné idú prvé), AŽ POTOM náhodne
+    final randomCard = await db.rawQuery('SELECT * FROM cards ORDER BY counter ASC, RANDOM() LIMIT 1');
+    
+    if (randomCard.isEmpty) return null; 
+    
+    final card = randomCard.first;
+    final cardId = card['id']; // Uložíme si ID, aby sme vedeli, komu zdvihnúť counter
+    final deckId = card['deck_id'];
+    final correctAnswer = card['correct_answer'] as String;
+    final prompt = card['prompt'] as String;
+
+    // 2. Vytiahneme max 3 iné odpovede z TOHO ISTÉHO balíčka ako chytáky
+    final wrongAnswers = await db.rawQuery('''
+      SELECT correct_answer FROM cards 
+      WHERE deck_id = ? AND id != ? 
+      ORDER BY RANDOM() LIMIT 3
+    ''', [deckId, cardId]);
+
+    // 3. Spojíme správnu odpoveď s chytákmi do jedného zoznamu
+    List<String> options = [correctAnswer];
+    for (var row in wrongAnswers) {
+      options.add(row['correct_answer'] as String);
+    }
+
+    // 4. Zamiešame ich, aby správna nebola vždy prvá
+    options.shuffle();
+
+    // 5. ZMENA: Zdvihneme counter tejto kartičke o +1, aby sa neopakovala!
+    await db.rawUpdate('UPDATE cards SET counter = counter + 1 WHERE id = ?', [cardId]);
+
+    // Vrátime to úhľadne zabalené späť
+    return {
+      'prompt': prompt,
+      'correct_answer': correctAnswer,
+      'options': options,
+    };
   }
 
 }

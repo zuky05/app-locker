@@ -23,18 +23,11 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
     String prompt = _promptController.text;
     String answer = _answerController.text;
 
-    // 2. Put wrong answers into a List (exactly how your new function wants it)
-    List<String> distractors = [
-      _wrong1Controller.text,
-      _wrong2Controller.text,
-      _wrong3Controller.text,
-    ];
-
     // 3. Save the new deck using YOUR custom function and get the ID
     int newDeckId = await DatabaseHelper.instance.addNewDeck(deckName, "Custom");
 
     // 4. Save the first card to this new deck using YOUR custom function
-    await DatabaseHelper.instance.addNewCard(newDeckId, prompt, answer, distractors);
+    await DatabaseHelper.instance.addNewCard(newDeckId, prompt, answer);
 
     // 5. Close this screen and go back to the manager
     if (mounted) {

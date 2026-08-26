@@ -21,10 +21,13 @@ class MainActivity: FlutterActivity() {
         methodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
         
         methodChannel?.setMethodCallHandler { call, result ->
-            if (call.method == "isOverlayMode") {
+            // TOTO SME ZMENILI: Posielame obe informácie naraz
+            if (call.method == "getOverlayInfo") {
                 val isOverlay = intent.getBooleanExtra("isOverlay", false)
-                result.success(isOverlay)
-
+                val isTimeout = intent.getBooleanExtra("isTimeout", false)
+                
+                result.success(mapOf("isOverlay" to isOverlay, "isTimeout" to isTimeout))
+                
             } else if (call.method == "unlockApp") {
                 
                 // Kotlin si vytiahne číslo z Flutteru (ak nepríde, dá 1 minútu)
@@ -37,6 +40,10 @@ class MainActivity: FlutterActivity() {
                 finish() 
                 result.success(true)
                 
+            } else if (call.method == "setBlockedApps") {
+                val apps = call.argument<List<String>>("apps") ?: emptyList()
+                AppBlockerService.blockedApps = apps.toMutableSet()
+                result.success(true)
             } else {
                 result.notImplemented()
             }
@@ -47,7 +54,10 @@ class MainActivity: FlutterActivity() {
         super.onNewIntent(intent)
         setIntent(intent) 
         val isOverlay = intent.getBooleanExtra("isOverlay", false)
-        methodChannel?.invokeMethod("updateOverlayMode", isOverlay)
+        val isTimeout = intent.getBooleanExtra("isTimeout", false) // TOTO JE NOVÉ
+        
+        // Zmenili sme názov funkcie a posielame mapu
+        methodChannel?.invokeMethod("updateOverlayInfo", mapOf("isOverlay" to isOverlay, "isTimeout" to isTimeout))
     }
 
     override fun finish() {

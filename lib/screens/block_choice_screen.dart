@@ -4,7 +4,8 @@ import '../services/prefs_helper.dart';
 import 'quiz_overlay_screen.dart';
 
 class BlockChoiceScreen extends StatefulWidget {
-  const BlockChoiceScreen({super.key});
+  final bool isTimeout;
+  const BlockChoiceScreen({super.key, required this.isTimeout});
 
   @override
   State<BlockChoiceScreen> createState() => _BlockChoiceScreenState();
@@ -42,9 +43,12 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
   }
 
   void _startTest() {
-    // Prepne nás z tejto obrazovky priamo na Kvíz
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const QuizOverlayScreen()),
+      PageRouteBuilder(
+        pageBuilder: (context, animation1, animation2) => const QuizOverlayScreen(),
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+      ),
     );
   }
 
@@ -89,7 +93,16 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
                     const SizedBox(height: 12),
 
                     // DRUHÉ TLAČIDLO: GRACE PERIOD (Iba ak zostávajú pokusy!)
-                    if (remainingGrace > 0)
+                    if (widget.isTimeout)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 10),
+                        child: Text(
+                          "Čas vypršal! Teraz ťa zachráni už len test.",
+                          style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                        ),
+                      )
+                    // Ak to NIE JE timeout, a má pokusy, ukážeme mu Odpustok
+                    else if (remainingGrace > 0)
                       OutlinedButton(
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size(double.infinity, 50),
@@ -98,6 +111,7 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
                         onPressed: _useGracePeriod,
                         child: Text("Odpustok na 1 min. ($remainingGrace/3 dnes)"),
                       )
+                    // Ak to NIE JE timeout, ale nemá pokusy
                     else
                       const Padding(
                         padding: EdgeInsets.only(top: 10),

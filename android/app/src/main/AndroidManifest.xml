@@ -4,6 +4,8 @@
     
     <!-- Povolenie, aby sme mohli zobraziť náš kvíz PREZ iné aplikácie -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
     <application
         android:label="brainlock"
         android:name="${applicationName}"

@@ -111,6 +111,11 @@ class DatabaseHelper {
     return deckId;
   }
 
+  Future<void> removeCard(int id) async {
+    final db = await instance.database;
+    await db.rawDelete('DELETE FROM cards WHERE id = ?', [id]);
+  }
+
   // ZMENA: addNewCard už neberie List<String> wrongAnswers
   Future<void> addNewCard(int deckId, String prompt, String correctAnswer) async {
     final db = await instance.database;
@@ -170,6 +175,21 @@ class DatabaseHelper {
       'correct_answer': correctAnswer,
       'options': options,
     };
+  }
+
+  Future<List<Map<String, dynamic>>> getCardsForDeck(int deckId) async {
+    final db = await instance.database;
+    return await db.query(
+      'cards',
+      where: 'deck_id = ?',
+      whereArgs: [deckId],
+    );
+  }
+
+  Future<void> removeDeck(int deckId) async {
+    final db = await instance.database;
+    await db.rawDelete('DELETE FROM decks WHERE id = ?', [deckId]);
+    await db.rawDelete('DELETE FROM cards WHERE deck_id = ?', [deckId]);
   }
 
 }

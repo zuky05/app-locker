@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../services/database_helper.dart';
 import 'package:flutter/services.dart'; // Aby sme mohli použiť MethodChannel
 
@@ -79,11 +80,28 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                     const SizedBox(height: 20),
                     
                     // Skutočná otázka z databázy!
-                    Text(
-                      currentQuestion!['prompt'],
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 18, color: Colors.black87),
-                    ),
+                  if (currentQuestion!['prompt'].toString().endsWith('.svg')) ...[
+                                      const Text(
+                                        "Ktorému štátu patrí táto vlajka?",
+                                        style: TextStyle(fontSize: 18, color: Colors.black87),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(height: 10),
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: SvgPicture.asset(
+                                          currentQuestion!['prompt'],
+                                          height: 110,
+                                          fit: BoxFit.contain,
+                                        ),
+                                      ),
+                                    ] else ...[
+                                      Text(
+                                        currentQuestion!['prompt'],
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(fontSize: 18, color: Colors.black87, fontWeight: FontWeight.w600),
+                                      ),
+                                    ],
                     const SizedBox(height: 24),
                     
                     // Skutočné namixované odpovede!

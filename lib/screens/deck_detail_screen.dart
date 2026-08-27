@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/database_helper.dart';
 import '../models/deck_model.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
 
 class DeckDetailScreen extends StatefulWidget {
   final Deck deck;
@@ -194,7 +196,6 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                             child: Container(
                               margin: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
                               decoration: BoxDecoration(
-                                // Ak je otočená (odpoveď), zmeníme jemne farbu pre vizuálny efekt
                                 color: showAnswer ? Colors.deepPurple.shade50 : Colors.white,
                                 borderRadius: BorderRadius.circular(20),
                                 boxShadow: const [
@@ -207,27 +208,50 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
+                                      // 1. Malý nadpis na vrchu
                                       Text(
                                         showAnswer ? "ODPOVEĎ" : "OTÁZKA",
                                         style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,
                                           color: Colors.grey.shade500,
-                                          letterSpacing: 2
+                                          letterSpacing: 2,
                                         ),
                                       ),
                                       const SizedBox(height: 20),
-                                      Text(
-                                        showAnswer ? card['correct_answer'] : card['prompt'],
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
-                                      ),
+
+                                      // 2. Obsah kartičky (Vlajka vs. Klasický text)
+                                      if (!showAnswer && card['prompt'].toString().endsWith('.svg')) ...[
+                                        const SizedBox(height: 12),
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(8),
+                                          child: SvgPicture.asset(
+                                            card['prompt'], // Správny kľúč pre cestu k SVG!
+                                            height: 120,
+                                            fit: BoxFit.contain,
+                                          ),
+                                        ),
+                                        Text(
+                                          showAnswer ? card['correct_answer'] : 'Komu patrí táto vlajka?',
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
+                                        ),
+                                      ] else ...[
+                                        Text(
+                                          showAnswer ? card['correct_answer'] : card['prompt'],
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
+                                        ),
+                                      ],
+
                                       const SizedBox(height: 30),
+
+                                      // 3. Ikona ruky
                                       Icon(
                                         Icons.touch_app,
                                         color: Colors.grey.shade300,
                                         size: 30,
-                                      )
+                                      ),
                                     ],
                                   ),
                                 ),

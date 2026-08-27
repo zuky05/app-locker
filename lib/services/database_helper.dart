@@ -47,7 +47,6 @@ class DatabaseHelper {
         deck_id INTEGER NOT NULL,
         prompt TEXT NOT NULL,
         correct_answer TEXT NOT NULL,
-        difficulty INTEGER NOT NULL,
         counter INTEGER NOT NULL,
         FOREIGN KEY (deck_id) REFERENCES decks (id) ON DELETE CASCADE
       )
@@ -72,6 +71,7 @@ class DatabaseHelper {
     try {
       final jsonString = await rootBundle.loadString('assets/decks/premade_decks.json');
       final List<dynamic> deckList = jsonDecode(jsonString);
+      print(deckList); // Debug print to check the structure of the loaded JSON
       for (var d in deckList) {
         final deckId = await db.insert('decks', {
           'name': d['name'],
@@ -84,8 +84,6 @@ class DatabaseHelper {
             'deck_id': deckId,
             'prompt': c['prompt'],
             'correct_answer': c['correct_answer'],
-            // Zlé odpovede tu už neukladáme!
-            'difficulty': c['difficulty'] ?? 1,
             'counter': 0,
           });
         }
@@ -116,7 +114,7 @@ class DatabaseHelper {
     await db.rawDelete('DELETE FROM cards WHERE id = ?', [id]);
   }
 
-  // ZMENA: addNewCard už neberie List<String> wrongAnswers
+  
   Future<void> addNewCard(int deckId, String prompt, String correctAnswer) async {
     final db = await instance.database;
     
@@ -124,7 +122,6 @@ class DatabaseHelper {
       'deck_id': deckId,
       'prompt': prompt,
       'correct_answer': correctAnswer,
-      'difficulty': 1,
       'counter': 0,
     });
   }
@@ -135,7 +132,7 @@ class DatabaseHelper {
     return Sqflite.firstIntValue(result) ?? 0;
   }
 
-  // --- TÚTO FUNKCIU PRIDAJ NA KONIEC SÚBORU ---
+  
   Future<Map<String, dynamic>?> getRandomQuizQuestion() async {
     final db = await instance.database;
     

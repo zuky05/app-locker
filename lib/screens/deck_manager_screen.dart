@@ -4,6 +4,7 @@ import '../models/deck_model.dart';
 import 'app_selector_screen.dart';
 import 'deck_detail_screen.dart';
 //toto je na anki a quizlet keby to nechceme treba to vymazat iba som sa s tym hral este 
+// pohoda jahoda, vraj nam nemaju aj tak co spravit xd
 import 'anki_playground_screen.dart';
 import 'quizlet_playground_screen.dart';
 //---------------------------
@@ -102,7 +103,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
   }
 
   Widget _buildDeckList(List<Deck> deckList) {
-    if (deckList.isEmpty) return const Center(child: Text("Zatiaľ žiadne balíčky."));
+    if (deckList.isEmpty) return const Center(child: Text("You have no custom decks."));
     
     return ListView.builder(
       itemCount: deckList.length,
@@ -167,8 +168,8 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
           unselectedLabelColor: Colors.white70,
           indicatorColor: Colors.white,
           tabs: const [
-            Tab(text: 'Moje balíčky', icon: Icon(Icons.person)),
-            Tab(text: 'Predpripravené', icon: Icon(Icons.library_books)),
+            Tab(text: 'My decks', icon: Icon(Icons.person)),
+            Tab(text: 'Premade decks', icon: Icon(Icons.library_books)),
           ],
         ),
       ),

@@ -13,9 +13,6 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
   final _deckNameController = TextEditingController();
   final _promptController = TextEditingController();
   final _answerController = TextEditingController();
-  final _wrong1Controller = TextEditingController();
-  final _wrong2Controller = TextEditingController();
-  final _wrong3Controller = TextEditingController();
 
   void _saveData() async {
     // 1. Get strings from text fields
@@ -64,18 +61,6 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
             TextField(
               controller: _answerController, 
               decoration: const InputDecoration(labelText: "Correct Answer")
-            ),
-            TextField(
-              controller: _wrong1Controller, 
-              decoration: const InputDecoration(labelText: "Wrong Answer 1")
-            ),
-            TextField(
-              controller: _wrong2Controller, 
-              decoration: const InputDecoration(labelText: "Wrong Answer 2")
-            ),
-            TextField(
-              controller: _wrong3Controller, 
-              decoration: const InputDecoration(labelText: "Wrong Answer 3")
             ),
             const SizedBox(height: 20),
             Center(

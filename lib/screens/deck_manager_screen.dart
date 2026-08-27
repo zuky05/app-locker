@@ -3,6 +3,10 @@ import '../services/database_helper.dart';
 import '../models/deck_model.dart';
 import 'app_selector_screen.dart';
 import 'deck_detail_screen.dart';
+//toto je na anki a quizlet keby to nechceme treba to vymazat iba som sa s tym hral este 
+import 'anki_playground_screen.dart';
+import 'quizlet_playground_screen.dart';
+//---------------------------
 
 class DeckManagerScreen extends StatefulWidget {
   const DeckManagerScreen({super.key});
@@ -138,6 +142,20 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
         actions: [
+          // toto je tiez na anki 
+          IconButton(
+            icon: const Icon(Icons.science),
+            tooltip: 'Playground',
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AnkiPlaygroundScreen())).then((_) => _loadDecks()),
+          ),
+          //------------------------------
+          // toto je tiez na quizlet
+          IconButton(
+            icon: const Icon(Icons.language), // Ikonka pre Quizlet web
+            tooltip: 'Quizlet Playground',
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const QuizletPlaygroundScreen())).then((_) => _loadDecks()),
+          ),
+          //------------------------------
           IconButton(
             icon: const Icon(Icons.apps_rounded),
             onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AppSelectorScreen())),

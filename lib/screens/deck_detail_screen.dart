@@ -298,7 +298,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                     Navigator.pop(context); 
                   },
                   icon: const Icon(Icons.add),
-                  label: const Text("vymazat deck"),
+                  label: const Text("deck"),
                   backgroundColor: Colors.redAccent,
                   foregroundColor: Colors.white,
                 ),

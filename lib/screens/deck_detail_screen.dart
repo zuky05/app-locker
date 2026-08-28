@@ -312,20 +312,6 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                   backgroundColor: Colors.deepPurple,
                   foregroundColor: Colors.white,
                 ),
-
-                FloatingActionButton.extended(
-                  heroTag: 'removedeck_btn', // AJ DRUHÉ MUSÍ MAŤ SVOJ TAG!
-                  onPressed: () async {
-                    // 1. Zmažeme balíček (použijeme bezpečné ID z widgetu)
-                    await DatabaseHelper.instance.removeDeck(widget.deck.id!);
-                    // 2. Keďže balíček už neexistuje, vrátime používateľa späť na zoznam
-                    Navigator.pop(context); 
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text("deck"),
-                  backgroundColor: Colors.redAccent,
-                  foregroundColor: Colors.white,
-                ),
               ],
             )
           : null,

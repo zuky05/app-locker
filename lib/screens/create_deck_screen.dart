@@ -17,16 +17,12 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
   void _saveData() async {
     // 1. Get strings from text fields
     String deckName = _deckNameController.text;
-    String prompt = _promptController.text;
-    String answer = _answerController.text;
 
-    // 3. Save the new deck using YOUR custom function and get the ID
-    int newDeckId = await DatabaseHelper.instance.addNewDeck(deckName, "Custom");
+    
+    await DatabaseHelper.instance.addNewDeck(deckName, "Custom");
 
-    // 4. Save the first card to this new deck using YOUR custom function
-    await DatabaseHelper.instance.addNewCard(newDeckId, prompt, answer);
+    
 
-    // 5. Close this screen and go back to the manager
     if (mounted) {
       Navigator.pop(context);
     }

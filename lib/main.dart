@@ -69,7 +69,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       title: 'Brainlock',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 190, 106, 10)),
         useMaterial3: true,
       ),
       // Ak je to overlay, posunieme mu informáciu o tom, či je to Timeout!

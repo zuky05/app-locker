@@ -71,7 +71,6 @@ class DatabaseHelper {
     try {
       final jsonString = await rootBundle.loadString('assets/decks/premade_decks.json');
       final List<dynamic> deckList = jsonDecode(jsonString);
-      print(deckList); // Debug print to check the structure of the loaded JSON
       for (var d in deckList) {
         final deckId = await db.insert('decks', {
           'name': d['name'],

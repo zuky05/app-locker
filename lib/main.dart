@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'screens/deck_manager_screen.dart';
 import 'screens/block_choice_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,7 +27,7 @@ void main() async {
       isTimeout = info['isTimeout'] ?? false;
     }
   } catch (e) {
-    print("Chyba komunikácie: $e");
+    debugPrint("Chyba komunikácie: $e");
   }
 
   runApp(MyApp(initialOverlay: isOverlay, initialTimeout: isTimeout));
@@ -73,7 +73,7 @@ class _MyAppState extends State<MyApp> {
         useMaterial3: true,
       ),
       // Ak je to overlay, posunieme mu informáciu o tom, či je to Timeout!
-      home: isOverlay ? BlockChoiceScreen(isTimeout: isTimeout) : const DeckManagerScreen(),
+      home: isOverlay ? BlockChoiceScreen(isTimeout: isTimeout) : const HomeScreen(),
     );
   }
 }

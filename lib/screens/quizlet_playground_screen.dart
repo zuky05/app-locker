@@ -22,14 +22,13 @@ class _QuizletPlaygroundScreenState extends State<QuizletPlaygroundScreen> {
     // Inicializácia webového prehliadača
     controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      // Týmto vytvoríme komunikačný kanál medzi JavaScriptom na webe a naším Flutter kódom
+      // Komunikačný kanál
       ..addJavaScriptChannel(
         'QuizletChannel',
         onMessageReceived: (JavaScriptMessage message) {
           _processExtractedData(message.message);
         },
       )
-      // Načítame úvodnú stránku Quizletu (rovno hľadanie, nech to máme rýchlejšie)
       ..loadRequest(Uri.parse('https://quizlet.com/search?query=medicine&type=sets'));
   }
 
@@ -37,34 +36,82 @@ class _QuizletPlaygroundScreenState extends State<QuizletPlaygroundScreen> {
   void _extractCards() async {
     setState(() {
       isExtracting = true;
-      statusMessage = "Cucám dáta z obrazovky...";
+      statusMessage = "Rolujem, klikám na 'See more' a zbieram dáta... 👻";
     });
 
-    // Toto je náš tajný JavaScript Scraper
-    // Hľadá všetky prvky s triedou 'TermText' (Otázka, Odpoveď, Otázka, Odpoveď...)
+    // VYLEPŠENÝ JAVASCRIPT: Auto-Scroller s automatickým klikaním!
     const String jsCode = '''
-      try {
-        var termElements = document.querySelectorAll('.TermText');
-        var cards = [];
-        
-        for (var i = 0; i < termElements.length; i += 2) {
-          if (i + 1 < termElements.length) {
-            var q = termElements[i].innerText;
-            var a = termElements[i+1].innerText;
-            cards.push({q: q, a: a});
+      async function extractAll() {
+        try {
+          var extracted = new Map(); 
+          var scrollAttempts = 0;
+          
+          // Zber toho, čo je práve na obrazovke
+          function collectVisible() {
+            var termElements = document.querySelectorAll('.TermText');
+            for (var i = 0; i < termElements.length - 1; i += 2) {
+              if (termElements[i] && termElements[i+1]) {
+                var q = termElements[i].innerText.trim();
+                var a = termElements[i+1].innerText.trim();
+                if (q !== "" && a !== "") {
+                  extracted.set(q, a); 
+                }
+              }
+            }
           }
+
+          // NOVÁ FUNKCIA: Hľadáčik na tlačidlo "See more"
+          function clickSeeMore() {
+            var buttons = document.querySelectorAll('button');
+            for (var i = 0; i < buttons.length; i++) {
+              // Hľadáme tlačidlo, ktoré obsahuje text "See more" (odignorujeme veľké/malé písmená)
+              if (buttons[i].innerText && buttons[i].innerText.toLowerCase().includes('see more')) {
+                buttons[i].click(); // KLIK!
+                return; // Našli sme a klikli, môžeme ísť ďalej
+              }
+            }
+          }
+
+          window.scrollTo(0, 0);
+          await new Promise(r => setTimeout(r, 500));
+          
+          // Zvýšili sme limit na 4 pokusy, aby robot počkal aj pri veľmi dlhých balíčkoch
+          while (scrollAttempts < 4) {
+            collectVisible(); 
+            
+            clickSeeMore(); // Pred rolovaním robot skontroluje, či netreba otvoriť ďalšie karty!
+            
+            var oldY = window.scrollY;
+            window.scrollBy(0, 1000); 
+            await new Promise(r => setTimeout(r, 800)); 
+            
+            if (window.scrollY === oldY || (window.innerHeight + window.scrollY) >= document.body.scrollHeight - 50) {
+              scrollAttempts++; 
+            } else {
+              scrollAttempts = 0; 
+            }
+          }
+          
+          collectVisible(); // Posledný zber na dne
+          
+          var cards = [];
+          extracted.forEach(function(value, key) {
+            cards.push({q: key, a: value});
+          });
+          
+          QuizletChannel.postMessage(JSON.stringify(cards));
+        } catch(e) {
+          QuizletChannel.postMessage("ERROR:" + e.toString());
         }
-        // Výsledok pošleme späť do Flutteru ako JSON text
-        QuizletChannel.postMessage(JSON.stringify(cards));
-      } catch(e) {
-        QuizletChannel.postMessage("ERROR:" + e.toString());
       }
+      
+      extractAll(); 
     ''';
 
     await controller.runJavaScript(jsCode);
   }
 
-  // Funkcia, ktorá spracuje dáta, ktoré nám poslal JavaScript
+  // Funkcia, ktorá spracuje dáta z JS
   void _processExtractedData(String data) async {
     if (data.startsWith("ERROR:")) {
        setState(() {
@@ -119,7 +166,6 @@ class _QuizletPlaygroundScreenState extends State<QuizletPlaygroundScreen> {
       ),
       body: Column(
         children: [
-          // Informačný panel navrchu
           Container(
             padding: const EdgeInsets.all(12),
             width: double.infinity,
@@ -130,13 +176,11 @@ class _QuizletPlaygroundScreenState extends State<QuizletPlaygroundScreen> {
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
           ),
-          // Samotný webový prehliadač (zaberá zvyšok obrazovky)
           Expanded(
             child: WebViewWidget(controller: controller),
           ),
         ],
       ),
-      // Tlačidlo, ktoré spustí kradnutie kartičiek
       floatingActionButton: isExtracting
           ? const FloatingActionButton(
               onPressed: null,

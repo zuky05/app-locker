@@ -3,10 +3,14 @@ import '../services/database_helper.dart';
 import '../models/deck_model.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-
 class DeckDetailScreen extends StatefulWidget {
   final Deck deck;
-  const DeckDetailScreen({super.key, required this.deck});
+  final bool isReadOnly;
+  const DeckDetailScreen({
+    super.key,
+    required this.deck,
+    this.isReadOnly = false,
+  });
 
   @override
   State<DeckDetailScreen> createState() => _DeckDetailScreenState();
@@ -15,11 +19,11 @@ class DeckDetailScreen extends StatefulWidget {
 class _DeckDetailScreenState extends State<DeckDetailScreen> {
   List<Map<String, dynamic>> cards = [];
   bool isLoading = true;
-  
+
   // Sledujeme, na ktorej kartičke sme a či sme ju "otočili"
   int currentIndex = 0;
   bool showAnswer = false;
-  
+
   final PageController _pageController = PageController();
 
   @override
@@ -124,18 +128,19 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                   promptController.text,
                   answerController.text,
                 );
-                
+
+                if (!context.mounted) return;
                 Navigator.pop(context); // Najprv zavrieme okienko
-                
+
                 // 1. POČKÁME, kým sa vytiahnu nové dáta z databázy
-                await _loadCards(); 
+                await _loadCards();
 
                 // 2. Dáme Flutteru "mikropauzu" (100 ms), aby stihol novú kartu reálne vykresliť
                 Future.delayed(const Duration(milliseconds: 100), () {
                   if (cards.isNotEmpty) {
                     // 3. Odscrollujeme úplne na koniec zoznamu k novej karte
                     _pageController.animateToPage(
-                      cards.length - 1, 
+                      cards.length - 1,
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeInOut,
                     );
@@ -174,7 +179,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.deepPurple),
                       ),
                     ),
-                    
+
                     // Hlavná kartička
                     Expanded(
                       child: PageView.builder(
@@ -220,7 +225,6 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                                       ),
                                       const SizedBox(height: 20),
 
-                                      // 2. Obsah kartičky (Vlajka vs. Klasický text)
                                       if (!showAnswer && card['prompt'].toString().endsWith('.svg')) ...[
                                         const SizedBox(height: 12),
                                         ClipRRect(
@@ -286,26 +290,26 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                     )
                   ],
                 ),
-      floatingActionButton: (widget.deck.isPremade == 0 || widget.deck.isPremade == false)
+      floatingActionButton: !widget.isReadOnly
           ? Column(
               mainAxisAlignment: MainAxisAlignment.end,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 // 1. Tlačidlo: VYMAZAŤ KARTIČKU
-                if (cards.isNotEmpty) // Zobrazíme kôš iba vtedy, ak je v balíčku nejaká karta
+                if (cards.isNotEmpty)
                   FloatingActionButton(
-                    heroTag: 'delete_btn', // TOTO JE TEN MAGICKÝ TAG!
+                    heroTag: 'delete_btn',
                     onPressed: _deleteCard,
                     backgroundColor: Colors.redAccent,
                     foregroundColor: Colors.white,
                     child: const Icon(Icons.delete),
                   ),
-                
-                const SizedBox(height: 16), // Medzera medzi tlačidlami
-                
+
+                const SizedBox(height: 16),
+
                 // 2. Tlačidlo: PRIDAŤ KARTIČKU
                 FloatingActionButton.extended(
-                  heroTag: 'add_btn', // AJ DRUHÉ MUSÍ MAŤ SVOJ TAG!
+                  heroTag: 'add_btn',
                   onPressed: _showAddCardDialog,
                   icon: const Icon(Icons.add),
                   label: const Text("Pridať"),
@@ -315,9 +319,6 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
               ],
             )
           : null,
-          
     );
-
   }
-
 }

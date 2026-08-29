@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../services/database_helper.dart';
-import 'package:flutter/services.dart'; // Aby sme mohli použiť MethodChannel
+import 'package:flutter/services.dart';
 
 class QuizOverlayScreen extends StatefulWidget {
   const QuizOverlayScreen({super.key});
@@ -32,7 +32,6 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
 
   void checkAnswer(String selectedOption) async {
     if (selectedOption == currentQuestion?['correct_answer']) {
-      print("SPRÁVNE! Neskôr tu odomkneme appku.");
       const platform = MethodChannel('brainlock.channel');
       try {
         await platform.invokeMethod('unlockApp', {'minutes': 5});
@@ -41,7 +40,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       }
     } else {
       print("ZLE! Skús znova.");
-      // Ak odpovie zle, môžeme mu napríklad načítať novú otázku
+      
       _loadRandomQuestion();
     }
   }

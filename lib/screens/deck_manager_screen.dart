@@ -182,6 +182,9 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
             onPressed: () async {
               if (nameController.text.isNotEmpty && categoryController.text.isNotEmpty) {
                 Navigator.pop(context);
+                print(nameController.text); 
+                print(categoryController.text);
+                await DatabaseHelper.instance.updateDeck(deck.id!, nameController.text, categoryController.text);
                 _loadDecks();
               }
             },
@@ -307,16 +310,16 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                           _buildActionButton(
                             icon: Icons.style,
                             label: "View",
-                            color: Colors.deepPurple,
+                            color:  Colors.orange.shade800,
                             onTap: () => Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => DeckDetailScreen(deck: deck)),
+                              MaterialPageRoute(builder: (context) => DeckDetailScreen(deck: deck, isReadOnly: true,)),
                             ).then((_) => _loadDecks()),
                           ),
                           _buildActionButton(
                             icon: Icons.quiz,
                             label: "Test",
-                            color: Colors.deepPurple,
+                            color:  Colors.green.shade700,
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(builder: (context) => const QuizOverlayScreen()),
@@ -342,9 +345,9 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
                             _buildActionButton(
-                              icon: Icons.add_card,
+                              icon: Icons.add_circle_outline_outlined,
                               label: "Edit Cards",
-                              color: Colors.deepPurple,
+                              color:  Colors.pink,
                               onTap: () => Navigator.push(
                                 context,
                                 MaterialPageRoute(builder: (context) => DeckDetailScreen(deck: deck)),

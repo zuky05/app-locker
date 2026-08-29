@@ -188,4 +188,9 @@ class DatabaseHelper {
     await db.rawDelete('DELETE FROM cards WHERE deck_id = ?', [deckId]);
   }
 
+
+  Future<void> updateDeck(int deckId, String newName, String newCategory) async {
+    final db = await instance.database;
+    await db.rawUpdate('UPDATE decks SET name = ?, category = ? WHERE id = ?', [newName, newCategory, deckId]);
+  }
 }

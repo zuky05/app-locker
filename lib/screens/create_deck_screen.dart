@@ -11,9 +11,8 @@ class CreateDeckScreen extends StatefulWidget {
 class _CreateDeckScreenState extends State<CreateDeckScreen> {
   // Controllers to read text from the input fields
   final _deckNameController = TextEditingController();
-  final _promptController = TextEditingController();
-  final _answerController = TextEditingController();
 
+  
   void _saveData() async {
     // 1. Get strings from text fields
     String deckName = _deckNameController.text;
@@ -50,15 +49,7 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)
             ),
             const SizedBox(height: 10),
-            TextField(
-              controller: _promptController, 
-              decoration: const InputDecoration(labelText: "Question (Prompt)")
-            ),
-            TextField(
-              controller: _answerController, 
-              decoration: const InputDecoration(labelText: "Correct Answer")
-            ),
-            const SizedBox(height: 20),
+
             Center(
               child: ElevatedButton(
                 onPressed: _saveData,

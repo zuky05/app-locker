@@ -47,8 +47,60 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
     setState(() {
       if (blockedPackages.contains(packageName)) {
         blockedPackages.remove(packageName);
-      } else {
+      } else if (blockedPackages.length < 3) {
         blockedPackages.add(packageName);
+      } else {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Column(
+            children: [
+              Icon(Icons.star_rounded, size: 50, color: Colors.amber),
+              SizedBox(height: 10),
+              Text(
+                "Odomkni Brainlock Premium!",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          content: const Text(
+            "Dosiahol si limit 3 vlastných balíčkov zadarmo.\n\nPre neobmedzené vytváranie kartičiek a prístup ku všetkým balíčkom si aktivuj Premium.",
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 15),
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: const Text("Zrušiť"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                print("Navigovať na nákup Premium");
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.amber.shade700,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: const Text("Odomknúť Premium", style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      );
+      return;
+    
+        
       }
     });
 

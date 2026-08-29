@@ -304,7 +304,36 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                       const SizedBox(height: 10),
 
                       // Riadok 1: Štúdium, Test, Share
+                      if (!isCustom) ... [
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildActionButton(
+                            icon: Icons.style,
+                            label: "View",
+                            color:  Colors.orange.shade800,
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => DeckDetailScreen(deck: deck, isReadOnly: true,)),
+                            ).then((_) => _loadDecks()),
+                          ),
+                          _buildActionButton(
+                            icon: Icons.quiz,
+                            label: "Test",
+                            color:  Colors.green.shade700,
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const QuizOverlayScreen()),
+                            ),
+                          ),
+                        ],
+                      ),
+                      ]
+
+                      // Riadok 2: Editácia, Rename, Delete (Iba pre custom balíčky)
+                      else if (isCustom) ...[
+                        const SizedBox(height: 12),
+                        Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
                           _buildActionButton(
@@ -337,10 +366,6 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                           ),
                         ],
                       ),
-
-                      // Riadok 2: Editácia, Rename, Delete (Iba pre custom balíčky)
-                      if (isCustom) ...[
-                        const SizedBox(height: 12),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [

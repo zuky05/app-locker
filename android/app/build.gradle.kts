@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.example.brainlock"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = flutter.targetSdkVersion
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

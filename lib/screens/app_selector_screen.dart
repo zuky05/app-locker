@@ -66,7 +66,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
             ],
           ),
           content: const Text(
-            "Dosiahol si limit 3 vlastných balíčkov zadarmo.\n\nPre neobmedzené vytváranie kartičiek a prístup ku všetkým balíčkom si aktivuj Premium.",
+            "Dosiahol si limit 3 zablokovanych appiek kokot zadarmo.\n\nPre neobmedzené vytváranie kartičiek a prístup ku všetkým balíčkom si aktivuj Premium.",
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 15),
           ),

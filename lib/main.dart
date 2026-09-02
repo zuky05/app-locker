@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'screens/block_choice_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/home_screen.dart';
+import 'screens/permission_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -73,7 +74,7 @@ class _MyAppState extends State<MyApp> {
         useMaterial3: true,
       ),
       // Ak je to overlay, posunieme mu informáciu o tom, či je to Timeout!
-      home: isOverlay ? BlockChoiceScreen(isTimeout: isTimeout) : const HomeScreen(),
+      home: isOverlay ? BlockChoiceScreen(isTimeout: isTimeout) : const PermissionScreen(),
     );
   }
 }

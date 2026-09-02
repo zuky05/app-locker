@@ -604,7 +604,10 @@
     { "prompt": "Translate: 'Sobre'", "correct_answer": "About / On top of" },
     { "prompt": "Translate: 'Entre'", "correct_answer": "Between / Among" },
     { "prompt": "Translate: 'Hasta'", "correct_answer": "Until" },
-    { "prompt": "Translate: 'Desde'", "correct_answer": "From / Since" }
+    { "prompt": "Translate: 'Desde'", "correct_answer": "From / Since" },
+    { "prompt": "Translate: 'El viaje'", "correct_answer": "Trip / Journey" },
+    { "prompt": "Translate: 'La escuela'", "correct_answer": "School" },
+    { "prompt": "Translate: 'El libro'", "correct_answer": "Book" }
   ]
 },
 {
@@ -612,6 +615,11 @@
   "category": "Language",
   "is_premade": 1,
   "cards": [
+    { "prompt": "Translate: 'Das Fenster'", "correct_answer": "Window" },
+    { "prompt": "Translate: 'Der Schlüssel'", "correct_answer": "Key" },
+    { "prompt": "Translate: 'Die Uhr'", "correct_answer": "Clock / Watch" },
+    { "prompt": "Translate: 'Das Bild'", "correct_answer": "Picture / Image" },
+    { "prompt": "Translate: 'Die Zeitung'", "correct_answer": "Newspaper" },
     { "prompt": "Translate: 'Die Zeit'", "correct_answer": "Time" },
     { "prompt": "Translate: 'Das Jahr'", "correct_answer": "Year" },
     { "prompt": "Translate: 'Der Mensch'", "correct_answer": "Person / Human" },
@@ -796,7 +804,17 @@
     { "prompt": "Translate: 'Von'", "correct_answer": "From / Of" },
     { "prompt": "Translate: 'Zu'", "correct_answer": "To" },
     { "prompt": "Translate: 'Auf'", "correct_answer": "On / Upon" },
-    { "prompt": "Translate: 'Für'", "correct_answer": "For" }
+    { "prompt": "Translate: 'Für'", "correct_answer": "For" },
+    { "prompt": "Translate: 'Über'", "correct_answer": "Over / About" },
+    { "prompt": "Translate: 'Unter'", "correct_answer": "Under / Among" },
+    { "prompt": "Translate: 'Vor'", "correct_answer": "In front of / Before" },
+    { "prompt": "Translate: 'Nach'", "correct_answer": "After / To (a direction)" },
+    { "prompt": "Translate: 'Durch'", "correct_answer": "Through" },
+    { "prompt": "Translate: 'Gegen'", "correct_answer": "Against" },
+    { "prompt": "Translate: 'Der Tisch'", "correct_answer": "Table" },
+    { "prompt": "Translate: 'Der Stuhl'", "correct_answer": "Chair" },
+    { "prompt": "Translate: 'Das Auto'", "correct_answer": "Car" },
+    { "prompt": "Translate: 'Die Schule'", "correct_answer": "School" }
   ]
 },
 {
@@ -990,7 +1008,20 @@
     { "prompt": "Translate: 'Sur'", "correct_answer": "On / Upon" },
     { "prompt": "Translate: 'Sous'", "correct_answer": "Under" },
     { "prompt": "Translate: 'De'", "correct_answer": "Of / From" },
-    { "prompt": "Translate: 'À'", "correct_answer": "To / At" }
+    { "prompt": "Translate: 'À'", "correct_answer": "To / At" },
+    { "prompt": "Translate: 'Entre'", "correct_answer": "Between" },
+    { "prompt": "Translate: 'Pendant'", "correct_answer": "During" },
+    { "prompt": "Translate: 'Avant'", "correct_answer": "Before" },
+    { "prompt": "Translate: 'Après'", "correct_answer": "After" },
+    { "prompt": "Translate: 'La table'", "correct_answer": "Table" },
+    { "prompt": "Translate: 'La chaise'", "correct_answer": "Chair" },
+    { "prompt": "Translate: 'La voiture'", "correct_answer": "Car" },
+    { "prompt": "Translate: 'L'école'", "correct_answer": "School" },
+    { "prompt": "Translate: 'Le voyage'", "correct_answer": "Trip / Journey" },
+    { "prompt": "Translate: 'La fenêtre'", "correct_answer": "Window" },
+    { "prompt": "Translate: 'La clé'", "correct_answer": "Key" },
+    { "prompt": "Translate: 'L'image'", "correct_answer": "Picture / Image" },
+    { "prompt": "Translate: 'Le journal'", "correct_answer": "Newspaper" }
   ]
 },
 {
@@ -1181,7 +1212,23 @@
     { "prompt": "Translate: 'Kanssa'", "correct_answer": "With" },
     { "prompt": "Translate: 'Ilman'", "correct_answer": "Without" },
     { "prompt": "Translate: 'Jälkeen'", "correct_answer": "After" },
-    { "prompt": "Translate: 'Ennen'", "correct_answer": "Before" }
+    { "prompt": "Translate: 'Ennen'", "correct_answer": "Before" },
+    { "prompt": "Translate: 'Pöytä'", "correct_answer": "Table" },
+    { "prompt": "Translate: 'Tuoli'", "correct_answer": "Chair" },
+    { "prompt": "Translate: 'Auto'", "correct_answer": "Car" },
+    { "prompt": "Translate: 'Koulu'", "correct_answer": "School" },
+    { "prompt": "Translate: 'Matka'", "correct_answer": "Trip / Journey" },
+    { "prompt": "Translate: 'Ikkuna'", "correct_answer": "Window" },
+    { "prompt": "Translate: 'Avain'", "correct_answer": "Key" },
+    { "prompt": "Translate: 'Kello'", "correct_answer": "Clock / Watch" },
+    { "prompt": "Translate: 'Kuva'", "correct_answer": "Picture / Image" },
+    { "prompt": "Translate: 'Sanomalehti'", "correct_answer": "Newspaper" },
+    { "prompt": "Translate: 'Puhelin'", "correct_answer": "Phone" },
+    { "prompt": "Translate: 'Tietokone'", "correct_answer": "Computer" },
+    { "prompt": "Translate: 'Metsä'", "correct_answer": "Forest" },
+    { "prompt": "Translate: 'Järvi'", "correct_answer": "Lake" },
+    { "prompt": "Translate: 'Taivas'", "correct_answer": "Sky / Heaven" },
+    { "prompt": "Translate: 'Kukka'", "correct_answer": "Flower" }
   ]
 }
 ]

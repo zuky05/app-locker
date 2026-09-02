@@ -110,7 +110,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Nový balíček'),
+        title: const Text('New Deck'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -182,8 +182,6 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
             onPressed: () async {
               if (nameController.text.isNotEmpty && categoryController.text.isNotEmpty) {
                 Navigator.pop(context);
-                print(nameController.text); 
-                print(categoryController.text);
                 await DatabaseHelper.instance.updateDeck(deck.id!, nameController.text, categoryController.text);
                 _loadDecks();
               }
@@ -303,7 +301,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                       const Divider(height: 1),
                       const SizedBox(height: 10),
 
-                      // Riadok 1: Štúdium, Test, Share
+                      
                       if (!isCustom) ... [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -423,10 +421,6 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
             icon: const Icon(Icons.language),
             tooltip: 'Quizlet Playground',
             onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const QuizletPlaygroundScreen())).then((_) => _loadDecks()),
-          ),
-          IconButton(
-            icon: const Icon(Icons.apps_rounded),
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AppSelectorScreen())),
           ),
         ],
         bottom: TabBar(

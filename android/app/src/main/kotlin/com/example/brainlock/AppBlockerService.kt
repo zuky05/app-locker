@@ -51,16 +51,17 @@ class AppBlockerService : AccessibilityService() {
 
             Log.d("BrainlockNinja", "ZACHYTENÁ ZAKÁZANÁ APPKA: $packageName! Blokujem!")
             
-            val launchIntent = Intent(this, MainActivity::class.java)
-            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            launchIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+            val launchIntent = Intent(this, MainActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK) // Zmaže starú históriu appky
+            addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION) // Zruší animáciu, aby blokovanie "blesklo" okamžite
             
-            // Posielame do Flutteru OBA signály
-            launchIntent.putExtra("isOverlay", true)
-            launchIntent.putExtra("isTimeout", isTimeout) // TOTO JE NOVÉ
-            
+            putExtra("isOverlay", true)
+            putExtra("isTimeout", isTimeout)
+            }
             startActivity(launchIntent)
+                    
+            
         }
     }
 

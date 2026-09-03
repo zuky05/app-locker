@@ -11,7 +11,9 @@ class PermissionScreen extends StatefulWidget {
 
 class _PermissionScreenState extends State<PermissionScreen> with WidgetsBindingObserver {
   static const platform = MethodChannel('brainlock.channel');
-  bool isPermissionGranted = false;
+  
+  bool isOverlayGranted = false;
+  bool isAccessibilityGranted = false;
   bool isLoading = true;
 
   @override
@@ -37,26 +39,39 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
 
   Future<void> _checkPermission() async {
     try {
-      final bool granted = await platform.invokeMethod('isAccessibilityGranted');
-      setState(() {
-        isPermissionGranted = granted;
-        isLoading = false;
-      });
+      // Skontrolujeme OBE povolenia
+      final bool overlay = await platform.invokeMethod('isOverlayGranted') ?? false;
+      final bool accessibility = await platform.invokeMethod('isAccessibilityGranted') ?? false;
 
-      // Ak povolenie už máme, hneď navigujeme do aplikácie
-      if (granted && mounted) {
-        _navigateToMain();
+      if (mounted) {
+        setState(() {
+          isOverlayGranted = overlay;
+          isAccessibilityGranted = accessibility;
+          isLoading = false;
+        });
+
+        // Ak máme OBE povolenia udelené, navigujeme do hlavnej aplikácie
+        if (overlay && accessibility) {
+          _navigateToMain();
+        }
       }
     } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
+  // Otvára systémové nastavenia postupne podľa toho, čo chýba
   Future<void> _openSettings() async {
     try {
-      await platform.invokeMethod('openAccessibilitySettings');
+      if (!isOverlayGranted) {
+        await platform.invokeMethod('requestOverlayPermission');
+      } else if (!isAccessibilityGranted) {
+        await platform.invokeMethod('openAccessibilitySettings');
+      }
     } catch (e) {
       debugPrint("Chyba otvárania nastavení: $e");
     }
@@ -75,6 +90,8 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
         body: Center(child: CircularProgressIndicator(color: Colors.deepPurple)),
       );
     }
+
+    final bool allGranted = isOverlayGranted && isAccessibilityGranted;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -109,7 +126,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
               ),
               const SizedBox(height: 14),
               Text(
-                "Pre správne blokovanie vybraných aplikácií a zobrazovanie kvízov je potrebné zapnúť službu Brainlock v nastaveniach Zjednodušenia prístupu (Accessibility).",
+                "Pre správne blokovanie aplikácií je potrebné povoliť vykresľovanie cez iné aplikácie a službu Zjednodušenia prístupu (Accessibility).",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 15,
@@ -117,53 +134,35 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
                   height: 1.4,
                 ),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 32),
 
-              // Karta so stavom povolenia
-              Card(
-                elevation: 0,
-                color: isPermissionGranted ? Colors.green.shade50 : Colors.amber.shade50,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(
-                    color: isPermissionGranted ? Colors.green : Colors.amber.shade700,
-                    width: 1,
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    children: [
-                      Icon(
-                        isPermissionGranted ? Icons.check_circle : Icons.warning_amber_rounded,
-                        color: isPermissionGranted ? Colors.green : Colors.amber.shade900,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          isPermissionGranted
-                              ? "Služba je aktívna!"
-                              : "Služba Zjednodušenia prístupu je vypnutá",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: isPermissionGranted ? Colors.green.shade900 : Colors.amber.shade900,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              // Stav 1: Overlay
+              _buildPermissionTile(
+                title: "Prekrytie aplikácií (Overlay)",
+                isGranted: isOverlayGranted,
+              ),
+
+              const SizedBox(height: 12),
+
+              // Stav 2: Accessibility
+              _buildPermissionTile(
+                title: "Zjednodušenie prístupu (Accessibility)",
+                isGranted: isAccessibilityGranted,
               ),
 
               const SizedBox(height: 32),
 
-              // Hlavné tlačidlo na presmerovanie
+              // Hlavné tlačidlo
               ElevatedButton.icon(
-                onPressed: _openSettings,
-                icon: const Icon(Icons.settings),
-                label: const Text(
-                  "Povoliť v Nastaveniach",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                onPressed: allGranted ? _navigateToMain : _openSettings,
+                icon: Icon(allGranted ? Icons.arrow_forward : Icons.settings),
+                label: Text(
+                  allGranted
+                      ? "Pokračovať"
+                      : (!isOverlayGranted
+                          ? "Povoliť prekrytie"
+                          : "Povoliť Zjednodušenie prístupu"),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 54),
@@ -174,6 +173,41 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPermissionTile({required String title, required bool isGranted}) {
+    return Card(
+      elevation: 0,
+      color: isGranted ? Colors.green.shade50 : Colors.amber.shade50,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: isGranted ? Colors.green : Colors.amber.shade700,
+          width: 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          children: [
+            Icon(
+              isGranted ? Icons.check_circle : Icons.warning_amber_rounded,
+              color: isGranted ? Colors.green : Colors.amber.shade900,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: isGranted ? Colors.green.shade900 : Colors.amber.shade900,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

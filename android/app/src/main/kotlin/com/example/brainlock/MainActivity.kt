@@ -30,7 +30,9 @@ class MainActivity: FlutterActivity() {
 
                     val isOverlay = if (isLauncher) false else intent.getBooleanExtra("isOverlay", false)
                     val isTimeout = if (isLauncher) false else intent.getBooleanExtra("isTimeout", false)
-                    result.success(mapOf("isOverlay" to isOverlay, "isTimeout" to isTimeout))
+                    val deckId = intent.data?.getQueryParameter("deckId")
+
+                    result.success(mapOf("isOverlay" to isOverlay, "isTimeout" to isTimeout, "deckId" to deckId))
                 }
                 "unlockApp" -> {
                     val minutes = call.argument<Int>("minutes") ?: 1
@@ -85,21 +87,38 @@ class MainActivity: FlutterActivity() {
         return enabledServices?.contains(expectedService) == true
     }
 
-override fun onNewIntent(intent: Intent) {
-    super.onNewIntent(intent)
-    setIntent(intent) 
-    
-    // Znovu overíme, či neklikol na ikonu počas toho, ako appka spala v pozadí
-    val isLauncher = intent.action == Intent.ACTION_MAIN && intent.hasCategory(Intent.CATEGORY_LAUNCHER)
-    
-    val isOverlay = if (isLauncher) false else intent.getBooleanExtra("isOverlay", false)
-    val isTimeout = if (isLauncher) false else intent.getBooleanExtra("isTimeout", false)
-    
-    methodChannel?.invokeMethod("updateOverlayInfo", mapOf("isOverlay" to isOverlay, "isTimeout" to isTimeout))
-}
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent) 
+        handleIntent(intent)
+        
+        // Znovu overíme, či neklikol na ikonu počas toho, ako appka spala v pozadí
+        val isLauncher = intent.action == Intent.ACTION_MAIN && intent.hasCategory(Intent.CATEGORY_LAUNCHER)
+        
+        val isOverlay = if (isLauncher) false else intent.getBooleanExtra("isOverlay", false)
+        val isTimeout = if (isLauncher) false else intent.getBooleanExtra("isTimeout", false)
+        
+        methodChannel?.invokeMethod("updateOverlayInfo", mapOf("isOverlay" to isOverlay, "isTimeout" to isTimeout))
+    }
 
     override fun finish() {
         super.finish()
         overridePendingTransition(0, 0)
+    }
+    
+    
+    private fun handleIntent(intent: Intent) {
+        val action = intent.action
+        val data = intent.data
+
+        // Ak ide o deeplink (brainlock://share?deckId=123)
+        if (Intent.ACTION_VIEW == action && data != null) {
+            val deckId = data.getQueryParameter("deckId")
+            if (deckId != null) {
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                    methodChannel?.invokeMethod("handleDeepLink", mapOf("deckId" to deckId))
+                }, 200) // Krátky delay, aby sa Flutter stihol inicializovať
+            }
+        }
     }
 }

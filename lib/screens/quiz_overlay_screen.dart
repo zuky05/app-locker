@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../services/database_helper.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/database_helper.dart';
 
 class QuizOverlayScreen extends StatefulWidget {
   const QuizOverlayScreen({super.key});
@@ -13,14 +14,24 @@ class QuizOverlayScreen extends StatefulWidget {
 class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
   Map<String, dynamic>? currentQuestion;
   bool isLoading = true;
+  bool isVibrationEnabled = true; // Predvolená hodnota pre vibrácie
 
   @override
   void initState() {
     super.initState();
+    _loadVibrationPreference(); // Načítame stav vibrácií pri štarte
     _loadRandomQuestion();
   }
 
-  // Funkcia, ktorá zavolá našu novú databázovú mágiu
+  // Načítanie nastavenia zo SharedPreferences
+  Future<void> _loadVibrationPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      isVibrationEnabled = prefs.getBool('vibration_enabled') ?? true;
+    });
+  }
+
+  // Načítanie náhodnej otázky z databázy
   Future<void> _loadRandomQuestion() async {
     setState(() => isLoading = true);
     final questionData = await DatabaseHelper.instance.getRandomQuizQuestion();
@@ -40,6 +51,11 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       }
     } else {
       print("ZLE! Skús znova.");
+      
+      // Vibrujeme IBA ak to má používateľ povolené v nastaveniach
+      if (isVibrationEnabled) {
+        HapticFeedback.vibrate();
+      }
       
       _loadRandomQuestion();
     }
@@ -63,10 +79,14 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
           child: isLoading 
             ? const Padding(
                 padding: EdgeInsets.all(20.0),
-                child: CircularProgressIndicator(), // Načítavacie koliesko
+                child: Center(child: CircularProgressIndicator()),
               )
             : currentQuestion == null 
-              ? const Text("Žiadne kartičky v databáze!")
+              ? const Text(
+                  "Žiadne kartičky v databáze!",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16),
+                )
               : Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -78,32 +98,30 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                     ),
                     const SizedBox(height: 20),
                     
-                    // Skutočná otázka z databázy!
-                  if (currentQuestion!['prompt'].toString().endsWith('.svg')) ...[
-                                      const Text(
-                                        "Ktorému štátu patrí táto vlajka?",
-                                        style: TextStyle(fontSize: 18, color: Colors.black87),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      const SizedBox(height: 10),
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: SvgPicture.asset(
-                                          currentQuestion!['prompt'],
-                                          height: 110,
-                                          fit: BoxFit.contain,
-                                        ),
-                                      ),
-                                    ] else ...[
-                                      Text(
-                                        currentQuestion!['prompt'],
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(fontSize: 18, color: Colors.black87, fontWeight: FontWeight.w600),
-                                      ),
-                                    ],
+                    if (currentQuestion!['prompt'].toString().endsWith('.svg')) ...[
+                      const Text(
+                        "Ktorému štátu patrí táto vlajka?",
+                        style: TextStyle(fontSize: 18, color: Colors.black87),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 10),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: SvgPicture.asset(
+                          currentQuestion!['prompt'],
+                          height: 110,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ] else ...[
+                      Text(
+                        currentQuestion!['prompt'],
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 18, color: Colors.black87, fontWeight: FontWeight.w600),
+                      ),
+                    ],
                     const SizedBox(height: 24),
                     
-                    // Skutočné namixované odpovede!
                     ...(currentQuestion!['options'] as List<String>).map((option) => Padding(
                       padding: const EdgeInsets.only(bottom: 10),
                       child: ElevatedButton(

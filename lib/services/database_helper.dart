@@ -193,4 +193,12 @@ class DatabaseHelper {
     final db = await instance.database;
     await db.rawUpdate('UPDATE decks SET name = ?, category = ? WHERE id = ?', [newName, newCategory, deckId]);
   }
+  
+  Future<int> getCardCountForDeck(int deckId) async {
+    final db = await instance.database;
+    final result = await db.rawQuery('SELECT COUNT(*) FROM cards WHERE deck_id = ?', [deckId]);
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
 }
+

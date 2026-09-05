@@ -50,7 +50,38 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     });
   }
 
-  // Dialóg pre nákup Premium / vytvorenie nového balíčka
+  // Statické popisy pre kategórie
+  String _getCategoryDescription(String category) {
+    switch (category.toLowerCase().trim()) {
+      case 'geography':
+        return 'Otestuj svoje znalosti hlavných miest, vlajok a geografie sveta.';
+      case 'language':
+        return 'Rozšír si slovnú zásobu v najpoužívanejších svetových jazykoch.';
+      case 'technology':
+      case 'tech':
+      case 'it':
+        return 'Ovládni HTTP status kódy, Linux príkazy a základné vývojárske koncepty.';
+      default:
+        return 'Pripravené kolekcie kartičiek pre rýchle učenie.';
+    }
+  }
+
+  // Odolné priradenie ikoniek kategóriám
+  IconData _getCategoryIcon(String category) {
+    final cleanCategory = category.trim().toLowerCase();
+    debugPrint("Načítavam ikonku pre kategóriu: '$cleanCategory'");
+
+    if (cleanCategory.contains('geography')) {
+      return Icons.public;
+    } else if (cleanCategory.contains('language')) {
+      return Icons.translate;
+    } else if (cleanCategory.contains('tech')) {
+      return Icons.terminal;
+    }
+    
+    return Icons.folder_special;
+  }
+
   void _showAddDeckDialog() async {
     final int customCount = await DatabaseHelper.instance.getCustomDeckCount();
 
@@ -154,7 +185,6 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     );
   }
 
-  // Dialóg pre premenowanie balíčka
   void _showRenameDeckDialog(Deck deck) {
     final nameController = TextEditingController(text: deck.name);
     final categoryController = TextEditingController(text: deck.category);
@@ -198,7 +228,6 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     );
   }
 
-  // Dialóg na potvrdenie zmazania balíčka
   void _showDeleteConfirmDialog(Deck deck) {
     showDialog(
       context: context,
@@ -228,7 +257,6 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     );
   }
 
-  // Pomocný widget pre akčné minitlačidlá s ikonou a textom
   Widget _buildActionButton({
     required IconData icon,
     required String label,
@@ -255,184 +283,259 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     );
   }
 
-  Widget _buildDeckList(List<Deck> deckList) {
-    if (deckList.isEmpty) return const Center(child: Text("No custom decks found. Try creating new ones!"));
+  // Karta pre jeden balíček
+  Widget _buildDeckCard(Deck deck) {
+    final isExpanded = expandedDeckId == deck.id;
+    final bool isCustom = deck.isPremade == 0 || deck.isPremade == false;
+
+    return FutureBuilder<int>(
+      future: DatabaseHelper.instance.getCardCountForDeck(deck.id!),
+      builder: (context, snapshot) {
+        final cardCount = snapshot.data ?? 0;
+        final bool hasEnoughCards = cardCount >= 4;
+
+        return Card(
+          elevation: 2,
+          margin: const EdgeInsets.only(bottom: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            children: [
+              ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                leading: const CircleAvatar(
+                  backgroundColor: Colors.deepPurple,
+                  child: Icon(Icons.style, color: Colors.white),
+                ),
+                title: Text(deck.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: Text("${deck.category} • Karty: $cardCount"),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (!hasEnoughCards) ...[
+                      const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 22),
+                      const SizedBox(width: 8),
+                    ],
+                    Icon(
+                      isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                      color: Colors.deepPurple,
+                    ),
+                  ],
+                ),
+                onTap: () {
+                  setState(() {
+                    expandedDeckId = isExpanded ? null : deck.id;
+                  });
+                },
+              ),
+              AnimatedCrossFade(
+                firstChild: const SizedBox.shrink(),
+                secondChild: Container(
+                  width: double.infinity,
+                  color: Colors.deepPurple.shade50.withOpacity(0.5),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                  child: Column(
+                    children: [
+                      const Divider(height: 1),
+                      const SizedBox(height: 10),
+                      if (!isCustom) ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _buildActionButton(
+                              icon: Icons.style,
+                              label: "View",
+                              color: Colors.orange.shade800,
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => DeckDetailScreen(deck: deck, isReadOnly: true)),
+                              ).then((_) => _loadDecks()),
+                            ),
+                            Opacity(
+                              opacity: hasEnoughCards ? 1.0 : 0.4,
+                              child: _buildActionButton(
+                                icon: Icons.quiz,
+                                label: "Test",
+                                color: Colors.green.shade700,
+                                onTap: hasEnoughCards ? () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const QuizOverlayScreen()),
+                                ) : () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("Na spustenie testu musíte mať aspoň 4 karty.")),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ] else ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _buildActionButton(
+                              icon: Icons.style,
+                              label: "View",
+                              color: Colors.orange.shade800,
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => DeckDetailScreen(deck: deck, isReadOnly: true)),
+                              ).then((_) => _loadDecks()),
+                            ),
+                            Opacity(
+                              opacity: hasEnoughCards ? 1.0 : 0.4,
+                              child: _buildActionButton(
+                                icon: Icons.quiz,
+                                label: "Test",
+                                color: Colors.green.shade700,
+                                onTap: hasEnoughCards ? () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const QuizOverlayScreen()),
+                                ) : () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("Na spustenie testu musíte mať aspoň 4 karty.")),
+                                  );
+                                },
+                              ),
+                            ),
+                            _buildActionButton(
+                              icon: Icons.share,
+                              label: "Share",
+                              color: Colors.blueAccent,
+                              onTap: () {
+                                final String shareLink = 'brainlock://share?deckId=${deck.id}';
+                                final String message = 'Poď sa učiť so mnou balíček "${deck.name}" v Brainlocku! Klikni sem pre import: $shareLink';
+                                Share.share(message);
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _buildActionButton(
+                              icon: Icons.add_circle_outline_outlined,
+                              label: "Edit Cards",
+                              color: Colors.pink,
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => DeckDetailScreen(deck: deck)),
+                              ).then((_) => _loadDecks()),
+                            ),
+                            _buildActionButton(
+                              icon: Icons.edit,
+                              label: "Rename",
+                              color: Colors.orangeAccent,
+                              onTap: () => _showRenameDeckDialog(deck),
+                            ),
+                            _buildActionButton(
+                              icon: Icons.delete,
+                              label: "Delete",
+                              color: Colors.redAccent,
+                              onTap: () => _showDeleteConfirmDialog(deck),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                crossFadeState: isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+                duration: const Duration(milliseconds: 250),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // Zoznam pre Vlastné Balíčky
+  Widget _buildCustomDeckList(List<Deck> deckList) {
+    if (deckList.isEmpty) {
+      return const Center(
+        child: Text("Nenašli sa žiadne vlastné balíčky. Skús nejaký vytvoriť!"),
+      );
+    }
 
     return ListView.builder(
       itemCount: deckList.length,
       padding: const EdgeInsets.all(12),
-      itemBuilder: (context, index) {
-        final deck = deckList[index];
-        final isExpanded = expandedDeckId == deck.id;
-        final bool isCustom = deck.isPremade == 0 || deck.isPremade == false;
+      itemBuilder: (context, index) => _buildDeckCard(deckList[index]),
+    );
+  }
 
-        return FutureBuilder<int>(
-          future: DatabaseHelper.instance.getCardCountForDeck(deck.id!),
-          builder: (context, snapshot) {
-            final cardCount = snapshot.data ?? 0;
-            final bool hasEnoughCards = cardCount >= 4;
+  // Zoznam pre Predpripravené Balíčky - Rozbaľovacie kategórie s ikonou
+  Widget _buildGroupedPremadeDeckList(List<Deck> deckList) {
+    if (deckList.isEmpty) {
+      return const Center(child: Text("Žiadne predpripravené balíčky."));
+    }
 
-            return Card(
-              elevation: 2,
-              margin: const EdgeInsets.only(bottom: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                children: [
-                  // HLAVNÝ RIADOK BALÍČKA
-                  ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    leading: const CircleAvatar(
-                      backgroundColor: Colors.deepPurple,
-                      child: Icon(Icons.style, color: Colors.white),
-                    ),
-                    title: Text(deck.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text("${deck.category} • Karty: $cardCount"),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (!hasEnoughCards) ...[
-                          const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 22),
-                          const SizedBox(width: 8),
-                        ],
-                        Icon(
-                          isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                          color: Colors.deepPurple,
-                        ),
-                      ],
-                    ),
-                    onTap: () {
-                      setState(() {
-                        expandedDeckId = isExpanded ? null : deck.id;
-                      });
-                    },
-                  ),
+    final Map<String, List<Deck>> groupedDecks = {};
+    for (var deck in deckList) {
+      groupedDecks.putIfAbsent(deck.category, () => []).add(deck);
+    }
 
-                  // ANIMOVANÉ VYSUNUTIE MOŽNOSTÍ (INLINE)
-                  AnimatedCrossFade(
-                    firstChild: const SizedBox.shrink(),
-                    secondChild: Container(
-                      width: double.infinity,
-                      color: Colors.deepPurple.shade50.withOpacity(0.5),
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                      child: Column(
-                        children: [
-                          const Divider(height: 1),
-                          const SizedBox(height: 10),
+    return ListView(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      children: groupedDecks.entries.map((entry) {
+        final categoryName = entry.key;
+        final categoryDecks = entry.value;
 
-                          if (!isCustom) ... [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                _buildActionButton(
-                                  icon: Icons.style,
-                                  label: "View",
-                                  color: Colors.orange.shade800,
-                                  onTap: () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => DeckDetailScreen(deck: deck, isReadOnly: true)),
-                                  ).then((_) => _loadDecks()),
-                                ),
-                                Opacity(
-                                  opacity: hasEnoughCards ? 1.0 : 0.4,
-                                  child: _buildActionButton(
-                                    icon: Icons.quiz,
-                                    label: "Test",
-                                    color: Colors.green.shade700,
-                                    onTap: hasEnoughCards ? () => Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (context) => const QuizOverlayScreen()),
-                                    ) : () {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text("Na spustenie testu musíte mať aspoň 4 karty.")),
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ]
-                          else if (isCustom) ...[
-                            const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                _buildActionButton(
-                                  icon: Icons.style,
-                                  label: "View",
-                                  color: Colors.orange.shade800,
-                                  onTap: () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => DeckDetailScreen(deck: deck, isReadOnly: true)),
-                                  ).then((_) => _loadDecks()),
-                                ),
-                                Opacity(
-                                  opacity: hasEnoughCards ? 1.0 : 0.4,
-                                  child: _buildActionButton(
-                                    icon: Icons.quiz,
-                                    label: "Test",
-                                    color: Colors.green.shade700,
-                                    onTap: hasEnoughCards ? () => Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (context) => const QuizOverlayScreen()),
-                                    ) : () {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text("Na spustenie testu musíte mať aspoň 4 karty.")),
-                                      );
-                                    },
-                                  ),
-                                ),
-                                _buildActionButton(
-                                  icon: Icons.share,
-                                  label: "Share",
-                                  color: Colors.blueAccent,
-                                  onTap: () {
-                                    final String shareLink = 'brainlock://share?deckId=${deck.id}';
-                                    final String message = 'Poď sa učiť so mnou balíček "${deck.name}" v Brainlocku! Klikni sem pre import: $shareLink';
-                                    Share.share(message);
-                                  },
-                                ),
-                              ],
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                _buildActionButton(
-                                  icon: Icons.add_circle_outline_outlined,
-                                  label: "Edit Cards",
-                                  color: Colors.pink,
-                                  onTap: () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => DeckDetailScreen(deck: deck)),
-                                  ).then((_) => _loadDecks()),
-                                ),
-                                _buildActionButton(
-                                  icon: Icons.edit,
-                                  label: "Rename",
-                                  color: Colors.orangeAccent,
-                                  onTap: () => _showRenameDeckDialog(deck),
-                                ),
-                                _buildActionButton(
-                                  icon: Icons.delete,
-                                  label: "Delete",
-                                  color: Colors.redAccent,
-                                  onTap: () => _showDeleteConfirmDialog(deck),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    crossFadeState: isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-                    duration: const Duration(milliseconds: 250),
-                  ),
-                ],
+        return Card(
+          elevation: 1,
+          margin: const EdgeInsets.only(bottom: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          clipBehavior: Clip.antiAlias,
+          child: ExpansionTile(
+            // Bezpečne obalená ikonka s explicitnými rozmermi
+            leading: SizedBox(
+              width: 32,
+              height: 32,
+              child: Center(
+                child: Icon(
+                  _getCategoryIcon(categoryName),
+                  color: Colors.deepPurple,
+                  size: 28,
+                ),
               ),
-            );
-          },
+            ),
+            iconColor: Colors.deepPurple,
+            collapsedIconColor: Colors.deepPurple,
+            collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            
+            title: Text(
+              categoryName,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.deepPurple,
+              ),
+            ),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                _getCategoryDescription(categoryName),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey.shade700,
+                ),
+              ),
+            ),
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                child: Column(
+                  children: categoryDecks.map((deck) => _buildDeckCard(deck)).toList(),
+                ),
+              ),
+            ],
+          ),
         );
-      },
+      }).toList(),
     );
   }
 
@@ -459,8 +562,8 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
           : TabBarView(
               controller: _tabController,
               children: [
-                _buildDeckList(myDecks), 
-                _buildDeckList(premadeDecks),
+                _buildCustomDeckList(myDecks), 
+                _buildGroupedPremadeDeckList(premadeDecks),
               ],
             ),
       floatingActionButton: _tabController.index == 0

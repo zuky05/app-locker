@@ -3,8 +3,6 @@ import 'package:share_plus/share_plus.dart';
 import '../services/database_helper.dart';
 import '../models/deck_model.dart';
 import 'deck_detail_screen.dart';
-import 'anki_playground_screen.dart';
-import 'quizlet_playground_screen.dart';
 import 'quiz_overlay_screen.dart';
 
 class DeckManagerScreen extends StatefulWidget {

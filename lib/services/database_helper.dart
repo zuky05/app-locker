@@ -183,6 +183,31 @@ class DatabaseHelper {
     };
   }
 
+  // --- NOVÁ FUNKCIA PRE LEARNING MODE ---
+  Future<List<Map<String, dynamic>>> getLearningCards(int limit, {int? deckId}) async {
+    final db = await instance.database;
+    List<Map<String, dynamic>> result;
+    
+    if (deckId != null) {
+      result = await db.rawQuery(
+        'SELECT * FROM cards WHERE deck_id = ? ORDER BY counter ASC, RANDOM() LIMIT ?',
+        [deckId, limit]
+      );
+    } else {
+      result = await db.rawQuery(
+        'SELECT * FROM cards ORDER BY counter ASC, RANDOM() LIMIT ?',
+        [limit]
+      );
+    }
+    
+    // Zdvihneme counter pre všetky vybrané karty, aby rotovali
+    for (var card in result) {
+      await db.rawUpdate('UPDATE cards SET counter = counter + 1 WHERE id = ?', [card['id']]);
+    }
+    
+    return result;
+  }
+
   Future<List<Map<String, dynamic>>> getCardsForDeck(int deckId) async {
     final db = await instance.database;
     return await db.query(

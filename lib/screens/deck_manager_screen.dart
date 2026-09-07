@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/database_helper.dart';
 import '../models/deck_model.dart';
 import 'deck_detail_screen.dart';
@@ -17,8 +18,8 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
   List<Deck> premadeDecks = [];
   bool isLoading = true;
   
-  // ID balíčka, ktorý je aktuálne rozbalený
   int? expandedDeckId;
+  int? activeBlockerDeckId; // <--- Uloží ID balíčka pre zámok
 
   late TabController _tabController;
 
@@ -40,15 +41,16 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
 
   Future<void> _loadDecks() async {
     final loadedDecks = await DatabaseHelper.instance.getDecks();
+    final prefs = await SharedPreferences.getInstance();
     
     setState(() {
       myDecks = loadedDecks.where((d) => d.isPremade == 0 || d.isPremade == false).toList();
       premadeDecks = loadedDecks.where((d) => d.isPremade == 1 || d.isPremade == true).toList();
+      activeBlockerDeckId = prefs.getInt('active_test_deck_id');
       isLoading = false;
     });
   }
 
-  // Statické popisy pre kategórie
   String _getCategoryDescription(String category) {
     switch (category.toLowerCase().trim()) {
       case 'geography':
@@ -64,19 +66,11 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     }
   }
 
-  // Odolné priradenie ikoniek kategóriám
   IconData _getCategoryIcon(String category) {
     final cleanCategory = category.trim().toLowerCase();
-    debugPrint("Načítavam ikonku pre kategóriu: '$cleanCategory'");
-
-    if (cleanCategory.contains('geography')) {
-      return Icons.public;
-    } else if (cleanCategory.contains('language')) {
-      return Icons.translate;
-    } else if (cleanCategory.contains('tech')) {
-      return Icons.terminal;
-    }
-    
+    if (cleanCategory.contains('geography')) return Icons.public;
+    if (cleanCategory.contains('language')) return Icons.translate;
+    if (cleanCategory.contains('tech')) return Icons.terminal;
     return Icons.folder_special;
   }
 
@@ -143,33 +137,21 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('New Deck'),
+        title: const Text('Ný balíček'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: 'Name'),
-            ),
+            TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Názov')),
             const SizedBox(height: 10),
-            TextField(
-              controller: categoryController,
-              decoration: const InputDecoration(labelText: 'Category (e.g. Languages)'),
-            ),
+            TextField(controller: categoryController, decoration: const InputDecoration(labelText: 'Kategória (napr. Jazyky)')),
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Zrušiť'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Zrušiť')),
           ElevatedButton(
             onPressed: () async {
               if (nameController.text.isNotEmpty && categoryController.text.isNotEmpty) {
-                await DatabaseHelper.instance.addNewDeck(
-                  nameController.text,
-                  categoryController.text,
-                );
+                await DatabaseHelper.instance.addNewDeck(nameController.text, categoryController.text);
                 if (!context.mounted) return;
                 Navigator.pop(context);
                 _loadDecks();
@@ -194,22 +176,13 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: 'Názov balíčka'),
-            ),
+            TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Názov balíčka')),
             const SizedBox(height: 10),
-            TextField(
-              controller: categoryController,
-              decoration: const InputDecoration(labelText: 'Kategória'),
-            ),
+            TextField(controller: categoryController, decoration: const InputDecoration(labelText: 'Kategória')),
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Zrušiť'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Zrušiť')),
           ElevatedButton(
             onPressed: () async {
               if (nameController.text.isNotEmpty && categoryController.text.isNotEmpty) {
@@ -234,18 +207,18 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
         title: const Text('Vymazať balíček?'),
         content: Text('Naozaj chceš vymazať balíček "${deck.name}"? Táto akcia je nenávratná a vymaže aj všetky kartičky v ňom.'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Zrušiť', style: TextStyle(color: Colors.grey)),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Zrušiť', style: TextStyle(color: Colors.grey))),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
             onPressed: () async {
               Navigator.pop(context);
               await DatabaseHelper.instance.removeDeck(deck.id!);
+              
+              // Ak sme zmazali aktuálne aktívny balíček, resetujeme zámok
+              if (activeBlockerDeckId == deck.id) {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.remove('active_test_deck_id');
+              }
               _loadDecks();
             },
             child: const Text('Vymazať'),
@@ -265,7 +238,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -281,10 +254,11 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     );
   }
 
-  // Karta pre jeden balíček
+  // --- HLAVNÁ ZMENA: Čistá a spoločná karta pre všetky balíčky ---
   Widget _buildDeckCard(Deck deck) {
     final isExpanded = expandedDeckId == deck.id;
     final bool isCustom = deck.isPremade == 0 || deck.isPremade == false;
+    final bool isActive = activeBlockerDeckId == deck.id;
 
     return FutureBuilder<int>(
       future: DatabaseHelper.instance.getCardCountForDeck(deck.id!),
@@ -293,9 +267,12 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
         final bool hasEnoughCards = cardCount >= 4;
 
         return Card(
-          elevation: 2,
+          elevation: isActive ? 4 : 2,
           margin: const EdgeInsets.only(bottom: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: isActive ? const BorderSide(color: Colors.green, width: 2) : BorderSide.none,
+          ),
           clipBehavior: Clip.antiAlias,
           child: Column(
             children: [
@@ -305,7 +282,21 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                   backgroundColor: Colors.deepPurple,
                   child: Icon(Icons.style, color: Colors.white),
                 ),
-                title: Text(deck.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                title: Row(
+                  children: [
+                    Flexible(
+                      child: Text(deck.name, style: const TextStyle(fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+                    ),
+                    if (isActive) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(4)),
+                        child: const Text('AKTÍVNY', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                      )
+                    ]
+                  ],
+                ),
                 subtitle: Text("${deck.category} • Karty: $cardCount"),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -336,81 +327,70 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                     children: [
                       const Divider(height: 1),
                       const SizedBox(height: 10),
-                      if (!isCustom) ...[
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _buildActionButton(
-                              icon: Icons.style,
-                              label: "View",
-                              color: Colors.orange.shade800,
-                              onTap: () => Navigator.push(
+                      
+                      // Prvý riadok akcií (Spoločný pre predpripravené aj vlastné)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildActionButton(
+                            icon: isActive ? Icons.check_circle : Icons.radio_button_unchecked,
+                            label: isActive ? "Aktívny" : "Zvoliť",
+                            color: isActive ? Colors.green : Colors.grey.shade600,
+                            onTap: () async {
+                              if (!hasEnoughCards) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text("Na blokovanie musíte mať aspoň 4 karty.")),
+                                );
+                                return;
+                              }
+                              final prefs = await SharedPreferences.getInstance();
+                              await prefs.setInt('active_test_deck_id', deck.id!);
+                              setState(() => activeBlockerDeckId = deck.id);
+                            },
+                          ),
+                          _buildActionButton(
+                            icon: Icons.style,
+                            label: "View",
+                            color: Colors.orange.shade800,
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => DeckDetailScreen(deck: deck, isReadOnly: true)),
+                            ).then((_) => _loadDecks()),
+                          ),
+                          Opacity(
+                            opacity: hasEnoughCards ? 1.0 : 0.4,
+                            child: _buildActionButton(
+                              icon: Icons.quiz,
+                              label: "Test",
+                              color: Colors.deepPurple,
+                              onTap: hasEnoughCards ? () => Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => DeckDetailScreen(deck: deck, isReadOnly: true)),
-                              ).then((_) => _loadDecks()),
-                            ),
-                            Opacity(
-                              opacity: hasEnoughCards ? 1.0 : 0.4,
-                              child: _buildActionButton(
-                                icon: Icons.quiz,
-                                label: "Test",
-                                color: Colors.green.shade700,
-                                onTap: hasEnoughCards ? () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => const QuizOverlayScreen()),
-                                ) : () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text("Na spustenie testu musíte mať aspoň 4 karty.")),
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ] else ...[
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _buildActionButton(
-                              icon: Icons.style,
-                              label: "View",
-                              color: Colors.orange.shade800,
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => DeckDetailScreen(deck: deck, isReadOnly: true)),
-                              ).then((_) => _loadDecks()),
-                            ),
-                            Opacity(
-                              opacity: hasEnoughCards ? 1.0 : 0.4,
-                              child: _buildActionButton(
-                                icon: Icons.quiz,
-                                label: "Test",
-                                color: Colors.green.shade700,
-                                onTap: hasEnoughCards ? () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => const QuizOverlayScreen()),
-                                ) : () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text("Na spustenie testu musíte mať aspoň 4 karty.")),
-                                  );
-                                },
-                              ),
-                            ),
-                            _buildActionButton(
-                              icon: Icons.share,
-                              label: "Share",
-                              color: Colors.blueAccent,
-                              onTap: () {
-                                final String shareLink = 'brainlock://share?deckId=${deck.id}';
-                                final String message = 'Poď sa učiť so mnou balíček "${deck.name}" v Brainlocku! Klikni sem pre import: $shareLink';
-                                Share.share(message);
+                                MaterialPageRoute(builder: (context) => QuizOverlayScreen(practiceDeckId: deck.id)),
+                              ) : () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text("Na spustenie testu musíte mať aspoň 4 karty.")),
+                                );
                               },
                             ),
-                          ],
-                        ),
+                          ),
+                          _buildActionButton(
+                            icon: Icons.share,
+                            label: "Share",
+                            color: Colors.blueAccent,
+                            onTap: () {
+                              final String shareLink = 'brainlock://share?deckId=${deck.id}';
+                              final String message = 'Poď sa učiť so mnou balíček "${deck.name}" v Brainlocku! Klikni sem pre import: $shareLink';
+                              Share.share(message);
+                            },
+                          ),
+                        ],
+                      ),
+                      
+                      // Druhý riadok akcií (Iba pre vlastné balíčky)
+                      if (isCustom) ...[
                         const SizedBox(height: 8),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             _buildActionButton(
                               icon: Icons.add_circle_outline_outlined,
@@ -449,14 +429,10 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     );
   }
 
-  // Zoznam pre Vlastné Balíčky
   Widget _buildCustomDeckList(List<Deck> deckList) {
     if (deckList.isEmpty) {
-      return const Center(
-        child: Text("Nenašli sa žiadne vlastné balíčky. Skús nejaký vytvoriť!"),
-      );
+      return const Center(child: Text("Nenašli sa žiadne vlastné balíčky. Skús nejaký vytvoriť!"));
     }
-
     return ListView.builder(
       itemCount: deckList.length,
       padding: const EdgeInsets.all(12),
@@ -464,11 +440,8 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     );
   }
 
-  // Zoznam pre Predpripravené Balíčky - Rozbaľovacie kategórie s ikonou
   Widget _buildGroupedPremadeDeckList(List<Deck> deckList) {
-    if (deckList.isEmpty) {
-      return const Center(child: Text("Žiadne predpripravené balíčky."));
-    }
+    if (deckList.isEmpty) return const Center(child: Text("Žiadne predpripravené balíčky."));
 
     final Map<String, List<Deck>> groupedDecks = {};
     for (var deck in deckList) {
@@ -487,16 +460,11 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           clipBehavior: Clip.antiAlias,
           child: ExpansionTile(
-            // Bezpečne obalená ikonka s explicitnými rozmermi
             leading: SizedBox(
               width: 32,
               height: 32,
               child: Center(
-                child: Icon(
-                  _getCategoryIcon(categoryName),
-                  color: Colors.deepPurple,
-                  size: 28,
-                ),
+                child: Icon(_getCategoryIcon(categoryName), color: Colors.deepPurple, size: 28),
               ),
             ),
             iconColor: Colors.deepPurple,
@@ -504,23 +472,15 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
             collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            
             title: Text(
               categoryName,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.deepPurple,
-              ),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.deepPurple),
             ),
             subtitle: Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
                 _getCategoryDescription(categoryName),
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey.shade700,
-                ),
+                style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
               ),
             ),
             children: [

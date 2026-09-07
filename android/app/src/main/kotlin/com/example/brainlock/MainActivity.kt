@@ -35,12 +35,16 @@ class MainActivity: FlutterActivity() {
                     result.success(mapOf("isOverlay" to isOverlay, "isTimeout" to isTimeout, "deckId" to deckId))
                 }
                 "unlockApp" -> {
-                    val minutes = call.argument<Int>("minutes") ?: 1
-                    val gracePeriod = minutes * 60 * 1000L
-                    
+                    // 1. Získame presné sekundy z Flutteru (ak by niečo zlyhalo, default dáme 0)
+                    val seconds = call.argument<Int>("seconds") ?: 0
+    
+                    // 2. Prevedieme sekundy na milisekundy pre Android
+                    val gracePeriod = seconds * 1000L
+    
+                    // 3. Nastavíme časovač a odblokujeme
                     AppBlockerService.unlockedUntil = System.currentTimeMillis() + gracePeriod
                     AppBlockerService.instance?.scheduleReblock(gracePeriod)
-                    
+    
                     finish() 
                     result.success(true)
                 }

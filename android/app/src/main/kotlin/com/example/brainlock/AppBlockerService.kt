@@ -44,8 +44,9 @@ class AppBlockerService : AccessibilityService() {
         // Kontrolujeme náš dynamický zoznam
         if (blockedApps.contains(packageName)) {
             if (System.currentTimeMillis() < unlockedUntil) {
-                var penis: Long = (unlockedUntil - System.currentTimeMillis()) / 60000 
-                Log.d("BrainlockNinja", "Appka $packageName má priepustku do $penis")
+                // Delíme 1000, aby sme z milisekúnd dostali presné sekundy
+                var penis: Long = (unlockedUntil - System.currentTimeMillis()) / 1000 
+                Log.d("BrainlockNinja", "Appka $packageName má priepustku ešte na $penis sekúnd")
                 return 
             }
 

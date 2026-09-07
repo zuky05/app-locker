@@ -130,19 +130,30 @@ class DatabaseHelper {
     final result = await db.rawQuery('SELECT COUNT(*) FROM decks WHERE is_premade = 0');
     return Sqflite.firstIntValue(result) ?? 0;
   }
-
   
-  Future<Map<String, dynamic>?> getRandomQuizQuestion() async {
+  Future<Map<String, dynamic>?> getRandomQuizQuestion({int? deckId}) async {
     final db = await instance.database;
     
-    // 1. ZMENA: Najprv zoradiť podľa počítadla (najmenej videné idú prvé), AŽ POTOM náhodne
-    final randomCard = await db.rawQuery('SELECT * FROM cards ORDER BY counter ASC, RANDOM() LIMIT 1');
+    List<Map<String, dynamic>> randomCardResult;
+
+    if (deckId != null) {
+      // 1A. Ak máme ID balíčka, ťaháme otázku LEN z neho
+      randomCardResult = await db.rawQuery(
+        'SELECT * FROM cards WHERE deck_id = ? ORDER BY counter ASC, RANDOM() LIMIT 1',
+        [deckId]
+      );
+    } else {
+      // 1B. Ak nemáme, ťaháme náhodne z celej databázy
+      randomCardResult = await db.rawQuery(
+        'SELECT * FROM cards ORDER BY counter ASC, RANDOM() LIMIT 1'
+      );
+    }
     
-    if (randomCard.isEmpty) return null; 
+    if (randomCardResult.isEmpty) return null; 
     
-    final card = randomCard.first;
-    final cardId = card['id']; // Uložíme si ID, aby sme vedeli, komu zdvihnúť counter
-    final deckId = card['deck_id'];
+    final card = randomCardResult.first;
+    final cardId = card['id'];
+    final actualDeckId = card['deck_id'];
     final correctAnswer = card['correct_answer'] as String;
     final prompt = card['prompt'] as String;
 
@@ -151,7 +162,7 @@ class DatabaseHelper {
       SELECT correct_answer FROM cards 
       WHERE deck_id = ? AND id != ? 
       ORDER BY RANDOM() LIMIT 3
-    ''', [deckId, cardId]);
+    ''', [actualDeckId, cardId]);
 
     // 3. Spojíme správnu odpoveď s chytákmi do jedného zoznamu
     List<String> options = [correctAnswer];
@@ -162,10 +173,9 @@ class DatabaseHelper {
     // 4. Zamiešame ich, aby správna nebola vždy prvá
     options.shuffle();
 
-    // 5. ZMENA: Zdvihneme counter tejto kartičke o +1, aby sa neopakovala!
+    // 5. Zdvihneme counter tejto kartičke o +1, aby sa neopakovala!
     await db.rawUpdate('UPDATE cards SET counter = counter + 1 WHERE id = ?', [cardId]);
 
-    // Vrátime to úhľadne zabalené späť
     return {
       'prompt': prompt,
       'correct_answer': correctAnswer,

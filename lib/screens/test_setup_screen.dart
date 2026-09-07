@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class TestSetupScreen extends StatefulWidget {
   const TestSetupScreen({super.key});
@@ -19,23 +20,52 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
   static const Color negativeRed = Color(0xFFD66943);
 
   // --- STAV PREMENNÝCH ---
+  SharedPreferences? _prefs;
+  bool _isLoading = true; // Zabezpečí, že UI počká na načítanie z pamäte
+
   double _questionCount = 5;
   
-  // Časový limit (Indexy: 0 = Bez limitu, 1 = 30s, 2 = 25s, 3 = 20s, 4 = 15s, 5 = 10s)
   double _timeLimitIndex = 0;
   final List<String> _timeLabels = ["Bez limitu", "30 s", "25 s", "20 s", "15 s", "10 s"];
   final List<double> _timeMultipliers = [1.0, 1.1, 1.2, 1.3, 1.4, 1.5];
 
-  // Lockout Prah (Indexy: 0 = 30%, ..., 7 = 100%)
-  double _lockoutIndex = 2; // Default na 50%
+  double _lockoutIndex = 2; // Default 50%
   final List<String> _lockoutLabels = ["30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%"];
   final List<double> _lockoutMultipliers = [0.6, 0.8, 1.0, 1.1, 1.15, 1.2, 1.25, 1.35];
 
-  // Toggles (Prepínače)
   bool _is3Options = false;
   bool _isSecondChance = false;
   bool _isConfusion = false;
   bool _isHardcore = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  // --- LOGIKA PAMÄTE (Shared Preferences) ---
+  Future<void> _loadSettings() async {
+    _prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _questionCount = _prefs!.getDouble('test_questionCount') ?? 5;
+      _timeLimitIndex = _prefs!.getDouble('test_timeLimitIndex') ?? 0;
+      _lockoutIndex = _prefs!.getDouble('test_lockoutIndex') ?? 2;
+      _is3Options = _prefs!.getBool('test_is3Options') ?? false;
+      _isSecondChance = _prefs!.getBool('test_isSecondChance') ?? false;
+      _isConfusion = _prefs!.getBool('test_isConfusion') ?? false;
+      _isHardcore = _prefs!.getBool('test_isHardcore') ?? false;
+      _isLoading = false;
+    });
+  }
+
+  void _saveDouble(String key, double value) {
+    _prefs?.setDouble(key, value);
+  }
+
+  void _saveBool(String key, bool value) {
+    _prefs?.setBool(key, value);
+  }
 
   // --- VÝPOČTY (Math Logic) ---
   double get _currentMultiplier {
@@ -60,14 +90,19 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
   String _formatTime(int seconds) {
     int m = seconds ~/ 60;
     int s = seconds % 60;
-    if (m > 0) {
-      return "${m}m ${s}s";
-    }
+    if (m > 0) return "${m}m ${s}s";
     return "${s}s";
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: bgColor,
+        body: Center(child: CircularProgressIndicator(color: deepPurple)),
+      );
+    }
+
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
@@ -76,14 +111,11 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
         iconTheme: const IconThemeData(color: primaryText),
-        title: const Text(
-          'Nastavenie Testu',
-          style: TextStyle(color: primaryText, fontWeight: FontWeight.bold),
-        ),
+        title: const Text('Nastavenie Testu', style: TextStyle(color: primaryText, fontWeight: FontWeight.bold)),
       ),
       body: Column(
         children: [
-          // 1. ZAKOTVENÝ DYNAMICKÝ DASHBOARD (Hore, fixný)
+          // 1. DYNAMICKÝ DASHBOARD (Kotva hore)
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
             child: Container(
@@ -92,11 +124,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                 color: deepPurple,
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
-                  BoxShadow(
-                    color: deepPurple.withOpacity(0.3),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
+                  BoxShadow(color: deepPurple.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 8)),
                 ],
               ),
               child: Column(
@@ -166,7 +194,6 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                 const Text('ZÁKLADNÉ NASTAVENIA', style: TextStyle(color: secondaryText, fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
                 const SizedBox(height: 12),
 
-                // SLIDERS
                 _buildSliderCard(
                   title: 'Počet otázok',
                   valueLabel: '${_questionCount.toInt()} otázok',
@@ -174,7 +201,10 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                   min: 3,
                   max: 10,
                   divisions: 7,
-                  onChanged: (val) => setState(() => _questionCount = val),
+                  onChanged: (val) {
+                    setState(() => _questionCount = val);
+                    _saveDouble('test_questionCount', val);
+                  },
                 ),
                 const SizedBox(height: 12),
 
@@ -186,7 +216,10 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                   min: 0,
                   max: 5,
                   divisions: 5,
-                  onChanged: (val) => setState(() => _timeLimitIndex = val),
+                  onChanged: (val) {
+                    setState(() => _timeLimitIndex = val);
+                    _saveDouble('test_timeLimitIndex', val);
+                  },
                 ),
                 const SizedBox(height: 12),
 
@@ -198,21 +231,26 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                   min: 0,
                   max: 7,
                   divisions: 7,
-                  onChanged: (val) => setState(() => _lockoutIndex = val),
+                  onChanged: (val) {
+                    setState(() => _lockoutIndex = val);
+                    _saveDouble('test_lockoutIndex', val);
+                  },
                 ),
 
                 const SizedBox(height: 24),
                 const Text('MODIFIKÁTORY', style: TextStyle(color: secondaryText, fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
                 const SizedBox(height: 12),
 
-                // TOGGLES
                 _buildSwitchCard(
                   title: '3 Možnosti',
                   subtitle: 'O jednu nesprávnu odpoveď menej.',
                   multiplier: 0.7,
                   value: _is3Options,
                   isDisabled: _isHardcore,
-                  onChanged: (val) => setState(() => _is3Options = val),
+                  onChanged: (val) {
+                    setState(() => _is3Options = val);
+                    _saveBool('test_is3Options', val);
+                  },
                 ),
                 const SizedBox(height: 12),
 
@@ -221,7 +259,10 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                   subtitle: 'Prvá nesprávna odpoveď sa ti odpustí.',
                   multiplier: 0.8,
                   value: _isSecondChance,
-                  onChanged: (val) => setState(() => _isSecondChance = val),
+                  onChanged: (val) {
+                    setState(() => _isSecondChance = val);
+                    _saveBool('test_isSecondChance', val);
+                  },
                 ),
                 const SizedBox(height: 12),
 
@@ -231,7 +272,10 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                   multiplier: 1.1,
                   value: _isConfusion,
                   isDisabled: _isHardcore,
-                  onChanged: (val) => setState(() => _isConfusion = val),
+                  onChanged: (val) {
+                    setState(() => _isConfusion = val);
+                    _saveBool('test_isConfusion', val);
+                  },
                 ),
                 const SizedBox(height: 12),
 
@@ -244,10 +288,12 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                   onChanged: (val) {
                     setState(() {
                       _isHardcore = val;
+                      _saveBool('test_isHardcore', val);
                       if (_isHardcore) {
-                        // Hardcore logika - vypne nezlučiteľné módy
                         _is3Options = false;
                         _isConfusion = false;
+                        _saveBool('test_is3Options', false);
+                        _saveBool('test_isConfusion', false);
                       }
                     });
                   },
@@ -271,7 +317,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
   }
 
   Widget _buildMultiplierBadge(double mult) {
-    if (mult == 1.0) return const SizedBox.shrink(); // Nezobrazovať x1.0
+    if (mult == 1.0) return const SizedBox.shrink();
     bool isPositive = mult > 1.0;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -281,11 +327,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
       ),
       child: Text(
         'x$mult',
-        style: TextStyle(
-          color: isPositive ? positiveGreen : negativeRed,
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
-        ),
+        style: TextStyle(color: isPositive ? positiveGreen : negativeRed, fontWeight: FontWeight.bold, fontSize: 12),
       ),
     );
   }
@@ -317,19 +359,10 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
           Text(valueLabel, style: const TextStyle(color: deepPurple, fontWeight: FontWeight.bold, fontSize: 18)),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: deepPurple,
-              inactiveTrackColor: bgColor,
-              thumbColor: deepPurple,
-              overlayColor: deepPurple.withOpacity(0.2),
-              trackHeight: 6.0,
+              activeTrackColor: deepPurple, inactiveTrackColor: bgColor, thumbColor: deepPurple,
+              overlayColor: deepPurple.withOpacity(0.2), trackHeight: 6.0,
             ),
-            child: Slider(
-              value: value,
-              min: min,
-              max: max,
-              divisions: divisions,
-              onChanged: onChanged,
-            ),
+            child: Slider(value: value, min: min, max: max, divisions: divisions, onChanged: onChanged),
           ),
         ],
       ),
@@ -370,11 +403,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                 ],
               ),
             ),
-            Switch(
-              value: value,
-              onChanged: isDisabled ? null : onChanged,
-              activeColor: isGold ? goldAccent : deepPurple,
-            ),
+            Switch(value: value, onChanged: isDisabled ? null : onChanged, activeColor: isGold ? goldAccent : deepPurple),
           ],
         ),
       ),

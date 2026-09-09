@@ -119,15 +119,17 @@ class _MyAppState extends State<MyApp> {
         final args = Map<String, dynamic>.from(call.arguments as Map);
         final bool shouldBlock = args['isOverlay'] ?? false;
         final bool timeout = args['isTimeout'] ?? false;
-        final bool fromNotification = args['isFromNotification'] ?? false;
+        final bool incomingFromNotif = args['isFromNotification'] ?? false;
 
-        // PREVENtarget NEKONEČNEJ SLUČKY: 
-        // Pre navigáciu sa rozhodujeme len vtedy, ak sa stav SKUTOČNE zmenil
-        if (shouldBlock != isOverlay || timeout != isTimeout || fromNotification != isFromNotification) {
+        // KĽÚČOVÁ ZMENA: Ak sme už otvorili test z notifikácie a sme zablokovaní,
+        // nesmie to žiadny iný signál z Kotlinu prepísať späť na false!
+        final bool resolvedFromNotification = (isOverlay && isFromNotification) ? true : incomingFromNotif;
+
+        if (shouldBlock != isOverlay || timeout != isTimeout || resolvedFromNotification != isFromNotification) {
           setState(() {
             isOverlay = shouldBlock;
             isTimeout = timeout;
-            isFromNotification = fromNotification;
+            isFromNotification = resolvedFromNotification; // Použijeme poistenú premennú
           });
 
           if (shouldBlock) {
@@ -135,7 +137,7 @@ class _MyAppState extends State<MyApp> {
               MaterialPageRoute(
                 builder: (context) => BlockChoiceScreen(
                   isTimeout: timeout,
-                  isFromNotification: fromNotification,
+                  isFromNotification: resolvedFromNotification, // Pošleme poistenú premennú
                 ),
               ),
               (route) => false,

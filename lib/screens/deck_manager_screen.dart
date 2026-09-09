@@ -6,9 +6,14 @@ import '../services/database_helper.dart';
 import '../models/deck_model.dart';
 import 'deck_detail_screen.dart';
 import 'quiz_overlay_screen.dart';
+import 'quizlet_playground_screen.dart';
+import 'anki_playground_screen.dart';
+
 
 class DeckManagerScreen extends StatefulWidget {
   const DeckManagerScreen({super.key});
+
+
 
   @override
   State<DeckManagerScreen> createState() => _DeckManagerScreenState();
@@ -131,14 +136,91 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
       return;
     }
 
-    final nameController = TextEditingController();
-    final categoryController = TextEditingController();
-
     if (!mounted) return;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Ný balíček'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Pridať nový balíček', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 1. Add new deck
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurple,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                  _showCreateManualDeckDialog();
+                },
+                icon: const Icon(Icons.add_circle_outline),
+                label: const Text("Add new deck", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // 2. Import from Quizlet
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue.shade700,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const QuizletPlaygroundScreen()),
+                            ).then((_) => DatabaseHelper.instance.getCustomDeckCount());
+                },
+                icon: const Icon(Icons.school),
+                label: const Text("Import from Quizlet", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // 3. Import from Anki
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.teal.shade700,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => AnkiPlaygroundScreen()),
+                            ).then((_) =>  DatabaseHelper.instance.getCustomDeckCount());
+                },
+                icon: const Icon(Icons.upload_file),
+                label: const Text("Import from Anki", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCreateManualDeckDialog() {
+    final nameController = TextEditingController();
+    final categoryController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Nový balíček'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -265,8 +347,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
       future: DatabaseHelper.instance.getCardCountForDeck(deck.id!),
       builder: (context, snapshot) {
         final cardCount = snapshot.data ?? 0;
-        final bool hasEnoughCards = cardCount >= 5
-        ;
+        final bool hasEnoughCards = cardCount >= 5;
 
         return Card(
           elevation: isActive ? 4 : 2,
@@ -380,10 +461,8 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                             label: "Share",
                             color: Colors.blueAccent,
                             onTap: () async {
-                              // 1. Načítame všetky karty vybraného balíčka z databázy
                               final cards = await DatabaseHelper.instance.getCardsForDeck(deck.id!);
 
-                              // 2. Zabalia sa dáta do štruktúry pre JSON
                               final mapData = {
                                 'title': deck.name,
                                 'category': deck.category,
@@ -393,11 +472,9 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                                 }).toList(),
                               };
 
-                              // 3. Zakódovanie do JSON + Base64
                               String jsonString = jsonEncode(mapData);
                               String base64Data = base64Url.encode(utf8.encode(jsonString));
 
-                              // 4. Vytvorenie deep-linku a odoslanie cez systémový share sheet
                               final String shareLink = 'brainlock://share?data=$base64Data';
                               final String message = 'Poď sa učiť balíček "${deck.name}" v Brainlocku! Klikni pre import: $shareLink';
 

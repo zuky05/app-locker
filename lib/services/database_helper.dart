@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/deck_model.dart';
-//import '../models/card_model.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -30,7 +29,6 @@ class DatabaseHelper {
   }
 
   Future _createDB(Database db, int version) async {
-    // Tabulka pre balicky
     await db.execute('''
       CREATE TABLE decks (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -40,7 +38,6 @@ class DatabaseHelper {
       )
     ''');
 
-    // Tabulka pre karticky (UŽ BEZ distractors_json)
     await db.execute('''
       CREATE TABLE cards (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -52,7 +49,6 @@ class DatabaseHelper {
       )
     ''');
 
-    // Tabulka pre statistiky
     await db.execute('''
       CREATE TABLE study_sessions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -113,7 +109,6 @@ class DatabaseHelper {
     await db.rawDelete('DELETE FROM cards WHERE id = ?', [id]);
   }
 
-  
   Future<void> addNewCard(int deckId, String prompt, String correctAnswer) async {
     final db = await instance.database;
     
@@ -131,81 +126,81 @@ class DatabaseHelper {
     return Sqflite.firstIntValue(result) ?? 0;
   }
   
-  Future<Map<String, dynamic>?> getRandomQuizQuestion({int? deckId}) async {
+  Future<Map<String, dynamic>?> getRandomQuizQuestion({int? deckId, List<int> excludeCardIds = const []}) async {
     final db = await instance.database;
     
     List<Map<String, dynamic>> randomCardResult;
+    String excludeClause = excludeCardIds.isNotEmpty ? 'AND id NOT IN (${excludeCardIds.join(',')})' : '';
 
     if (deckId != null) {
-      // 1A. Ak máme ID balíčka, ťaháme otázku LEN z neho
       randomCardResult = await db.rawQuery(
-        'SELECT * FROM cards WHERE deck_id = ? ORDER BY counter ASC, RANDOM() LIMIT 1',
+        'SELECT * FROM cards WHERE deck_id = ? $excludeClause ORDER BY counter ASC, RANDOM() LIMIT 1',
         [deckId]
       );
     } else {
-      // 1B. Ak nemáme, ťaháme náhodne z celej databázy
       randomCardResult = await db.rawQuery(
-        'SELECT * FROM cards ORDER BY counter ASC, RANDOM() LIMIT 1'
+        'SELECT * FROM cards WHERE 1=1 $excludeClause ORDER BY counter ASC, RANDOM() LIMIT 1'
       );
     }
     
     if (randomCardResult.isEmpty) return null; 
     
     final card = randomCardResult.first;
-    final cardId = card['id'];
+    final cardId = card['id'] as int;
     final actualDeckId = card['deck_id'];
     final correctAnswer = card['correct_answer'] as String;
     final prompt = card['prompt'] as String;
 
-    // 2. Vytiahneme max 3 iné odpovede z TOHO ISTÉHO balíčka ako chytáky
     final wrongAnswers = await db.rawQuery('''
       SELECT correct_answer FROM cards 
       WHERE deck_id = ? AND id != ? 
       ORDER BY RANDOM() LIMIT 3
     ''', [actualDeckId, cardId]);
 
-    // 3. Spojíme správnu odpoveď s chytákmi do jedného zoznamu
     List<String> options = [correctAnswer];
     for (var row in wrongAnswers) {
       options.add(row['correct_answer'] as String);
     }
 
-    // 4. Zamiešame ich, aby správna nebola vždy prvá
     options.shuffle();
-
-    // 5. Zdvihneme counter tejto kartičke o +1, aby sa neopakovala!
     await db.rawUpdate('UPDATE cards SET counter = counter + 1 WHERE id = ?', [cardId]);
 
     return {
+      'id': cardId,
       'prompt': prompt,
       'correct_answer': correctAnswer,
       'options': options,
     };
   }
 
-  // --- NOVÁ FUNKCIA PRE LEARNING MODE ---
-  Future<List<Map<String, dynamic>>> getLearningCards(int limit, {int? deckId}) async {
+  Future<List<Map<String, dynamic>>> getLearningCards(int limit, {int? deckId, List<int> excludeCardIds = const []}) async {
     final db = await instance.database;
     List<Map<String, dynamic>> result;
     
+    String excludeClause = excludeCardIds.isNotEmpty ? 'AND id NOT IN (${excludeCardIds.join(',')})' : '';
+
     if (deckId != null) {
       result = await db.rawQuery(
-        'SELECT * FROM cards WHERE deck_id = ? ORDER BY counter ASC, RANDOM() LIMIT ?',
+        'SELECT * FROM cards WHERE deck_id = ? $excludeClause ORDER BY counter ASC, RANDOM() LIMIT ?',
         [deckId, limit]
       );
     } else {
       result = await db.rawQuery(
-        'SELECT * FROM cards ORDER BY counter ASC, RANDOM() LIMIT ?',
+        'SELECT * FROM cards WHERE 1=1 $excludeClause ORDER BY counter ASC, RANDOM() LIMIT ?',
         [limit]
       );
     }
     
-    // Zdvihneme counter pre všetky vybrané karty, aby rotovali
     for (var card in result) {
       await db.rawUpdate('UPDATE cards SET counter = counter + 1 WHERE id = ?', [card['id']]);
     }
     
     return result;
+  }
+
+  Future<void> resetCountersForDeck(int deckId) async {
+    final db = await instance.database;
+    await db.rawUpdate('UPDATE cards SET counter = 0 WHERE deck_id = ?', [deckId]);
   }
 
   Future<List<Map<String, dynamic>>> getCardsForDeck(int deckId) async {
@@ -223,7 +218,6 @@ class DatabaseHelper {
     await db.rawDelete('DELETE FROM cards WHERE deck_id = ?', [deckId]);
   }
 
-
   Future<void> updateDeck(int deckId, String newName, String newCategory) async {
     final db = await instance.database;
     await db.rawUpdate('UPDATE decks SET name = ?, category = ? WHERE id = ?', [newName, newCategory, deckId]);
@@ -234,6 +228,4 @@ class DatabaseHelper {
     final result = await db.rawQuery('SELECT COUNT(*) FROM cards WHERE deck_id = ?', [deckId]);
     return Sqflite.firstIntValue(result) ?? 0;
   }
-
 }
-

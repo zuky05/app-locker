@@ -17,6 +17,7 @@ class QuizOverlayScreen extends StatefulWidget {
 class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
   bool _isLoading = true;
   bool _isTestFinished = false;
+  final List<int> _excludedCardIds = [];
   
   // --- SPOLOČNÉ NASTAVENIA ---
   int? _activeDeckId;
@@ -112,10 +113,27 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
 
   Future<void> _startLearningMode() async {
     setState(() => _isLoading = true);
-    final cards = await DatabaseHelper.instance.getLearningCards(_learnCardCount.toInt(), deckId: _activeDeckId);
+    
+    // Zoznam ID, ktoré už máme v tejto relácii načítané, aby sa vylúčili z opätovného ťahania
+    final List<int> excludedLearningIds = [];
+
+    // Ak chceme napr. natiahnuť karty z databázy
+    final cards = await DatabaseHelper.instance.getLearningCards(
+      _learnCardCount.toInt(), 
+      deckId: _activeDeckId,
+      excludeCardIds: excludedLearningIds,
+    );
     
     setState(() {
       _learningCardsQueue = List<Map<String, dynamic>>.from(cards);
+      
+      // Pridáme natiahnuté ID-čká do vylúčených pre prípadné ďalšie dávky
+      for (var card in cards) {
+        if (card['id'] != null) {
+          excludedLearningIds.add(card['id'] as int);
+        }
+      }
+
       _totalLearnedCards = _learningCardsQueue.length;
       _failedCards.clear();
       _masteredCount = 0;
@@ -173,11 +191,17 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       _hardcoreController.clear();
     });
 
-    final questionData = await DatabaseHelper.instance.getRandomQuizQuestion(deckId: _activeDeckId);
+    final questionData = await DatabaseHelper.instance.getRandomQuizQuestion(
+    deckId: _activeDeckId, 
+    excludeCardIds: _excludedCardIds,);
     
     if (questionData == null) {
       setState(() { _currentQuestion = null; _isLoading = false; });
       return;
+    }
+
+    if (questionData['id'] != null) {
+      _excludedCardIds.add(questionData['id'] as int);
     }
 
     String correct = questionData['correct_answer'].toString();
@@ -697,7 +721,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
           ],
         ),
         const SizedBox(height: 16),
-        LinearProgressIndicator(value: (_currentQuestionIndex) / _questionCount, backgroundColor: Colors.grey.shade200, color: Colors.deepPurple),
+        LinearProgressIndicator(value: (_currentQuestionIndex + 1) / _questionCount, backgroundColor: Colors.grey.shade200, color: Colors.deepPurple),
         const SizedBox(height: 24),
         
         if (_currentQuestion!['prompt'].toString().endsWith('.svg'))

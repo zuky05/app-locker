@@ -30,20 +30,31 @@ class MainActivity: FlutterActivity() {
             when (call.method) {
                 "getOverlayInfo" -> {
                     if (isUnlocking) {
-                        result.success(mapOf("isOverlay" to false, "isTimeout" to false, "deckId" to null))
+                        result.success(mapOf("isOverlay" to false, "isTimeout" to false, "isFromNotification" to false, "deckId" to null))
                         return@setMethodCallHandler
                     }
 
                     val isLauncher = intent.action == Intent.ACTION_MAIN && intent.hasCategory(Intent.CATEGORY_LAUNCHER)
 
-                    val isOverlay = if (isLauncher) false else intent.getBooleanExtra("isOverlay", false)
+                    // SPRÁVNE PREČÍTANIE PRI ŠTARTE
+                    val isFromNotif = intent.getBooleanExtra("isFromNotification", false) || intent.action == "com.example.brainlock.ACTION_RETEST"
+                    val isOverlay = if (isLauncher) false else (intent.getBooleanExtra("isOverlay", false) || isFromNotif)
                     val isTimeout = if (isLauncher) false else intent.getBooleanExtra("isTimeout", false)
                     val deckId = intent.data?.getQueryParameter("deckId")
 
                     intent.removeExtra("isOverlay")
                     intent.removeExtra("isTimeout")
+                    intent.removeExtra("isFromNotification")
+                    if (intent.action == "com.example.brainlock.ACTION_RETEST") {
+                        intent.action = null
+                    }
 
-                    result.success(mapOf("isOverlay" to isOverlay, "isTimeout" to isTimeout, "deckId" to deckId))
+                    result.success(mapOf(
+                        "isOverlay" to isOverlay, 
+                        "isTimeout" to isTimeout, 
+                        "isFromNotification" to isFromNotif,
+                        "deckId" to deckId
+                    ))
                 }
                 "unlockApp" -> {
                     val seconds = call.argument<Int>("seconds") ?: 0
@@ -53,9 +64,9 @@ class MainActivity: FlutterActivity() {
                     
                     intent.removeExtra("isOverlay")
                     intent.removeExtra("isTimeout")
+                    intent.removeExtra("isFromNotification")
                     intent.action = null
 
-                    // Voláme správnu metódu s dvoma parametrami
                     AppBlockerService.instance?.startUnlockTimerNotification(seconds, maxCap)
                     
                     finish() 
@@ -113,27 +124,28 @@ class MainActivity: FlutterActivity() {
         
         if (isUnlocking) return
 
-
-        if (intent.action == "com.example.brainlock.ACTION_RETEST") {
-            intent.action = null
-            methodChannel?.invokeMethod(
-                "updateOverlayInfo", 
-                mapOf("isOverlay" to true, "isTimeout" to false, "isFromNotification" to true)
-            )
-            return
-        }
-
         handleIntent(intent)
 
         val isLauncher = intent.action == Intent.ACTION_MAIN && intent.hasCategory(Intent.CATEGORY_LAUNCHER)
         
-        val isOverlay = if (isLauncher) false else intent.getBooleanExtra("isOverlay", false)
+        // SPRÁVNE PREČÍTANIE PRI BEŽIACEJ APLIKÁCII
+        val isFromNotif = intent.getBooleanExtra("isFromNotification", false) || intent.action == "com.example.brainlock.ACTION_RETEST"
+        val isOverlay = if (isLauncher) false else (intent.getBooleanExtra("isOverlay", false) || isFromNotif)
         val isTimeout = if (isLauncher) false else intent.getBooleanExtra("isTimeout", false)
         
         intent.removeExtra("isOverlay")
         intent.removeExtra("isTimeout")
+        intent.removeExtra("isFromNotification")
+        
+        if (intent.action == "com.example.brainlock.ACTION_RETEST") {
+            intent.action = null
+        }
 
-        methodChannel?.invokeMethod("updateOverlayInfo", mapOf("isOverlay" to isOverlay, "isTimeout" to isTimeout, "isFromNotification" to true))
+        methodChannel?.invokeMethod("updateOverlayInfo", mapOf(
+            "isOverlay" to isOverlay, 
+            "isTimeout" to isTimeout, 
+            "isFromNotification" to isFromNotif
+        ))
     }
 
     override fun finish() {

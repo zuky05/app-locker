@@ -74,6 +74,7 @@ class AppBlockerService : AccessibilityService() {
             action = "com.example.brainlock.ACTION_RETEST"
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra("isOverlay", true)
+            putExtra("isFromNotification", true) // <--- PRIDANÁ POISTKA
         }
 
         val pendingIntent = PendingIntent.getActivity(

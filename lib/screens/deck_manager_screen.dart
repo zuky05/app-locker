@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
+import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/database_helper.dart';
 import '../models/deck_model.dart';
@@ -264,7 +265,8 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
       future: DatabaseHelper.instance.getCardCountForDeck(deck.id!),
       builder: (context, snapshot) {
         final cardCount = snapshot.data ?? 0;
-        final bool hasEnoughCards = cardCount >= 4;
+        final bool hasEnoughCards = cardCount >= 5
+        ;
 
         return Card(
           elevation: isActive ? 4 : 2,
@@ -339,7 +341,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                             onTap: () async {
                               if (!hasEnoughCards) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text("Na blokovanie musíte mať aspoň 4 karty.")),
+                                  const SnackBar(content: Text("Na blokovanie musíte mať aspoň 5 kariet.")),
                                 );
                                 return;
                               }
@@ -377,9 +379,28 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                             icon: Icons.share,
                             label: "Share",
                             color: Colors.blueAccent,
-                            onTap: () {
-                              final String shareLink = 'brainlock://share?deckId=${deck.id}';
-                              final String message = 'Poď sa učiť so mnou balíček "${deck.name}" v Brainlocku! Klikni sem pre import: $shareLink';
+                            onTap: () async {
+                              // 1. Načítame všetky karty vybraného balíčka z databázy
+                              final cards = await DatabaseHelper.instance.getCardsForDeck(deck.id!);
+
+                              // 2. Zabalia sa dáta do štruktúry pre JSON
+                              final mapData = {
+                                'title': deck.name,
+                                'category': deck.category,
+                                'cards': cards.map((c) => {
+                                  'q': c['question'] ?? c['front'] ?? c['prompt'] ?? '',
+                                  'a': c['answer'] ?? c['back'] ?? c['correct_answer'] ?? '',
+                                }).toList(),
+                              };
+
+                              // 3. Zakódovanie do JSON + Base64
+                              String jsonString = jsonEncode(mapData);
+                              String base64Data = base64Url.encode(utf8.encode(jsonString));
+
+                              // 4. Vytvorenie deep-linku a odoslanie cez systémový share sheet
+                              final String shareLink = 'brainlock://share?data=$base64Data';
+                              final String message = 'Poď sa učiť balíček "${deck.name}" v Brainlocku! Klikni pre import: $shareLink';
+
                               Share.share(message);
                             },
                           ),

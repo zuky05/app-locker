@@ -3,6 +3,8 @@ package com.example.brainlock
 import android.content.ComponentName
 import android.content.Intent
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.android.FlutterActivityLaunchConfigs.BackgroundMode
@@ -13,6 +15,7 @@ class MainActivity: FlutterActivity() {
     
     private val CHANNEL = "brainlock.channel"
     private var methodChannel: MethodChannel? = null
+    private var isUnlocking = false
 
     override fun getBackgroundMode(): BackgroundMode {
         return BackgroundMode.transparent
@@ -26,27 +29,41 @@ class MainActivity: FlutterActivity() {
         methodChannel?.setMethodCallHandler { call, result ->
             when (call.method) {
                 "getOverlayInfo" -> {
+                    if (isUnlocking) {
+                        result.success(mapOf("isOverlay" to false, "isTimeout" to false, "deckId" to null))
+                        return@setMethodCallHandler
+                    }
+
                     val isLauncher = intent.action == Intent.ACTION_MAIN && intent.hasCategory(Intent.CATEGORY_LAUNCHER)
 
                     val isOverlay = if (isLauncher) false else intent.getBooleanExtra("isOverlay", false)
                     val isTimeout = if (isLauncher) false else intent.getBooleanExtra("isTimeout", false)
                     val deckId = intent.data?.getQueryParameter("deckId")
 
+                    intent.removeExtra("isOverlay")
+                    intent.removeExtra("isTimeout")
+
                     result.success(mapOf("isOverlay" to isOverlay, "isTimeout" to isTimeout, "deckId" to deckId))
                 }
                 "unlockApp" -> {
-                    // 1. Získame presné sekundy z Flutteru (ak by niečo zlyhalo, default dáme 0)
                     val seconds = call.argument<Int>("seconds") ?: 0
-    
-                    // 2. Prevedieme sekundy na milisekundy pre Android
-                    val gracePeriod = seconds * 1000L
-    
-                    // 3. Nastavíme časovač a odblokujeme
-                    AppBlockerService.unlockedUntil = System.currentTimeMillis() + gracePeriod
-                    AppBlockerService.instance?.scheduleReblock(gracePeriod)
-    
+                    val maxCap = call.argument<Int>("maxCap") ?: 600
+                    
+                    isUnlocking = true
+                    
+                    intent.removeExtra("isOverlay")
+                    intent.removeExtra("isTimeout")
+                    intent.action = null
+
+                    // Voláme správnu metódu s dvoma parametrami
+                    AppBlockerService.instance?.startUnlockTimerNotification(seconds, maxCap)
+                    
                     finish() 
                     result.success(true)
+
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        isUnlocking = false
+                    }, 2000)
                 }
                 "setBlockedApps" -> {
                     val apps = call.argument<List<String>>("apps") ?: emptyList()
@@ -62,7 +79,6 @@ class MainActivity: FlutterActivity() {
                     startActivity(intent)
                     result.success(true)
                 }
-                // --- TETO DVE METÓDY SÚ KĽÚČOVÉ ---
                 "isOverlayGranted" -> {
                     result.success(Settings.canDrawOverlays(this))
                 }
@@ -94,15 +110,30 @@ class MainActivity: FlutterActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent) 
-        handleIntent(intent)
         
-        // Znovu overíme, či neklikol na ikonu počas toho, ako appka spala v pozadí
+        if (isUnlocking) return
+
+
+        if (intent.action == "com.example.brainlock.ACTION_RETEST") {
+            intent.action = null
+            methodChannel?.invokeMethod(
+                "updateOverlayInfo", 
+                mapOf("isOverlay" to true, "isTimeout" to false, "isFromNotification" to true)
+            )
+            return
+        }
+
+        handleIntent(intent)
+
         val isLauncher = intent.action == Intent.ACTION_MAIN && intent.hasCategory(Intent.CATEGORY_LAUNCHER)
         
         val isOverlay = if (isLauncher) false else intent.getBooleanExtra("isOverlay", false)
         val isTimeout = if (isLauncher) false else intent.getBooleanExtra("isTimeout", false)
         
-        methodChannel?.invokeMethod("updateOverlayInfo", mapOf("isOverlay" to isOverlay, "isTimeout" to isTimeout))
+        intent.removeExtra("isOverlay")
+        intent.removeExtra("isTimeout")
+
+        methodChannel?.invokeMethod("updateOverlayInfo", mapOf("isOverlay" to isOverlay, "isTimeout" to isTimeout, "isFromNotification" to true))
     }
 
     override fun finish() {
@@ -110,18 +141,16 @@ class MainActivity: FlutterActivity() {
         overridePendingTransition(0, 0)
     }
     
-    
     private fun handleIntent(intent: Intent) {
         val action = intent.action
         val data = intent.data
 
-        // Ak ide o deeplink (brainlock://share?deckId=123)
         if (Intent.ACTION_VIEW == action && data != null) {
             val deckId = data.getQueryParameter("deckId")
             if (deckId != null) {
-                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                Handler(Looper.getMainLooper()).postDelayed({
                     methodChannel?.invokeMethod("handleDeepLink", mapOf("deckId" to deckId))
-                }, 200) // Krátky delay, aby sa Flutter stihol inicializovať
+                }, 200)
             }
         }
     }

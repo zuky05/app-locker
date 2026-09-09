@@ -5,7 +5,13 @@ import 'quiz_overlay_screen.dart';
 
 class BlockChoiceScreen extends StatefulWidget {
   final bool isTimeout;
-  const BlockChoiceScreen({super.key, required this.isTimeout});
+  final bool isFromNotification;
+
+  const BlockChoiceScreen({
+    super.key, 
+    required this.isTimeout, 
+    this.isFromNotification = false,
+  });
 
   @override
   State<BlockChoiceScreen> createState() => _BlockChoiceScreenState();
@@ -34,7 +40,6 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
     if (success) {
       const platform = MethodChannel('brainlock.channel');
       try {
-        // Pošleme Kotlinu, že chceme IBA 1 MINÚTU
         await platform.invokeMethod('unlockApp', {'minutes': 1});
       } catch (e) {
         print("Chyba: $e");
@@ -80,7 +85,6 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
                     ),
                     const SizedBox(height: 20),
                     
-                    // HLAVNÉ TLAČIDLO: TEST
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 50),
@@ -90,36 +94,36 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
                       onPressed: _startTest,
                       child: const Text("Spustiť TEST (5 minút)", style: TextStyle(fontSize: 16)),
                     ),
-                    const SizedBox(height: 12),
 
-                    // DRUHÉ TLAČIDLO: GRACE PERIOD (Iba ak zostávajú pokusy!)
-                    if (widget.isTimeout)
-                      const Padding(
-                        padding: EdgeInsets.only(top: 10),
-                        child: Text(
-                          "Čas vypršal! Teraz ťa zachráni už len test.",
-                          style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                    if (!widget.isFromNotification) ...[
+                      const SizedBox(height: 12),
+
+                      if (widget.isTimeout)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 10),
+                          child: Text(
+                            "Čas vypršal! Teraz ťa zachráni už len test.",
+                            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                          ),
+                        )
+                      else if (remainingGrace > 0)
+                        OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 50),
+                            foregroundColor: Colors.black87,
+                          ),
+                          onPressed: _useGracePeriod,
+                          child: Text("Odpustok na 1 min. ($remainingGrace/3 dnes)"),
+                        )
+                      else
+                        const Padding(
+                          padding: EdgeInsets.only(top: 10),
+                          child: Text(
+                            "Dnešné odpustky si už vyčerpal!",
+                            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                          ),
                         ),
-                      )
-                    // Ak to NIE JE timeout, a má pokusy, ukážeme mu Odpustok
-                    else if (remainingGrace > 0)
-                      OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size(double.infinity, 50),
-                          foregroundColor: Colors.black87,
-                        ),
-                        onPressed: _useGracePeriod,
-                        child: Text("Odpustok na 1 min. ($remainingGrace/3 dnes)"),
-                      )
-                    // Ak to NIE JE timeout, ale nemá pokusy
-                    else
-                      const Padding(
-                        padding: EdgeInsets.only(top: 10),
-                        child: Text(
-                          "Dnešné odpustky si už vyčerpal!",
-                          style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
-                        ),
-                      ),
+                    ],
                   ],
                 ),
         ),

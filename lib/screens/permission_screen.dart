@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'home_screen.dart';
 
 class PermissionScreen extends StatefulWidget {
@@ -14,6 +15,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
   
   bool isOverlayGranted = false;
   bool isAccessibilityGranted = false;
+  bool isNotificationGranted = false;
   bool isLoading = true;
 
   @override
@@ -29,7 +31,6 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
     super.dispose();
   }
 
-  // Deteguje návrat používateľa zo systémových nastavení
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
@@ -39,19 +40,20 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
 
   Future<void> _checkPermission() async {
     try {
-      // Skontrolujeme OBE povolenia
       final bool overlay = await platform.invokeMethod('isOverlayGranted') ?? false;
       final bool accessibility = await platform.invokeMethod('isAccessibilityGranted') ?? false;
+      final bool notification = await Permission.notification.isGranted;
 
       if (mounted) {
         setState(() {
           isOverlayGranted = overlay;
           isAccessibilityGranted = accessibility;
+          isNotificationGranted = notification;
           isLoading = false;
         });
 
-        // Ak máme OBE povolenia udelené, navigujeme do hlavnej aplikácie
-        if (overlay && accessibility) {
+        // Ak máme VŠETKY TRI povolenia, ideme do hlavnej aplikácie
+        if (overlay && accessibility && notification) {
           _navigateToMain();
         }
       }
@@ -64,16 +66,23 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
     }
   }
 
-  // Otvára systémové nastavenia postupne podľa toho, čo chýba
-  Future<void> _openSettings() async {
+  Future<void> _openSettingsOrRequest() async {
     try {
       if (!isOverlayGranted) {
         await platform.invokeMethod('requestOverlayPermission');
       } else if (!isAccessibilityGranted) {
         await platform.invokeMethod('openAccessibilitySettings');
+      } else if (!isNotificationGranted) {
+        // Vyvolá štandardný systémový pop-up pre notifikácie
+        final status = await Permission.notification.request();
+        if (status.isGranted) {
+          _checkPermission();
+        } else if (status.isPermanentlyDenied) {
+          openAppSettings(); // Ak používateľ natvrdo zakázal pop-up
+        }
       }
     } catch (e) {
-      debugPrint("Chyba otvárania nastavení: $e");
+      debugPrint("Chyba vyžadovania povolení: $e");
     }
   }
 
@@ -91,7 +100,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
       );
     }
 
-    final bool allGranted = isOverlayGranted && isAccessibilityGranted;
+    final bool allGranted = isOverlayGranted && isAccessibilityGranted && isNotificationGranted;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -126,7 +135,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
               ),
               const SizedBox(height: 14),
               Text(
-                "Pre správne blokovanie aplikácií je potrebné povoliť vykresľovanie cez iné aplikácie a službu Zjednodušenia prístupu (Accessibility).",
+                "Pre správne fungovanie blokovania a odpočítavania času je potrebné povoliť nasledujúce tri funkcie.",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 15,
@@ -134,34 +143,44 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
                   height: 1.4,
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
 
-              // Stav 1: Overlay
+              // 1. Overlay
               _buildPermissionTile(
                 title: "Prekrytie aplikácií (Overlay)",
                 isGranted: isOverlayGranted,
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
 
-              // Stav 2: Accessibility
+              // 2. Accessibility
               _buildPermissionTile(
                 title: "Zjednodušenie prístupu (Accessibility)",
                 isGranted: isAccessibilityGranted,
               ),
 
+              const SizedBox(height: 10),
+
+              // 3. Notifications (Upozornenia)
+              _buildPermissionTile(
+                title: "Upozornenia a odpočet času (Notifications)",
+                isGranted: isNotificationGranted,
+              ),
+
               const SizedBox(height: 32),
 
-              // Hlavné tlačidlo
+              // Dynamic Button
               ElevatedButton.icon(
-                onPressed: allGranted ? _navigateToMain : _openSettings,
+                onPressed: allGranted ? _navigateToMain : _openSettingsOrRequest,
                 icon: Icon(allGranted ? Icons.arrow_forward : Icons.settings),
                 label: Text(
                   allGranted
                       ? "Pokračovať"
                       : (!isOverlayGranted
                           ? "Povoliť prekrytie"
-                          : "Povoliť Zjednodušenie prístupu"),
+                          : (!isAccessibilityGranted
+                              ? "Povoliť Zjednodušenie prístupu"
+                              : "Povoliť Upozornenia")),
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 style: ElevatedButton.styleFrom(

@@ -1,10 +1,12 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:app_links/app_links.dart';
+
 import 'screens/block_choice_screen.dart';
 import 'screens/permission_screen.dart';
 import 'services/permission_guard.dart';
-import 'package:app_links/app_links.dart';
 import 'services/database_helper.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -30,14 +32,16 @@ void main() async {
 
   bool isOverlay = false;
   bool isTimeout = false;
-  String? initialDeckId;
+  bool isFromNotification = false;
+  String? initialData;
 
   try {
     final info = await platform.invokeMethod('getOverlayInfo');
     if (info != null) {
       isOverlay = info['isOverlay'] ?? false;
       isTimeout = info['isTimeout'] ?? false;
-      initialDeckId = info['deckId'];
+      isFromNotification = info['isFromNotification'] ?? false;
+      initialData = info['data'];
     }
   } catch (e) {
     debugPrint("Chyba komunikácie: $e");
@@ -50,20 +54,23 @@ void main() async {
   runApp(MyApp(
     initialOverlay: isOverlay,
     initialTimeout: isTimeout,
-    initialDeckId: initialDeckId,
+    initialFromNotification: isFromNotification,
+    initialData: initialData,
   ));
 }
 
 class MyApp extends StatefulWidget {
   final bool initialOverlay;
   final bool initialTimeout;
-  final String? initialDeckId;
+  final bool initialFromNotification;
+  final String? initialData;
 
   const MyApp({
     super.key,
     required this.initialOverlay,
     required this.initialTimeout,
-    this.initialDeckId,
+    required this.initialFromNotification,
+    this.initialData,
   });
 
   @override
@@ -73,6 +80,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   late bool isOverlay;
   late bool isTimeout;
+  late bool isFromNotification;
   static const platform = MethodChannel('brainlock.channel');
 
   late AppLinks _appLinks;
@@ -82,11 +90,12 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     isOverlay = widget.initialOverlay;
     isTimeout = widget.initialTimeout;
+    isFromNotification = widget.initialFromNotification;
 
     // 1. Ak sa appka spustila priamo cez deep link v stave Cold Start
-    if (widget.initialDeckId != null) {
+    if (widget.initialData != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _navigateToDeck(widget.initialDeckId!);
+        _importDeckFromData(widget.initialData!);
       });
     } 
     // 2. Alebo ak sa spustila ako overlay
@@ -94,7 +103,10 @@ class _MyAppState extends State<MyApp> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         navigatorKey.currentState?.pushAndRemoveUntil(
           MaterialPageRoute(
-            builder: (context) => BlockChoiceScreen(isTimeout: isTimeout),
+            builder: (context) => BlockChoiceScreen(
+              isTimeout: isTimeout,
+              isFromNotification: isFromNotification,
+            ),
           ),
           (route) => false,
         );
@@ -107,38 +119,48 @@ class _MyAppState extends State<MyApp> {
         final args = Map<String, dynamic>.from(call.arguments as Map);
         final bool shouldBlock = args['isOverlay'] ?? false;
         final bool timeout = args['isTimeout'] ?? false;
+        final bool fromNotification = args['isFromNotification'] ?? false;
 
-        setState(() {
-          isOverlay = shouldBlock;
-          isTimeout = timeout;
-        });
+        // PREVENtarget NEKONEČNEJ SLUČKY: 
+        // Pre navigáciu sa rozhodujeme len vtedy, ak sa stav SKUTOČNE zmenil
+        if (shouldBlock != isOverlay || timeout != isTimeout || fromNotification != isFromNotification) {
+          setState(() {
+            isOverlay = shouldBlock;
+            isTimeout = timeout;
+            isFromNotification = fromNotification;
+          });
 
-        if (shouldBlock) {
-          navigatorKey.currentState?.pushAndRemoveUntil(
-            MaterialPageRoute(
-              builder: (context) => BlockChoiceScreen(isTimeout: timeout),
-            ),
-            (route) => false,
-          );
-        } else {
-          navigatorKey.currentState?.pushAndRemoveUntil(
-            MaterialPageRoute(
-              builder: (context) => const PermissionScreen(),
-            ),
-            (route) => false,
-          );
+          if (shouldBlock) {
+            navigatorKey.currentState?.pushAndRemoveUntil(
+              MaterialPageRoute(
+                builder: (context) => BlockChoiceScreen(
+                  isTimeout: timeout,
+                  isFromNotification: fromNotification,
+                ),
+              ),
+              (route) => false,
+            );
+          } else {
+            navigatorKey.currentState?.pushAndRemoveUntil(
+              MaterialPageRoute(
+                builder: (context) => const PermissionScreen(),
+              ),
+              (route) => false,
+            );
+          }
         }
       } else if (call.method == 'handleDeepLink') {
         final args = Map<String, dynamic>.from(call.arguments as Map);
-        final deckId = args['deckId'];
+        final rawData = args['data'];
         
-        if (deckId != null) {
-          _navigateToDeck(deckId);
+        if (rawData != null) {
+          Future.delayed(const Duration(milliseconds: 350), () {
+            _importDeckFromData(rawData);
+          });
         }
       }
     });
 
-    // Inicializácia deep linkov priamo v initState
     _initDeepLinks();
   }
 
@@ -146,133 +168,138 @@ class _MyAppState extends State<MyApp> {
     _appLinks = AppLinks();
 
     _appLinks.uriLinkStream.listen((uri) {
-      _handleDeepLink(uri);
+      Future.delayed(const Duration(milliseconds: 350), () {
+        _handleDeepLink(uri);
+      });
     });
   }
 
   void _handleDeepLink(Uri uri) {
     if (uri.scheme == 'brainlock' && uri.host == 'share') {
-      final deckId = uri.queryParameters['deckId'];
+      final rawData = uri.queryParameters['data'];
       
-      if (deckId != null) {
-        _navigateToDeck(deckId);
+      if (rawData != null) {
+        _importDeckFromData(rawData);
       }
     }
   }
 
-  Future<void> _navigateToDeck(String deckId) async {
-  debugPrint("Prijatý pokus o import balíčka s ID: $deckId");
+  Future<void> _importDeckFromData(String base64Data) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    
+    final context = navigatorKey.currentContext;
+    if (context == null) return;
 
-  // 1. Zistíme aktuálny počet custom balíčkov a overíme limit (max 3)
-  final int customCount = await DatabaseHelper.instance.getCustomDeckCount();
-  final int remainingDecks = 3 - customCount;
+    try {
+      String jsonString = utf8.decode(base64Url.decode(base64Data));
+      Map<String, dynamic> deckData = jsonDecode(jsonString);
 
-  final context = navigatorKey.currentContext;
-  if (context == null) return;
+      String title = deckData['title'] ?? 'Zdieľaný balíček';
+      String category = deckData['category'] ?? 'Shared';
+      List cards = deckData['cards'] ?? [];
 
-  // 2. Ak user prekročil limit (3 a viac), zobrazíme Premium dialóg
-  if (customCount >= 3) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Column(
-          children: [
-            Icon(Icons.star_rounded, size: 50, color: Colors.amber),
-            SizedBox(height: 10),
-            Text(
-              "Odomkni Brainlock Premium!",
+      final int customCount = await DatabaseHelper.instance.getCustomDeckCount();
+      final int remainingDecks = 3 - customCount;
+
+      if (customCount >= 3) {
+        if (!context.mounted) return;
+        showDialog(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: const Column(
+              children: [
+                Icon(Icons.star_rounded, size: 50, color: Colors.amber),
+                SizedBox(height: 10),
+                Text(
+                  "Odomkni Brainlock Premium!",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            content: const Text(
+              "Dosiahol si limit 3 vlastných balíčkov zadarmo.\n\nPre import ďalších balíčkov a neobmedzené vytváranie si aktivuj Premium.",
               textAlign: TextAlign.center,
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 15),
+            ),
+            actionsAlignment: MainAxisAlignment.center,
+            actions: [
+              ElevatedButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+                child: const Text("Zrušiť"),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                  debugPrint("Navigovať na nákup Premium");
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.amber.shade700,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+                child: const Text("Odomknúť Premium", style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+
+      if (!context.mounted) return;
+      showDialog(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text("Importovať '$title'?"),
+          content: Text(
+            "Tento zdieľaný balíček obsahuje ${cards.length} kartičiek.\n\nVoľné sloty na custom balíčky: $remainingDecks/3",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text("Zrušiť", style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepPurple,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+
+                final int newDeckId = await DatabaseHelper.instance.addNewDeck(title, category);
+
+                for (var card in cards) {
+                  await DatabaseHelper.instance.addNewCard(
+                    newDeckId,
+                    card['q'] ?? '',
+                    card['a'] ?? '',
+                  );
+                }
+
+                debugPrint("Balíček '$title' s ${cards.length} kartami úspešne pridaný!");
+
+                navigatorKey.currentState?.pushNamedAndRemoveUntil('/', (route) => false);
+              },
+              child: const Text("Importovať"),
             ),
           ],
         ),
-        content: const Text(
-          "Dosiahol si limit 3 vlastných balíčkov zadarmo.\n\nPre import ďalších balíčkov a neobmedzené vytváranie si aktivuj Premium.",
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 15),
-        ),
-        actionsAlignment: MainAxisAlignment.center,
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-            child: const Text("Zrušiť"),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              debugPrint("Navigovať na nákup Premium");
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.amber.shade700,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-            child: const Text("Odomknúť Premium", style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
-    return;
+      );
+    } catch (e) {
+      debugPrint("Chyba pri rozkódovaní zdieľaného balíčka: $e");
+    }
   }
 
-  // 3. Ak je pod limitom, zobrazíme potvrdenie o importovaní s počtom voľných slotov
-  showDialog(
-    context: context,
-    builder: (dialogContext) => AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: const Text("Chcete importovať deck?"),
-      content: Text(
-        "Tento zdieľaný balíček bude pridaný do vašej knižnice.\n\nVoľné sloty na custom balíčky: $remainingDecks/3",
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(dialogContext), // Zruší sa screena
-          child: const Text("Nie, nechať tak", style: TextStyle(color: Colors.grey)),
-        ),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.deepPurple,
-            foregroundColor: Colors.white,
-          ),
-          onPressed: () async {
-            Navigator.pop(dialogContext); // Zatvoríme dialóg
-
-            // 4. Uloženie balíčka a ukážkových kartičiek do databázy
-            // (Názov a kategóriu môžeš prispôsobiť, prípadne parsovať z linku)
-            final int newDeckId = await DatabaseHelper.instance.addNewDeck(
-              "Zdieľaný balíček ($deckId)", 
-              "Shared",
-            );
-
-            // Pridáme vzorovú kartičku (alebo viac kartičiek) do novozaloženého balíčka
-            await DatabaseHelper.instance.addNewCard(
-              newDeckId, 
-              "Imported Deck ID", 
-              deckId,
-            );
-
-            debugPrint("Balíček $deckId úspešne pridaný do databázy!");
-
-            // 5. Presmerovanie na main screen / DeckManagerScreen
-            navigatorKey.currentState?.pushNamedAndRemoveUntil(
-              '/', // Alebo tvoja hlavná cesta / obrazovka
-              (route) => false,
-            );
-          },
-          child: const Text("Áno, importovať"),
-        ),
-      ],
-    ),
-  );
-}
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -285,7 +312,7 @@ class _MyAppState extends State<MyApp> {
         useMaterial3: true,
       ),
       home: isOverlay
-          ? BlockChoiceScreen(isTimeout: isTimeout)
+          ? BlockChoiceScreen(isTimeout: isTimeout, isFromNotification: isFromNotification)
           : const PermissionScreen(),
       routes: {
         '/permissions': (context) => const PermissionScreen(),

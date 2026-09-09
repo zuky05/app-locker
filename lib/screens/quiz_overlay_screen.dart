@@ -61,7 +61,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
   double _learnInterval = 1;
   bool _learnRepeat = true;
   int _totalLearnedCards = 0;
-  int _masteredCount = 0; // Pridané pre zelené počítadlo v Quizlet štýle
+  int _masteredCount = 0;
 
   @override
   void initState() {
@@ -115,7 +115,6 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     final cards = await DatabaseHelper.instance.getLearningCards(_learnCardCount.toInt(), deckId: _activeDeckId);
     
     setState(() {
-      // Dôležité: Vytvárame upraviteľnú kópiu zoznamu
       _learningCardsQueue = List<Map<String, dynamic>>.from(cards);
       _totalLearnedCards = _learningCardsQueue.length;
       _failedCards.clear();
@@ -123,7 +122,11 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       _learningRound = 1;
       _isCardFlipped = false;
       _isLoading = false;
-      if (_learningCardsQueue.isEmpty) _isTestFinished = true;
+      if (_learningCardsQueue.isEmpty) {
+        _isTestFinished = true;
+      } else {
+        _isTestFinished = false;
+      }
     });
   }
 
@@ -134,29 +137,26 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       final card = _learningCardsQueue.removeAt(0);
       
       if (knewIt) {
-        _masteredCount++; // Úspešne zvládnutá karta
+        _masteredCount++;
       } else if (_learnRepeat) {
-        _failedCards.add(card); // Odložíme do zlej kôpky na ďalšie kolo
+        _failedCards.add(card);
       }
 
-      // Ak sme došli na koniec aktuálnej kôpky
       if (_learningCardsQueue.isEmpty) {
         if (_failedCards.isNotEmpty) {
-          // Začíname ďalšie kolo s kartami, ktoré nevedel
           _learningCardsQueue = List.from(_failedCards);
           _learningCardsQueue.shuffle();
-          _totalLearnedCards = _learningCardsQueue.length; // Upravíme počet pre nové kolo
+          _totalLearnedCards = _learningCardsQueue.length;
           _failedCards.clear();
           _learningRound++;
         } else {
-          _isTestFinished = true; // Všetko zvládol!
+          _isTestFinished = true;
         }
       }
       
-      _isCardFlipped = false; // Ďalšia karta je zase otázkou hore
+      _isCardFlipped = false;
     });
   }
-
 
   // ==========================================
   //         LOGIKA PRE KLASICKÝ KVÍZ
@@ -271,26 +271,27 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
   }
 
   void _finishAndUnlock() async {
-    // Ak je to Learning Mode
-    if (_isLearningMode) {
-      if (widget.practiceDeckId == null) {
-        // Nie je to tréning = pošleme odomykací príkaz do Androidu!
-        int earnedSeconds = (_learnInterval * 60).round(); // Minúty na sekundy
-        const platform = MethodChannel('brainlock.channel');
-        try { 
-          await platform.invokeMethod('unlockApp', {'seconds': earnedSeconds}); 
-        } catch (e) { 
-          print("Chyba pri odomykaní: $e"); 
-        }
-        SystemNavigator.pop(); // Zavrie test a pustí ťa do appky
-      } else {
-        // Je to len tréning v appke, vrátime sa späť do menu
-        Navigator.pop(context);
+    if (widget.practiceDeckId != null) {
+      if (mounted) {
+        Navigator.of(context).pop();
       }
-      return; // Tu končíme, aby sa nespúšťala logika kvízu nižšie
+      return;
     }
 
-    // Klasický Kvíz logika
+    if (_isLearningMode) {
+      int earnedSeconds = (_learnInterval * 60).round();
+      int maxCapSeconds = earnedSeconds; // Pre learning mode je cap rovný intervalu
+      const platform = MethodChannel('brainlock.channel');
+      try { 
+        // POŠLEME AJ MAXCAP
+        await platform.invokeMethod('unlockApp', {'seconds': earnedSeconds, 'maxCap': maxCapSeconds}); 
+      } catch (e) { 
+        debugPrint("Chyba pri odomykaní: $e"); 
+      }
+      SystemNavigator.pop();
+      return;
+    }
+
     double mult = 1.0;
     mult *= _timeMultipliers[_timeLimitIndex.toInt()];
     mult *= _lockoutMultipliers[_lockoutIndex.toInt()];
@@ -307,15 +308,27 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       earnedSeconds = (_correctAnswersCount * 30 * mult).round();
     }
 
-    if (earnedSeconds > 0 && widget.practiceDeckId == null) {
+    // --- TU VYPOČÍTAME ABSOLÚTNY STROP (100% úspešnosť) ---
+    int maxCapSeconds = (_questionCount * 30 * mult).round();
+
+    if (earnedSeconds > 0) {
       const platform = MethodChannel('brainlock.channel');
-      try { await platform.invokeMethod('unlockApp', {'seconds': earnedSeconds}); } catch (e) { print("Chyba: $e"); }
+      try { 
+        // POŠLEME OBA PARAMETRE DO KOTLINU
+        await platform.invokeMethod('unlockApp', {
+          'seconds': earnedSeconds,
+          'maxCap': maxCapSeconds, 
+        }); 
+      } catch (e) { 
+        debugPrint("Chyba: $e"); 
+      }
       SystemNavigator.pop(); 
     } else {
-      Navigator.pop(context); 
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
     }
   }
-
 
   // ==========================================
   //                   UI
@@ -323,17 +336,53 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isPractice = widget.practiceDeckId != null;
+
     return Scaffold(
-      backgroundColor: Colors.black.withOpacity(0.4),
+      backgroundColor: isPractice 
+          ? const Color(0xFFEBE8E0) 
+          : Colors.black.withOpacity(0.4),
       body: Center(
         child: SingleChildScrollView(
-          child: Container(
-            width: MediaQuery.of(context).size.width * 0.9,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20, spreadRadius: 5)]),
-            child: _isLoading 
-                ? const SizedBox(height: 200, child: Center(child: CircularProgressIndicator(color: Colors.deepPurple))) 
-                : _buildContent(),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 1. HLAVNÁ KARTA S TESTOM / LEARNINGOM
+              Container(
+                width: MediaQuery.of(context).size.width * 0.9,
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white, 
+                  borderRadius: BorderRadius.circular(24), 
+                  boxShadow: const [
+                    BoxShadow(color: Colors.black26, blurRadius: 20, spreadRadius: 5)
+                  ],
+                ),
+                child: _isLoading 
+                    ? const SizedBox(height: 200, child: Center(child: CircularProgressIndicator(color: Colors.deepPurple))) 
+                    : _buildContent(),
+              ),
+
+              // 2. TLAČIDLO "ZRUŠIŤ TEST" POD KARTOU (Iba pre tréning z appky)
+              if (isPractice) ...[
+                const SizedBox(height: 16),
+                TextButton.icon(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close_rounded, color: Colors.grey, size: 20),
+                  label: const Text(
+                    "Zrušiť test",
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
       ),
@@ -374,7 +423,6 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       );
     }
 
-    // Klasický test finished screen
     double successRate = _correctAnswersCount / _questionCount;
     double requiredRate = _lockoutThresholds[_lockoutIndex.toInt()];
     bool isSuccess = successRate >= requiredRate;
@@ -426,11 +474,9 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // QUIZLET TOP COUNTERS (Znova | Progres | Viem)
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Oranžový obdĺžnik vľavo (Ešte sa učím)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
@@ -440,7 +486,6 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
               ),
               child: Text("${_failedCards.length}", style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 16)),
             ),
-            // Progres v strede
             Column(
               children: [
                 Text("$currentIndex / $_totalLearnedCards", style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.bold, fontSize: 16)),
@@ -448,7 +493,6 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                   Text("Kolo $_learningRound", style: const TextStyle(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.bold)),
               ],
             ),
-            // Zelený obdĺžnik vpravo (Už to viem)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
@@ -468,16 +512,12 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
         ),
         const SizedBox(height: 24),
 
-        // OBROVSKÁ KARTIČKA (Swipe a Tap)
         Dismissible(
           key: ValueKey('${card['id']}_$_learningRound'),
-          // Swipovať dovoľujeme až keď je karta otočená!
           direction: _isCardFlipped ? DismissDirection.horizontal : DismissDirection.none,
           onDismissed: (direction) {
-            // startToEnd je Swipe Doprava (VIEM TO -> true)
             _handleLearningAnswer(direction == DismissDirection.startToEnd);
           },
-          // POZADIE PRI SWIPOVANÍ DOPRAVA (VIEM)
           background: Container(
             alignment: Alignment.centerLeft,
             padding: const EdgeInsets.symmetric(horizontal: 30),
@@ -492,7 +532,6 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
               ],
             ),
           ),
-          // POZADIE PRI SWIPOVANÍ DOĽAVA (ZNOVA)
           secondaryBackground: Container(
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.symmetric(horizontal: 30),
@@ -526,7 +565,6 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
         
         const SizedBox(height: 24),
         
-        // KRÁSNE TLAČIDLÁ (Iba ak je karta otočená)
         AnimatedOpacity(
           opacity: _isCardFlipped ? 1.0 : 0.0,
           duration: const Duration(milliseconds: 200),
@@ -542,7 +580,6 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                     elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Colors.orange.shade200, width: 1.5))
                   ),
-                  // False = Pôjde do nevedomostí
                   onPressed: _isCardFlipped ? () => _handleLearningAnswer(false) : null,
                   icon: const Icon(Icons.close),
                   label: const Text("Znova", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
@@ -558,7 +595,6 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                     elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Colors.green.shade300, width: 1.5))
                   ),
-                  // True = Správna odpoveď
                   onPressed: _isCardFlipped ? () => _handleLearningAnswer(true) : null,
                   icon: const Icon(Icons.check),
                   label: const Text("Viem", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
@@ -571,12 +607,11 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     );
   }
 
-  // --- DIZAJN PREDNEJ STRANY KARTY ---
   Widget _buildCardFront(Map<String, dynamic> card) {
     return Container(
       key: const ValueKey('front'),
       width: double.infinity,
-      height: MediaQuery.of(context).size.height * 0.40, // Výška prispôsobená pre vizuál veľkej kartičky
+      height: MediaQuery.of(context).size.height * 0.40,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -599,7 +634,6 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     );
   }
 
-  // --- DIZAJN ZADNEJ STRANY KARTY (S ODPOVEĎOU) ---
   Widget _buildCardBack(Map<String, dynamic> card) {
     return Container(
       key: const ValueKey('back'),
@@ -628,8 +662,6 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     );
   }
 
-
-  // --- QUIZ UI (Starý dobrý kvíz so spätnou väzbou) ---
   Widget _buildQuizUI() {
     Color hardcoreFillCol = Colors.grey.shade100;
     Color hardcoreBorderCol = Colors.transparent;

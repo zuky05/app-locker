@@ -1,5 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'themes/app_themes.dart';
+import 'themes/theme_provider.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:app_links/app_links.dart';
@@ -51,12 +54,17 @@ void main() async {
   permissionGuard = PermissionGuard(navigatorKey: navigatorKey);
   permissionGuard.startListening();
 
-  runApp(MyApp(
-    initialOverlay: isOverlay,
-    initialTimeout: isTimeout,
-    initialFromNotification: isFromNotification,
-    initialData: initialData,
-  ));
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => ThemeProvider(),
+      child: MyApp(
+        initialOverlay: isOverlay,
+        initialTimeout: isTimeout,
+        initialFromNotification: isFromNotification,
+        initialData: initialData,
+      ),
+    ),
+  );
 }
 
 class MyApp extends StatefulWidget {
@@ -304,20 +312,23 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      title: 'Brainlock',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color.fromARGB(255, 190, 106, 10),
-        ),
-        useMaterial3: true,
-      ),
-      home: isOverlay
-          ? BlockChoiceScreen(isTimeout: isTimeout, isFromNotification: isFromNotification)
-          : const PermissionScreen(),
-      routes: {
-        '/permissions': (context) => const PermissionScreen(),
+    // Consumer zabezpečuje počúvanie zmien tém z ThemeProvideru
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          navigatorKey: navigatorKey,
+          title: 'Brainlock',
+          
+          // Tu sa aplikuje zvolená téma z tvojho katalógu app_themes.dart
+          theme: themeProvider.theme,
+          
+          home: isOverlay
+              ? BlockChoiceScreen(isTimeout: isTimeout, isFromNotification: isFromNotification)
+              : const PermissionScreen(),
+          routes: {
+            '/permissions': (context) => const PermissionScreen(),
+          },
+        );
       },
     );
   }

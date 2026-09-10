@@ -45,6 +45,12 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
   int _currentTestRound = 1;
   bool _usedSecondChanceThisQuestion = false;
 
+  // --- STAV PRE OPRAVNÝ/TRESTNÝ REŽIM (REMEDIAL) ---
+  bool _isRemedialLearning = false;
+  bool _isRemedialQuiz = false;
+  List<Map<String, dynamic>> _remedialPool = [];
+  List<Map<String, dynamic>> _remedialQuizQuestions = [];
+
   Timer? _timer;
   int _timeLeft = 0;
   int _maxTime = 0;
@@ -109,12 +115,17 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     }
   }
 
-  // --- VÝPOČET DYNAMICKÉHO LOCKOUT NÁSOBIČA ---
+  // --- VÝPOČET POŽADOVANÝCH SPRÁVNYCH OTÁZOK ---
   int get _requiredCorrectQuestions {
+    if (_isRemedialQuiz) {
+      // V opravnom teste vyžadujeme 80 % (pri 5 otázkach min. 4)
+      return (_questionCount * 0.8).ceil();
+    }
     double targetPct = _lockoutPercentages[_lockoutIndex.toInt()];
     return (targetPct * _questionCount).round();
   }
 
+  // --- VÝPOČET DYNAMICKÉHO LOCKOUT NÁSOBIČA ---
   double get _effectiveLockoutMultiplier {
     double realRatio = _requiredCorrectQuestions / _questionCount;
     double mult = 1.0 + (realRatio - 0.5);
@@ -124,6 +135,9 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
   }
 
   double get _calculatedTotalMultiplier {
+    // V opravnom teste nepoužívame žiadne násobiče, je natvrdo 1.0x
+    if (_isRemedialQuiz) return 1.0;
+
     double mult = 1.0;
     mult *= _timeMultipliers[_timeLimitIndex.toInt()];
     mult *= _effectiveLockoutMultiplier;
@@ -131,19 +145,120 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     if (_isSecondChance) mult *= 0.8;
     if (_isConfusion && !_isHardcore) mult *= 1.1;
     if (_isHardcore) mult *= 1.5;
-    if (_isDoubleTest) mult *= 1.75;
+    if (_isDoubleTest) mult *= 1.75; 
     return mult;
   }
 
   // ==========================================
-  //         LOGIKA PRE LEARNING MODE
+  //         LOGIKA PRE OPRAVNÝ REŽIM (REMEDIAL)
+  // ==========================================
+
+  Future<void> _startRemedialLearning() async {
+    setState(() => _isLoading = true);
+    
+    // Na opravu stiahneme max 20 kariet z balíčka
+    final cards = await DatabaseHelper.instance.getLearningCards(
+      20, 
+      deckId: _activeDeckId,
+      excludeCardIds: [],
+    );
+
+    setState(() {
+      _remedialPool = List<Map<String, dynamic>>.from(cards);
+      _learningCardsQueue = List<Map<String, dynamic>>.from(cards);
+      _totalLearnedCards = _learningCardsQueue.length;
+      _failedCards.clear();
+      _masteredCount = 0;
+      _learningRound = 1;
+      _isCardFlipped = false;
+      
+      _isRemedialLearning = true;
+      _isLoading = false;
+    });
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Test zlyhal! Zopakuj si kartičky a absolvuj opravný test (min. 80 %)."),
+        backgroundColor: Colors.red,
+        duration: Duration(seconds: 4),
+      ),
+    );
+  }
+
+  void _startRemedialQuiz() {
+    setState(() {
+      _isRemedialLearning = false;
+      _isRemedialQuiz = true;
+      _isLoading = true;
+
+      // Vypnutie všetkých modifikátorov pre opravný test
+      _is3Options = false;
+      _isConfusion = false;
+      _isHardcore = false;
+      _isSecondChance = false;
+      _isDoubleTest = false;
+    });
+
+    _remedialPool.shuffle();
+    _remedialQuizQuestions = _remedialPool.take(5).toList();
+
+    setState(() {
+      _questionCount = _remedialQuizQuestions.length.toDouble();
+      _currentQuestionIndex = 0;
+      _correctAnswersCount = 0;
+      _excludedCardIds.clear();
+    });
+
+    _loadNextRemedialQuizQuestion();
+  }
+
+  void _loadNextRemedialQuizQuestion() {
+    _timer?.cancel();
+    setState(() {
+      _isLoading = true;
+      _usedSecondChanceThisQuestion = false;
+      _isAnswerChecked = false;
+      _selectedAnswer = null;
+      _hideCorrectAnswer = false;
+      _hardcoreController.clear();
+    });
+
+    if (_currentQuestionIndex >= _remedialQuizQuestions.length) {
+      setState(() => _isTestFinished = true);
+      return;
+    }
+
+    final questionData = _remedialQuizQuestions[_currentQuestionIndex];
+    String correct = (questionData['correct_answer'] ?? questionData['prompt'] ?? "").toString();
+
+    List<String> options = [correct];
+    var otherCards = List<Map<String, dynamic>>.from(_remedialPool)..shuffle();
+    for (var c in otherCards) {
+      String wrong = (c['correct_answer'] ?? c['prompt'] ?? "").toString();
+      if (wrong != correct && !options.contains(wrong) && options.length < 4) {
+        options.add(wrong);
+      }
+    }
+    options.shuffle();
+
+    setState(() {
+      _currentQuestion = questionData;
+      _currentOptions = options;
+      _actualCorrectAnswer = correct;
+      _isLoading = false;
+      if (_maxTime > 0) { _timeLeft = _maxTime; _startTimer(); }
+    });
+  }
+
+  // ==========================================
+  //         LOGIKA PRE LEARNING MODE (AJ REMEDIAL)
   // ==========================================
 
   Future<void> _startLearningMode() async {
     setState(() => _isLoading = true);
     
     final List<int> excludedLearningIds = [];
-
     final cards = await DatabaseHelper.instance.getLearningCards(
       _learnCardCount.toInt(), 
       deckId: _activeDeckId,
@@ -152,11 +267,8 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     
     setState(() {
       _learningCardsQueue = List<Map<String, dynamic>>.from(cards);
-      
       for (var card in cards) {
-        if (card['id'] != null) {
-          excludedLearningIds.add(card['id'] as int);
-        }
+        if (card['id'] != null) excludedLearningIds.add(card['id'] as int);
       }
 
       _totalLearnedCards = _learningCardsQueue.length;
@@ -177,7 +289,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       
       if (knewIt) {
         _masteredCount++;
-      } else if (_learnRepeat) {
+      } else if (_learnRepeat || _isRemedialLearning) {
         _failedCards.add(card);
       }
 
@@ -189,7 +301,11 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
           _failedCards.clear();
           _learningRound++;
         } else {
-          _isTestFinished = true;
+          if (_isRemedialLearning) {
+            _startRemedialQuiz();
+          } else {
+            _isTestFinished = true;
+          }
         }
       }
       
@@ -212,11 +328,20 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       _hardcoreController.clear();
     });
 
-    final questionData = await DatabaseHelper.instance.getRandomQuizQuestion(
+    var questionData = await DatabaseHelper.instance.getRandomQuizQuestion(
       deckId: _activeDeckId, 
       excludeCardIds: _excludedCardIds,
     );
     
+    // Ak sa minuli nepoužité karty, recyklujeme karty z decku
+    if (questionData == null && _excludedCardIds.isNotEmpty) {
+      _excludedCardIds.clear();
+      questionData = await DatabaseHelper.instance.getRandomQuizQuestion(
+        deckId: _activeDeckId, 
+        excludeCardIds: _excludedCardIds,
+      );
+    }
+
     if (questionData == null) {
       setState(() { _currentQuestion = null; _isLoading = false; });
       return;
@@ -311,63 +436,82 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
 
   void _triggerFailureVibration() {
     if (_isVibrationEnabled) {
-      // Dlhšie zavibrovanie pri celkovom zlyhaní testu
       HapticFeedback.vibrate();
-      Future.delayed(const Duration(milliseconds: 200), () {
-        HapticFeedback.vibrate();
-      });
+      Future.delayed(const Duration(milliseconds: 200), () => HapticFeedback.vibrate());
     }
   }
 
   void _proceedToNextQuiz() {
     _currentQuestionIndex++;
-    if (_currentQuestionIndex >= _questionCount.toInt()) {
+    int totalQuestions = _questionCount.toInt();
+    int remainingQuestions = totalQuestions - _currentQuestionIndex;
+    int maxPossibleCorrect = _correctAnswersCount + remainingQuestions;
+
+    // 1. Ak dokončil všetky otázky
+    if (_currentQuestionIndex >= totalQuestions) {
       bool passed = _correctAnswersCount >= _requiredCorrectQuestions;
 
-      // Ak bol zapnutý Double Test a úspešne spravil 1. kolo:
-      if (_isDoubleTest && _currentTestRound == 1 && passed) {
+      if (_isDoubleTest && _currentTestRound == 1 && passed && !_isRemedialQuiz) {
         setState(() {
           _currentTestRound = 2;
           _currentQuestionIndex = 0;
           _correctAnswersCount = 0;
           _excludedCardIds.clear();
         });
-
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("1. kolo zvládnuté! Teraz dokonči 2. kolo."),
-            backgroundColor: Colors.orange,
-            duration: Duration(seconds: 3),
-          ),
+          const SnackBar(content: Text("1. kolo zvládnuté! Teraz dokonči 2. kolo."), backgroundColor: Colors.orange, duration: Duration(seconds: 3)),
         );
-
         _loadNextQuizQuestion();
-      } else {
-        // Ak neprešiel celým testom, zavibrujeme na neúspech
-        if (!passed) {
-          _triggerFailureVibration();
-        }
+      } 
+      else if (!passed && !_isRemedialQuiz) {
+        _triggerFailureVibration();
+        _startRemedialLearning();
+      } 
+      else {
+        if (!passed) _triggerFailureVibration();
         setState(() => _isTestFinished = true);
       }
-    } else {
-      _loadNextQuizQuestion();
+    } 
+    // 2. KONTROLA PREDČASNÉHO ZLYHANIA (EARLY FAIL): Už nie je možné dosiahnuť lockout prah
+    else if (maxPossibleCorrect < _requiredCorrectQuestions) {
+      _triggerFailureVibration();
+      if (!_isRemedialQuiz) {
+        _startRemedialLearning();
+      } else {
+        setState(() => _isTestFinished = true);
+      }
+    } 
+    // 3. Pokračovanie na ďalšiu otázku
+    else {
+      if (_isRemedialQuiz) {
+        _loadNextRemedialQuizQuestion();
+      } else {
+        _loadNextQuizQuestion();
+      }
+    }
+  }
+
+  void _closeOrExitScreen() {
+    if (mounted) {
+      if (Navigator.canPop(context)) {
+        Navigator.of(context).pop();
+      } else {
+        SystemNavigator.pop();
+      }
     }
   }
 
   void _finishAndUnlock() async {
     if (widget.practiceDeckId != null) {
-      if (mounted) {
-        Navigator.of(context).pop();
-      }
+      _closeOrExitScreen();
       return;
     }
 
     if (_isLearningMode) {
       int earnedSeconds = (_learnInterval * 60).round();
-      int maxCapSeconds = earnedSeconds;
       const platform = MethodChannel('brainlock.channel');
       try { 
-        await platform.invokeMethod('unlockApp', {'seconds': earnedSeconds, 'maxCap': maxCapSeconds}); 
+        await platform.invokeMethod('unlockApp', {'seconds': earnedSeconds, 'maxCap': earnedSeconds}); 
       } catch (e) { 
         debugPrint("Chyba pri odomykaní: $e"); 
       }
@@ -382,25 +526,18 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     if (isSuccess) {
       earnedSeconds = (_correctAnswersCount * 30 * mult).round();
     }
-
     int maxCapSeconds = (_questionCount * 30 * mult).round();
 
     if (earnedSeconds > 0) {
       const platform = MethodChannel('brainlock.channel');
       try { 
-        await platform.invokeMethod('unlockApp', {
-          'seconds': earnedSeconds,
-          'maxCap': maxCapSeconds, 
-        }); 
+        await platform.invokeMethod('unlockApp', {'seconds': earnedSeconds, 'maxCap': maxCapSeconds}); 
       } catch (e) { 
         debugPrint("Chyba: $e"); 
       }
-      SystemNavigator.pop(); 
-    } else {
-      if (mounted) {
-        Navigator.of(context).pop();
-      }
     }
+    
+    SystemNavigator.pop();
   }
 
   // ==========================================
@@ -426,9 +563,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white, 
                   borderRadius: BorderRadius.circular(24), 
-                  boxShadow: const [
-                    BoxShadow(color: Colors.black26, blurRadius: 20, spreadRadius: 5)
-                  ],
+                  boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20, spreadRadius: 5)],
                 ),
                 child: _isLoading 
                     ? const SizedBox(height: 200, child: Center(child: CircularProgressIndicator(color: Colors.deepPurple))) 
@@ -438,19 +573,10 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
               if (isPractice) ...[
                 const SizedBox(height: 16),
                 TextButton.icon(
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: _closeOrExitScreen,
                   icon: const Icon(Icons.close_rounded, color: Colors.grey, size: 20),
-                  label: const Text(
-                    "Zrušiť test",
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                    ),
-                  ),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  ),
+                  label: const Text("Zrušiť test", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 15)),
+                  style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
                 ),
               ],
             ],
@@ -461,11 +587,9 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
   }
 
   Widget _buildContent() {
-    if (_isTestFinished) {
-      return _buildFinishedScreen();
-    }
+    if (_isTestFinished) return _buildFinishedScreen();
     
-    if (_isLearningMode) {
+    if (_isLearningMode || _isRemedialLearning) {
       if (_learningCardsQueue.isEmpty) return const Text("Žiadne kartičky v databáze!");
       return _buildLearningUI();
     } else {
@@ -502,12 +626,16 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     int s = earnedSeconds % 60;
     bool isPractice = widget.practiceDeckId != null;
 
+    String titleText = "Test Dokončený!";
+    if (_isRemedialQuiz) titleText = "Opravný test dokončený!";
+    else if (_isDoubleTest) titleText = "Double Test Dokončený!";
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(isSuccess ? Icons.emoji_events_rounded : Icons.sentiment_dissatisfied_rounded, size: 60, color: isSuccess ? Colors.amber : Colors.grey),
         const SizedBox(height: 16),
-        Text(_isDoubleTest ? "Double Test Dokončený!" : "Test Dokončený!", style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.deepPurple)),
+        Text(titleText, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.deepPurple), textAlign: TextAlign.center),
         const SizedBox(height: 16),
         Text("Úspešnosť: $_correctAnswersCount / ${_questionCount.toInt()}", style: const TextStyle(fontSize: 16)),
         Text("Požadovaný prah: $_requiredCorrectQuestions / ${_questionCount.toInt()}", style: const TextStyle(fontSize: 16, color: Colors.black54)),
@@ -528,7 +656,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     );
   }
 
-  // --- LEARNING UI ---
+  // --- LEARNING / REMEDIAL UI ---
   Widget _buildLearningUI() {
     final card = _learningCardsQueue.first;
     int currentIndex = _totalLearnedCards - _learningCardsQueue.length + 1;
@@ -536,16 +664,19 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (_isRemedialLearning)
+          Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+            decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(8)),
+            child: Text("POVINNÉ OPAKOVANIE ZA TREST", style: TextStyle(color: Colors.red.shade800, fontWeight: FontWeight.bold, fontSize: 12)),
+          ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                border: Border.all(color: Colors.orange, width: 2),
-                borderRadius: BorderRadius.circular(16),
-              ),
+              decoration: BoxDecoration(color: Colors.transparent, border: Border.all(color: Colors.orange, width: 2), borderRadius: BorderRadius.circular(16)),
               child: Text("${_failedCards.length}", style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 16)),
             ),
             Column(
@@ -557,29 +688,19 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                border: Border.all(color: Colors.green, width: 2),
-                borderRadius: BorderRadius.circular(16),
-              ),
+              decoration: BoxDecoration(color: Colors.transparent, border: Border.all(color: Colors.green, width: 2), borderRadius: BorderRadius.circular(16)),
               child: Text("$_masteredCount", style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16)),
             ),
           ],
         ),
         const SizedBox(height: 16),
-        LinearProgressIndicator(
-          value: currentIndex / _totalLearnedCards,
-          backgroundColor: Colors.grey.shade200,
-          color: Colors.deepPurple,
-        ),
+        LinearProgressIndicator(value: currentIndex / _totalLearnedCards, backgroundColor: Colors.grey.shade200, color: Colors.deepPurple),
         const SizedBox(height: 24),
 
         Dismissible(
           key: ValueKey('${card['id']}_$_learningRound'),
           direction: _isCardFlipped ? DismissDirection.horizontal : DismissDirection.none,
-          onDismissed: (direction) {
-            _handleLearningAnswer(direction == DismissDirection.startToEnd);
-          },
+          onDismissed: (direction) => _handleLearningAnswer(direction == DismissDirection.startToEnd),
           background: Container(
             alignment: Alignment.centerLeft,
             padding: const EdgeInsets.symmetric(horizontal: 30),
@@ -615,18 +736,12 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             },
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
-              transitionBuilder: (Widget child, Animation<double> animation) {
-                return ScaleTransition(scale: animation, child: child);
-              },
-              child: _isCardFlipped
-                  ? _buildCardBack(card)
-                  : _buildCardFront(card),
+              transitionBuilder: (Widget child, Animation<double> animation) => ScaleTransition(scale: animation, child: child),
+              child: _isCardFlipped ? _buildCardBack(card) : _buildCardFront(card),
             ),
           ),
         ),
-        
         const SizedBox(height: 24),
-        
         AnimatedOpacity(
           opacity: _isCardFlipped ? 1.0 : 0.0,
           duration: const Duration(milliseconds: 200),
@@ -636,10 +751,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
               Expanded(
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16), 
-                    backgroundColor: Colors.orange.shade50, 
-                    foregroundColor: Colors.orange, 
-                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 16), backgroundColor: Colors.orange.shade50, foregroundColor: Colors.orange, elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Colors.orange.shade200, width: 1.5))
                   ),
                   onPressed: _isCardFlipped ? () => _handleLearningAnswer(false) : null,
@@ -651,10 +763,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
               Expanded(
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16), 
-                    backgroundColor: Colors.green.shade50, 
-                    foregroundColor: Colors.green.shade800, 
-                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 16), backgroundColor: Colors.green.shade50, foregroundColor: Colors.green.shade800, elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Colors.green.shade300, width: 1.5))
                   ),
                   onPressed: _isCardFlipped ? () => _handleLearningAnswer(true) : null,
@@ -676,9 +785,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       height: MediaQuery.of(context).size.height * 0.40,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.deepPurple.shade100, width: 2),
+        color: Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.deepPurple.shade100, width: 2),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 15, spreadRadius: 2, offset: const Offset(0, 8))],
       ),
       child: Column(
@@ -688,7 +795,6 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             SvgPicture.asset(card['prompt'], height: 100, fit: BoxFit.contain)
           else
             Text(card['prompt'], textAlign: TextAlign.center, style: const TextStyle(fontSize: 24, color: Colors.black87, fontWeight: FontWeight.bold)),
-          
           const SizedBox(height: 40),
           const Text("Ťukni pre otočenie", style: TextStyle(color: Colors.grey, fontSize: 13, fontStyle: FontStyle.italic)),
         ],
@@ -703,9 +809,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       height: MediaQuery.of(context).size.height * 0.40,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.deepPurple.shade50,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.deepPurple, width: 2),
+        color: Colors.deepPurple.shade50, borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.deepPurple, width: 2),
         boxShadow: [BoxShadow(color: Colors.deepPurple.withOpacity(0.15), blurRadius: 15, spreadRadius: 2, offset: const Offset(0, 8))],
       ),
       child: Column(
@@ -715,9 +819,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             SvgPicture.asset(card['prompt'], height: 60, fit: BoxFit.contain)
           else
             Text(card['prompt'], textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: Colors.deepPurple.shade300, fontWeight: FontWeight.w600)),
-          
           const Padding(padding: EdgeInsets.symmetric(vertical: 24), child: Divider(color: Colors.deepPurple, thickness: 1)),
-          
           Text(card['correct_answer'], textAlign: TextAlign.center, style: const TextStyle(fontSize: 28, color: Colors.deepPurple, fontWeight: FontWeight.bold)),
         ],
       ),
@@ -741,18 +843,17 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       }
     }
 
+    String topTitleText = "Otázka ${_currentQuestionIndex + 1} z ${_questionCount.toInt()}";
+    if (_isRemedialQuiz) topTitleText = "Opravný test • Otázka ${_currentQuestionIndex + 1} z ${_questionCount.toInt()}";
+    else if (_isDoubleTest) topTitleText = "Kolo $_currentTestRound/2 • Otázka ${_currentQuestionIndex + 1} z ${_questionCount.toInt()}";
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              _isDoubleTest 
-                  ? "Kolo $_currentTestRound/2 • Otázka ${_currentQuestionIndex + 1} z ${_questionCount.toInt()}" 
-                  : "Otázka ${_currentQuestionIndex + 1} z ${_questionCount.toInt()}", 
-              style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.bold),
-            ),
+            Text(topTitleText, style: TextStyle(color: _isRemedialQuiz ? Colors.red.shade700 : Colors.black54, fontWeight: FontWeight.bold)),
             if (_maxTime > 0)
               Row(
                 children: [
@@ -764,7 +865,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
           ],
         ),
         const SizedBox(height: 16),
-        LinearProgressIndicator(value: (_currentQuestionIndex + 1) / _questionCount, backgroundColor: Colors.grey.shade200, color: Colors.deepPurple),
+        LinearProgressIndicator(value: (_currentQuestionIndex + 1) / _questionCount, backgroundColor: Colors.grey.shade200, color: _isRemedialQuiz ? Colors.redAccent : Colors.deepPurple),
         const SizedBox(height: 24),
         
         if (_currentQuestion!['prompt'].toString().endsWith('.svg'))

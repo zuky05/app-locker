@@ -7,15 +7,25 @@ import 'package:path/path.dart';
 import 'database_helper.dart';
 
 class AnkiImporter {
-  static Future<String> importApkg(int deckId) async {
+  static Future<String?> importApkgDirect() async {
     try {
-      final pickedFile = await FilePicker.pickFile();
-      
-      if (pickedFile == null || pickedFile.path == null) {
-        return "Zrušil si výber súboru.";
-      }
+      // 1. PickFiles vracia List<PlatformFile>?
+      final dynamic result = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['apkg'],
+      );
 
-      File file = File(pickedFile.path!);
+      // Ak používateľ zrušil výber alebo je zoznam prázdny
+      if (result == null) return null;
+
+      // Ak je result priamo List<PlatformFile>
+      List filesList = result is List ? result : (result.files ?? []);
+      if (filesList.isEmpty) return null;
+
+      final String? filePath = filesList.first.path;
+      if (filePath == null) return null;
+
+      File file = File(filePath);
       final bytes = file.readAsBytesSync();
       final archive = ZipDecoder().decodeBytes(bytes);
 
@@ -36,15 +46,19 @@ class AnkiImporter {
       Database ankiDb = await openDatabase(dbPath);
       final List<Map<String, dynamic>> notes = await ankiDb.query('notes');
 
-      if (notes.isEmpty) return "Databáza otvorená, ale tabuľka 'notes' je úplne prázdna!";
+      if (notes.isEmpty) {
+        await ankiDb.close();
+        await File(dbPath).delete();
+        return "Súbor neobsahuje žiadne kartičky (poznámky v Anki sú prázdne).";
+      }
 
-      int importedCount = 0;
+      // 2. Extrahujeme platné dvojice otázka/odpoveď
+      List<Map<String, String>> cardsToInsert = [];
 
       for (var note in notes) {
         String flds = note['flds'] as String;
         List<String> fields = flds.split('\x1f');
         
-        // INTELIGENTNÝ FILTER: Zozbiera iba polia, v ktorých reálne nejaký text je
         List<String> validTextParts = [];
         for (var field in fields) {
           String cleaned = _cleanText(field);
@@ -53,38 +67,40 @@ class AnkiImporter {
           }
         }
 
-        // Ak sme našli aspoň 2 časti s textom (štandardná karta)
         if (validTextParts.length >= 2) {
-          String prompt = validTextParts[0];
-          String answer = validTextParts[1];
-          await DatabaseHelper.instance.addNewCard(deckId, prompt, answer);
-          importedCount++;
-        } 
-        // Bonus: Ak karta mala len 1 jediný text (napríklad Cloze doplňovačky)
-        else if (validTextParts.length == 1) {
-          await DatabaseHelper.instance.addNewCard(deckId, validTextParts[0], "(Zisti z kontextu: ${validTextParts[0]})");
-          importedCount++;
+          cardsToInsert.add({'prompt': validTextParts[0], 'answer': validTextParts[1]});
+        } else if (validTextParts.length == 1) {
+          cardsToInsert.add({'prompt': validTextParts[0], 'answer': "(Zisti z kontextu: ${validTextParts[0]})"});
         }
       }
 
       await ankiDb.close();
       await File(dbPath).delete();
 
-      if (importedCount == 0) {
-        return "Našlo sa ${notes.length} poznámok, ale žiadna nedávala zmysel.";
+      if (cardsToInsert.isEmpty) {
+        return "Súbor obsahuje dáta, ale nepodarilo sa vyextrahovať žiadne textové kartičky.";
       }
 
-      return "🎉 ÚSPECH: Neskutočné! Podarilo sa pridať $importedCount kartičiek do tvojho balíčka!";
+      // 3. AŽ TERAZ vytvoríme balíček v databáze
+      String fileName = basenameWithoutExtension(file.path);
+      String deckName = fileName.isNotEmpty ? fileName : "Anki Import";
+      
+      int newDeckId = await DatabaseHelper.instance.addNewDeck(deckName, "Anki");
+
+      for (var card in cardsToInsert) {
+        await DatabaseHelper.instance.addNewCard(newDeckId, card['prompt']!, card['answer']!);
+      }
+
+      return "🎉 Balíček '$deckName' bol vytvorený so ${cardsToInsert.length} kartičkami!";
     } catch (e) {
-      return "⚠️ Výnimka: $e";
+      return "⚠️ Chyba pri importe: $e";
     }
   }
 
-  // Funkcia teraz čistí aj zbytočné medzery naviac, aby bol text dokonale pekný
   static String _cleanText(String text) {
     return text
-        .replaceAll(RegExp(r'<[^>]*>'), '') // Zmaže HTML (napr. <b>, <div>)
-        .replaceAll('&nbsp;', ' ')          // Nahradí HTML medzery
+        .replaceAll(RegExp(r'<[^>]*>'), '')
+        .replaceAll('&nbsp;', ' ')
         .trim();
   }
 }

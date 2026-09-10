@@ -7,13 +7,10 @@ import '../models/deck_model.dart';
 import 'deck_detail_screen.dart';
 import 'quiz_overlay_screen.dart';
 import 'quizlet_playground_screen.dart';
-import 'anki_playground_screen.dart';
-
+import '../services/anki_importer.dart';
 
 class DeckManagerScreen extends StatefulWidget {
   const DeckManagerScreen({super.key});
-
-
 
   @override
   State<DeckManagerScreen> createState() => _DeckManagerScreenState();
@@ -48,11 +45,29 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
   Future<void> _loadDecks() async {
     final loadedDecks = await DatabaseHelper.instance.getDecks();
     final prefs = await SharedPreferences.getInstance();
+    int? activeId = prefs.getInt('active_test_deck_id');
+
+    // SKONTROLUJEME, ČI JE AKTÍVNY BALÍČEK STÁLE PLATNÝ (MÁ ASPOŇ 5 KARTOČIEK)
+    if (activeId != null) {
+      final activeCardCount = await DatabaseHelper.instance.getCardCountForDeck(activeId);
+      if (activeCardCount < 5) {
+        await prefs.remove('active_test_deck_id');
+        activeId = null;
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Aktívny balíček bol odznačený, pretože má menej ako 5 kariet."),
+            ),
+          );
+        }
+      }
+    }
     
     setState(() {
       myDecks = loadedDecks.where((d) => d.isPremade == 0 || d.isPremade == false).toList();
       premadeDecks = loadedDecks.where((d) => d.isPremade == 1 || d.isPremade == true).toList();
-      activeBlockerDeckId = prefs.getInt('active_test_deck_id');
+      activeBlockerDeckId = activeId;
       isLoading = false;
     });
   }
@@ -70,6 +85,19 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
       default:
         return 'Pripravené kolekcie kartičiek pre rýchle učenie.';
     }
+  }
+
+  Future<void> _handleAnkiImport() async {
+    final String? result = await AnkiImporter.importApkgDirect();
+
+    if (result == null) return;
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(result)),
+    );
+
+    _loadDecks();
   }
 
   IconData _getCategoryIcon(String category) {
@@ -145,7 +173,6 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 1. Add new deck
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -164,7 +191,6 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
               ),
             ),
             const SizedBox(height: 12),
-            // 2. Import from Quizlet
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -177,16 +203,15 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                 onPressed: () {
                   Navigator.pop(context);
                   Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const QuizletPlaygroundScreen()),
-                            ).then((_) => DatabaseHelper.instance.getCustomDeckCount());
+                    context,
+                    MaterialPageRoute(builder: (context) => const QuizletPlaygroundScreen()),
+                  ).then((_) => _loadDecks());
                 },
                 icon: const Icon(Icons.school),
                 label: const Text("Import from Quizlet", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
             const SizedBox(height: 12),
-            // 3. Import from Anki
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -198,10 +223,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                 ),
                 onPressed: () {
                   Navigator.pop(context);
-                  Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => AnkiPlaygroundScreen()),
-                            ).then((_) =>  DatabaseHelper.instance.getCustomDeckCount());
+                  _handleAnkiImport();
                 },
                 icon: const Icon(Icons.upload_file),
                 label: const Text("Import from Anki", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
@@ -297,7 +319,6 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
               Navigator.pop(context);
               await DatabaseHelper.instance.removeDeck(deck.id!);
               
-              // Ak sme zmazali aktuálne aktívny balíček, resetujeme zámok
               if (activeBlockerDeckId == deck.id) {
                 final prefs = await SharedPreferences.getInstance();
                 await prefs.remove('active_test_deck_id');
@@ -337,17 +358,18 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     );
   }
 
-  // --- HLAVNÁ ZMENA: Čistá a spoločná karta pre všetky balíčky ---
   Widget _buildDeckCard(Deck deck) {
     final isExpanded = expandedDeckId == deck.id;
     final bool isCustom = deck.isPremade == 0 || deck.isPremade == false;
-    final bool isActive = activeBlockerDeckId == deck.id;
 
     return FutureBuilder<int>(
       future: DatabaseHelper.instance.getCardCountForDeck(deck.id!),
       builder: (context, snapshot) {
         final cardCount = snapshot.data ?? 0;
         final bool hasEnoughCards = cardCount >= 5;
+        
+        // BALÍČEK JE AKTÍVNY IBA VTDY, AK JE ULOŽENÝ V PREFS A SÚČASNE MÁ ASPOŇ 5 KARTOČIEK
+        final bool isActive = (activeBlockerDeckId == deck.id) && hasEnoughCards;
 
         return Card(
           elevation: isActive ? 4 : 2,
@@ -411,7 +433,6 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                       const Divider(height: 1),
                       const SizedBox(height: 10),
                       
-                      // Prvý riadok akcií (Spoločný pre predpripravené aj vlastné)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
@@ -451,7 +472,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                                 MaterialPageRoute(builder: (context) => QuizOverlayScreen(practiceDeckId: deck.id)),
                               ) : () {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text("Na spustenie testu musíte mať aspoň 4 karty.")),
+                                  const SnackBar(content: Text("Na spustenie testu musíte mať aspoň 5 kariet.")),
                                 );
                               },
                             ),
@@ -484,7 +505,6 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                         ],
                       ),
                       
-                      // Druhý riadok akcií (Iba pre vlastné balíčky)
                       if (isCustom) ...[
                         const SizedBox(height: 8),
                         Row(
@@ -497,7 +517,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                               onTap: () => Navigator.push(
                                 context,
                                 MaterialPageRoute(builder: (context) => DeckDetailScreen(deck: deck)),
-                              ).then((_) => _loadDecks()),
+                              ).then((_) => _loadDecks()), // <--- TUTO sa pri návrate zavolá _loadDecks() a validuje počet
                             ),
                             _buildActionButton(
                               icon: Icons.edit,

@@ -41,6 +41,8 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
   bool _isSecondChance = false;
   bool _isConfusion = false;
   bool _isHardcore = false;
+  bool _isDoubleTest = false;
+  int _currentTestRound = 1;
   bool _usedSecondChanceThisQuestion = false;
 
   Timer? _timer;
@@ -50,8 +52,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
 
   final List<int> _timeLimitsInSeconds = [0, 30, 25, 20, 15, 10];
   final List<double> _timeMultipliers = [1.0, 1.1, 1.2, 1.3, 1.4, 1.5];
-  final List<double> _lockoutThresholds = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0];
-  final List<double> _lockoutMultipliers = [0.6, 0.8, 1.0, 1.1, 1.15, 1.2, 1.25, 1.35];
+  final List<double> _lockoutPercentages = [0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 1.00];
 
   // --- STAV PRE LEARNING MODE ---
   List<Map<String, dynamic>> _learningCardsQueue = [];
@@ -96,6 +97,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
         _is3Options = _isHardcore ? false : (prefs.getBool('test_is3Options') ?? false);
         _isConfusion = _isHardcore ? false : (prefs.getBool('test_isConfusion') ?? false);
         _isSecondChance = prefs.getBool('test_isSecondChance') ?? false;
+        _isDoubleTest = prefs.getBool('test_isDoubleTest') ?? false;
         _maxTime = _timeLimitsInSeconds[_timeLimitIndex.toInt()];
       }
     });
@@ -107,6 +109,32 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     }
   }
 
+  // --- VÝPOČET DYNAMICKÉHO LOCKOUT NÁSOBIČA ---
+  int get _requiredCorrectQuestions {
+    double targetPct = _lockoutPercentages[_lockoutIndex.toInt()];
+    return (targetPct * _questionCount).round();
+  }
+
+  double get _effectiveLockoutMultiplier {
+    double realRatio = _requiredCorrectQuestions / _questionCount;
+    double mult = 1.0 + (realRatio - 0.5);
+    if (mult < 0.6) return 0.6;
+    if (mult > 1.5) return 1.5;
+    return mult;
+  }
+
+  double get _calculatedTotalMultiplier {
+    double mult = 1.0;
+    mult *= _timeMultipliers[_timeLimitIndex.toInt()];
+    mult *= _effectiveLockoutMultiplier;
+    if (_is3Options && !_isHardcore) mult *= 0.7;
+    if (_isSecondChance) mult *= 0.8;
+    if (_isConfusion && !_isHardcore) mult *= 1.1;
+    if (_isHardcore) mult *= 1.5;
+    if (_isDoubleTest) mult *= 1.75;
+    return mult;
+  }
+
   // ==========================================
   //         LOGIKA PRE LEARNING MODE
   // ==========================================
@@ -114,10 +142,8 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
   Future<void> _startLearningMode() async {
     setState(() => _isLoading = true);
     
-    // Zoznam ID, ktoré už máme v tejto relácii načítané, aby sa vylúčili z opätovného ťahania
     final List<int> excludedLearningIds = [];
 
-    // Ak chceme napr. natiahnuť karty z databázy
     final cards = await DatabaseHelper.instance.getLearningCards(
       _learnCardCount.toInt(), 
       deckId: _activeDeckId,
@@ -127,7 +153,6 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     setState(() {
       _learningCardsQueue = List<Map<String, dynamic>>.from(cards);
       
-      // Pridáme natiahnuté ID-čká do vylúčených pre prípadné ďalšie dávky
       for (var card in cards) {
         if (card['id'] != null) {
           excludedLearningIds.add(card['id'] as int);
@@ -140,11 +165,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       _learningRound = 1;
       _isCardFlipped = false;
       _isLoading = false;
-      if (_learningCardsQueue.isEmpty) {
-        _isTestFinished = true;
-      } else {
-        _isTestFinished = false;
-      }
+      _isTestFinished = _learningCardsQueue.isEmpty;
     });
   }
 
@@ -192,8 +213,9 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     });
 
     final questionData = await DatabaseHelper.instance.getRandomQuizQuestion(
-    deckId: _activeDeckId, 
-    excludeCardIds: _excludedCardIds,);
+      deckId: _activeDeckId, 
+      excludeCardIds: _excludedCardIds,
+    );
     
     if (questionData == null) {
       setState(() { _currentQuestion = null; _isLoading = false; });
@@ -271,7 +293,9 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
 
       if (_isSecondChance && !_usedSecondChanceThisQuestion) {
         setState(() { _usedSecondChanceThisQuestion = true; _hideCorrectAnswer = true; });
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Druhá šanca! Skús znova.'), backgroundColor: Colors.orange, duration: Duration(seconds: 2)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Druhá šanca! Skús znova.'), backgroundColor: Colors.orange, duration: Duration(seconds: 2))
+        );
         await Future.delayed(const Duration(milliseconds: 1500));
         if (!mounted) return;
         setState(() { _isAnswerChecked = false; _selectedAnswer = null; _hideCorrectAnswer = false; _hardcoreController.clear(); });
@@ -285,10 +309,46 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     }
   }
 
+  void _triggerFailureVibration() {
+    if (_isVibrationEnabled) {
+      // Dlhšie zavibrovanie pri celkovom zlyhaní testu
+      HapticFeedback.vibrate();
+      Future.delayed(const Duration(milliseconds: 200), () {
+        HapticFeedback.vibrate();
+      });
+    }
+  }
+
   void _proceedToNextQuiz() {
     _currentQuestionIndex++;
     if (_currentQuestionIndex >= _questionCount.toInt()) {
-      setState(() => _isTestFinished = true);
+      bool passed = _correctAnswersCount >= _requiredCorrectQuestions;
+
+      // Ak bol zapnutý Double Test a úspešne spravil 1. kolo:
+      if (_isDoubleTest && _currentTestRound == 1 && passed) {
+        setState(() {
+          _currentTestRound = 2;
+          _currentQuestionIndex = 0;
+          _correctAnswersCount = 0;
+          _excludedCardIds.clear();
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("1. kolo zvládnuté! Teraz dokonči 2. kolo."),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 3),
+          ),
+        );
+
+        _loadNextQuizQuestion();
+      } else {
+        // Ak neprešiel celým testom, zavibrujeme na neúspech
+        if (!passed) {
+          _triggerFailureVibration();
+        }
+        setState(() => _isTestFinished = true);
+      }
     } else {
       _loadNextQuizQuestion();
     }
@@ -304,10 +364,9 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
 
     if (_isLearningMode) {
       int earnedSeconds = (_learnInterval * 60).round();
-      int maxCapSeconds = earnedSeconds; // Pre learning mode je cap rovný intervalu
+      int maxCapSeconds = earnedSeconds;
       const platform = MethodChannel('brainlock.channel');
       try { 
-        // POŠLEME AJ MAXCAP
         await platform.invokeMethod('unlockApp', {'seconds': earnedSeconds, 'maxCap': maxCapSeconds}); 
       } catch (e) { 
         debugPrint("Chyba pri odomykaní: $e"); 
@@ -316,29 +375,19 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       return;
     }
 
-    double mult = 1.0;
-    mult *= _timeMultipliers[_timeLimitIndex.toInt()];
-    mult *= _lockoutMultipliers[_lockoutIndex.toInt()];
-    if (_is3Options && !_isHardcore) mult *= 0.7;
-    if (_isSecondChance) mult *= 0.8;
-    if (_isConfusion && !_isHardcore) mult *= 1.1;
-    if (_isHardcore) mult *= 1.5;
-
-    double successRate = _correctAnswersCount / _questionCount;
-    double requiredRate = _lockoutThresholds[_lockoutIndex.toInt()];
+    double mult = _calculatedTotalMultiplier;
+    bool isSuccess = _correctAnswersCount >= _requiredCorrectQuestions;
 
     int earnedSeconds = 0;
-    if (successRate >= requiredRate) {
+    if (isSuccess) {
       earnedSeconds = (_correctAnswersCount * 30 * mult).round();
     }
 
-    // --- TU VYPOČÍTAME ABSOLÚTNY STROP (100% úspešnosť) ---
     int maxCapSeconds = (_questionCount * 30 * mult).round();
 
     if (earnedSeconds > 0) {
       const platform = MethodChannel('brainlock.channel');
       try { 
-        // POŠLEME OBA PARAMETRE DO KOTLINU
         await platform.invokeMethod('unlockApp', {
           'seconds': earnedSeconds,
           'maxCap': maxCapSeconds, 
@@ -355,7 +404,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
   }
 
   // ==========================================
-  //                   UI
+  //                  UI
   // ==========================================
 
   @override
@@ -371,7 +420,6 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // 1. HLAVNÁ KARTA S TESTOM / LEARNINGOM
               Container(
                 width: MediaQuery.of(context).size.width * 0.9,
                 padding: const EdgeInsets.all(24),
@@ -387,7 +435,6 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                     : _buildContent(),
               ),
 
-              // 2. TLAČIDLO "ZRUŠIŤ TEST" POD KARTOU (Iba pre tréning z appky)
               if (isPractice) ...[
                 const SizedBox(height: 16),
                 TextButton.icon(
@@ -447,17 +494,8 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       );
     }
 
-    double successRate = _correctAnswersCount / _questionCount;
-    double requiredRate = _lockoutThresholds[_lockoutIndex.toInt()];
-    bool isSuccess = successRate >= requiredRate;
-
-    double mult = 1.0;
-    mult *= _timeMultipliers[_timeLimitIndex.toInt()];
-    mult *= _lockoutMultipliers[_lockoutIndex.toInt()];
-    if (_is3Options && !_isHardcore) mult *= 0.7;
-    if (_isSecondChance) mult *= 0.8;
-    if (_isConfusion && !_isHardcore) mult *= 1.1;
-    if (_isHardcore) mult *= 1.5;
+    bool isSuccess = _correctAnswersCount >= _requiredCorrectQuestions;
+    double mult = _calculatedTotalMultiplier;
     
     int earnedSeconds = isSuccess ? (_correctAnswersCount * 30 * mult).round() : 0;
     int m = earnedSeconds ~/ 60;
@@ -469,10 +507,10 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       children: [
         Icon(isSuccess ? Icons.emoji_events_rounded : Icons.sentiment_dissatisfied_rounded, size: 60, color: isSuccess ? Colors.amber : Colors.grey),
         const SizedBox(height: 16),
-        const Text("Test Dokončený!", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.deepPurple)),
+        Text(_isDoubleTest ? "Double Test Dokončený!" : "Test Dokončený!", style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.deepPurple)),
         const SizedBox(height: 16),
-        Text("Úspešnosť: $_correctAnswersCount / ${_questionCount.toInt()} (${(successRate * 100).toInt()}%)", style: const TextStyle(fontSize: 16)),
-        Text("Lockout Prah: ${(requiredRate * 100).toInt()}%", style: const TextStyle(fontSize: 16, color: Colors.black54)),
+        Text("Úspešnosť: $_correctAnswersCount / ${_questionCount.toInt()}", style: const TextStyle(fontSize: 16)),
+        Text("Požadovaný prah: $_requiredCorrectQuestions / ${_questionCount.toInt()}", style: const TextStyle(fontSize: 16, color: Colors.black54)),
         const SizedBox(height: 20),
         Container(
           padding: const EdgeInsets.all(16),
@@ -490,7 +528,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     );
   }
 
-  // --- LEARNING UI (QUIZLET ŠTÝL) ---
+  // --- LEARNING UI ---
   Widget _buildLearningUI() {
     final card = _learningCardsQueue.first;
     int currentIndex = _totalLearnedCards - _learningCardsQueue.length + 1;
@@ -709,7 +747,12 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text("Otázka ${_currentQuestionIndex + 1} z ${_questionCount.toInt()}", style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
+            Text(
+              _isDoubleTest 
+                  ? "Kolo $_currentTestRound/2 • Otázka ${_currentQuestionIndex + 1} z ${_questionCount.toInt()}" 
+                  : "Otázka ${_currentQuestionIndex + 1} z ${_questionCount.toInt()}", 
+              style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.bold),
+            ),
             if (_maxTime > 0)
               Row(
                 children: [

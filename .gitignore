@@ -12,6 +12,8 @@
 .swiftpm/
 migrate_working_dir/
 projekt_kod.txt
+all_project_files.txt
+all_code.txt
 
 # IntelliJ related
 *.iml

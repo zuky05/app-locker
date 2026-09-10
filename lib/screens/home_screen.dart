@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'deck_manager_screen.dart';
 import 'app_selector_screen.dart';
 import 'quizlet_playground_screen.dart';
-import 'anki_playground_screen.dart';
 import '../services/database_helper.dart';
+import '../services/anki_importer.dart';
 import 'settings_screen.dart';
 import 'test_setup_screen.dart';
 
@@ -38,6 +38,20 @@ class _HomeScreenState extends State<HomeScreen> {
       customDeckCount = count;
       isLoading = false;
     });
+  }
+
+  // Priamy import Anki balíčka bez otvárania medziobrazoviek
+  Future<void> _handleAnkiImport() async {
+    final String? result = await AnkiImporter.importApkgDirect();
+
+    if (result == null) return; // Používateľ zrušil výber
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(result)),
+    );
+
+    _checkDeckCount(); // Obnovíme stav počtu vlastných balíčkov
   }
 
   void _showPremiumDialog() {
@@ -132,12 +146,12 @@ class _HomeScreenState extends State<HomeScreen> {
       // STICKY BOTTOM BAR (Kotva na spodku pre Quick Import)
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: bgColor, // Splýva s pozadím, ale zostáva dole
+          color: bgColor,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.03),
               blurRadius: 10,
-              offset: const Offset(0, -5), // Jemný tieň smerom hore
+              offset: const Offset(0, -5),
             ),
           ],
         ),
@@ -145,7 +159,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Padding(
             padding: const EdgeInsets.only(left: 20.0, right: 20.0, bottom: 16.0, top: 12.0),
             child: Column(
-              mainAxisSize: MainAxisSize.min, // Zaberá len toľko miesta, koľko musí
+              mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
                   'QUICK IMPORT',
@@ -188,10 +202,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           if (isLimitReached) {
                             _showPremiumDialog();
                           } else {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => AnkiPlaygroundScreen()),
-                            ).then((_) => _checkDeckCount());
+                            _handleAnkiImport();
                           }
                         },
                       ),
@@ -212,19 +223,19 @@ class _HomeScreenState extends State<HomeScreen> {
               physics: const BouncingScrollPhysics(),
               children: [
                 
-                // 1. DAILY GOAL (Dashboard - Zväčšený!)
+                // 1. DAILY GOAL
                 Container(
-                  height: 260, // Pevne daná, oveľa väčšia výška
+                  height: 260,
                   padding: const EdgeInsets.all(24),
                   decoration: _cardDecoration(),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center, // Vycentruje obsah dnu
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Text(
                         'DAILY GOAL',
                         style: TextStyle(
                           color: secondaryText,
-                          fontSize: 14, // Zväčšený text
+                          fontSize: 14,
                           letterSpacing: 1.2,
                           fontWeight: FontWeight.w700,
                         ),
@@ -233,7 +244,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: const [
-                          Text('🔥', style: TextStyle(fontSize: 52)), // Zväčšený oheň
+                          Text('🔥', style: TextStyle(fontSize: 52)),
                           SizedBox(width: 16),
                           Text(
                             '15 / 20\nCards',
@@ -241,7 +252,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             style: TextStyle(
                               color: primaryText,
                               fontWeight: FontWeight.bold,
-                              fontSize: 24, // Zväčšené čísla
+                              fontSize: 24,
                               height: 1.1,
                             ),
                           ),
@@ -252,7 +263,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         borderRadius: BorderRadius.circular(12),
                         child: const LinearProgressIndicator(
                           value: 15 / 20,
-                          minHeight: 12, // Tučnejší progress bar
+                          minHeight: 12,
                           backgroundColor: Color(0xFFE5E0D5),
                           valueColor: AlwaysStoppedAnimation<Color>(deepPurple),
                         ),
@@ -305,7 +316,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 const SizedBox(height: 16),
 
-                // 3. DECKS (Jeden veľký spojený button)
+                // 3. DECKS
                 InkWell(
                   onTap: () async {
                     await Navigator.push(
@@ -338,7 +349,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 const SizedBox(height: 16),
 
-                // 4. TEST SETUP & BLOCKED APPS (2 vedľa seba)
+                // 4. TEST SETUP & BLOCKED APPS
                 Row(
                   children: [
                     Expanded(
@@ -366,7 +377,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
 
-                // Na spodok ListView už nepridávame Quick import, je zakotvený v bottomNavigationBar
                 const SizedBox(height: 24),
               ],
             ),
@@ -377,11 +387,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   BoxDecoration _cardDecoration({double radius = 20}) {
     return BoxDecoration(
-      color: cardColor, // Čistá biela!
+      color: cardColor,
       borderRadius: BorderRadius.circular(radius),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(0.08), // Výraznejší tieň pre lepší 3D efekt
+          color: Colors.black.withOpacity(0.08),
           blurRadius: 16,
           offset: const Offset(0, 6),
         ),
@@ -398,7 +408,7 @@ class _HomeScreenState extends State<HomeScreen> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: Container(
-        height: 125, // Kúsok som ich natiahol do výšky
+        height: 125,
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: _cardDecoration(),
         child: Column(
@@ -433,13 +443,13 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Opacity(
         opacity: isLocked ? 0.65 : 1.0,
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16), // Zväčšený padding
+          padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
             color: isLocked ? Colors.grey.shade200 : cardColor,
             borderRadius: BorderRadius.circular(16),
             border: isLocked ? Border.all(color: goldAccent, width: 1.5) : null,
             boxShadow: isLocked
-                ? [] 
+                ? []
                 : [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.06),

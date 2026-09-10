@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/database_helper.dart';
+import 'deck_manager_screen.dart';
 
 class TestSetupScreen extends StatefulWidget {
   const TestSetupScreen({super.key});
@@ -21,24 +23,28 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
 
   SharedPreferences? _prefs;
   bool _isLoading = true;
+  int? _activeDeckId;
+  int _availableCardCount = 10;
 
   // --- STAV PRE KVÍZ ---
   double _questionCount = 10;
   double _timeLimitIndex = 0;
   final List<String> _timeLabels = ["Bez limitu", "30 s", "25 s", "20 s", "15 s", "10 s"];
   final List<double> _timeMultipliers = [1.0, 1.1, 1.2, 1.3, 1.4, 1.5];
+  
   double _lockoutIndex = 2;
-  final List<String> _lockoutLabels = ["30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%"];
-  final List<double> _lockoutMultipliers = [0.6, 0.8, 1.0, 1.1, 1.15, 1.2, 1.25, 1.35];
+  final List<double> _lockoutPercentages = [0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 1.00];
+
   bool _is3Options = false;
   bool _isSecondChance = false;
   bool _isConfusion = false;
   bool _isHardcore = false;
+  bool _isDoubleTest = false; // <-- Nový modifikátor pre Double Test
 
   // --- STAV PRE LEARNING MODE ---
   bool _isLearningMode = false;
   double _learnCardCount = 10;
-  double _learnInterval = 1; // v minútach (1 až 5)
+  double _learnInterval = 1;
   bool _learnRepeat = true;
 
   @override
@@ -49,18 +55,45 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
 
   Future<void> _loadSettings() async {
     _prefs = await SharedPreferences.getInstance();
+    
+    final activeDeckId = _prefs!.getInt('active_test_deck_id');
+    _activeDeckId = activeDeckId;
+
+    if (activeDeckId != null) {
+      final cardCount = await DatabaseHelper.instance.getCardCountForDeck(activeDeckId);
+      if (cardCount >= 5) {
+        _availableCardCount = cardCount;
+      } else {
+        _activeDeckId = null;
+        await _prefs!.remove('active_test_deck_id');
+      }
+    }
+
+    double savedQuestions = _prefs!.getDouble('test_questionCount') ?? 10;
+    double savedLearnCards = _prefs!.getDouble('test_learnCardCount') ?? 10;
+
+    double maxQuestions = _availableCardCount < 10 ? _availableCardCount.toDouble() : 10;
+    if (maxQuestions < 3) maxQuestions = 3;
+    if (savedQuestions > maxQuestions) savedQuestions = maxQuestions;
+
+    double maxLearnCards = _availableCardCount < 20 ? _availableCardCount.toDouble() : 20;
+    if (maxLearnCards < 5) maxLearnCards = 5;
+    if (savedLearnCards > maxLearnCards) savedLearnCards = maxLearnCards;
+    if (savedLearnCards < 5) savedLearnCards = 5;
+
     setState(() {
-      _questionCount = _prefs!.getDouble('test_questionCount') ?? 10;
+      _questionCount = savedQuestions;
+      _learnCardCount = savedLearnCards;
+      
       _timeLimitIndex = _prefs!.getDouble('test_timeLimitIndex') ?? 0;
       _lockoutIndex = _prefs!.getDouble('test_lockoutIndex') ?? 2;
       _is3Options = _prefs!.getBool('test_is3Options') ?? false;
       _isSecondChance = _prefs!.getBool('test_isSecondChance') ?? false;
       _isConfusion = _prefs!.getBool('test_isConfusion') ?? false;
       _isHardcore = _prefs!.getBool('test_isHardcore') ?? false;
+      _isDoubleTest = _prefs!.getBool('test_isDoubleTest') ?? false; // Načítanie stavu
 
-      // Načítanie Learning Mode vecí
       _isLearningMode = _prefs!.getBool('test_isLearningMode') ?? false;
-      _learnCardCount = _prefs!.getDouble('test_learnCardCount') ?? 10;
       _learnInterval = _prefs!.getDouble('test_learnInterval') ?? 1;
       _learnRepeat = _prefs!.getBool('test_learnRepeat') ?? true;
 
@@ -71,14 +104,33 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
   void _saveDouble(String key, double value) => _prefs?.setDouble(key, value);
   void _saveBool(String key, bool value) => _prefs?.setBool(key, value);
 
+  // --- REÁLNE VYPOČÍTANÉ HODNOTY PRE LOCKOUT ---
+  int get _requiredCorrectQuestions {
+    double targetPct = _lockoutPercentages[_lockoutIndex.toInt()];
+    return (targetPct * _questionCount).round();
+  }
+
+  double get _effectiveLockoutMultiplier {
+    double realRatio = _requiredCorrectQuestions / _questionCount;
+    
+    // 50% -> 1.0x | 100% -> 1.5x
+    double mult = 1.0 + (realRatio - 0.5);
+    
+    if (mult < 0.6) return 0.6;
+    if (mult > 1.5) return 1.5;
+    
+    return mult;
+  }
+
   double get _currentMultiplier {
     double mult = 1.0;
     mult *= _timeMultipliers[_timeLimitIndex.toInt()];
-    mult *= _lockoutMultipliers[_lockoutIndex.toInt()];
+    mult *= _effectiveLockoutMultiplier;
     if (_is3Options && !_isHardcore) mult *= 0.7;
     if (_isSecondChance) mult *= 0.8;
     if (_isConfusion && !_isHardcore) mult *= 1.1;
     if (_isHardcore) mult *= 1.5;
+    if (_isDoubleTest) mult *= 1.75; // <-- Zapracovaný Double Test násobič
     return mult;
   }
 
@@ -98,6 +150,27 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
       return const Scaffold(backgroundColor: bgColor, body: Center(child: CircularProgressIndicator(color: deepPurple)));
     }
 
+    double maxQuestions = _availableCardCount < 10 ? _availableCardCount.toDouble() : 10;
+    double minQuestions = 3;
+    if (maxQuestions < minQuestions) maxQuestions = minQuestions;
+    
+    int questionDivisions = (maxQuestions - minQuestions).toInt();
+    if (questionDivisions <= 0) questionDivisions = 1;
+
+    double maxLearnCards = _availableCardCount < 20 ? _availableCardCount.toDouble() : 20;
+    double minLearnCards = 5;
+    if (maxLearnCards < minLearnCards) maxLearnCards = minLearnCards;
+
+    int learnDivisions = (maxLearnCards - minLearnCards).toInt();
+    if (learnDivisions <= 0) learnDivisions = 1;
+
+    double currentLearnValue = _learnCardCount;
+    if (currentLearnValue > maxLearnCards) currentLearnValue = maxLearnCards;
+    if (currentLearnValue < minLearnCards) currentLearnValue = minLearnCards;
+
+    int targetPctInt = (_lockoutPercentages[_lockoutIndex.toInt()] * 100).round();
+    String lockoutLabel = "$targetPctInt% (min. $_requiredCorrectQuestions / ${_questionCount.toInt()})";
+
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
@@ -110,9 +183,54 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
       ),
       body: Column(
         children: [
-          // ZÁKLADNÝ PREPÍNAČ (Learning Mode)
+          if (_activeDeckId == null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: InkWell(
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const DeckManagerScreen()),
+                  );
+                  _loadSettings();
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: negativeRed.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: negativeRed, width: 1.5),
+                  ),
+                  child: Row(
+                    children: const [
+                      Icon(Icons.warning_amber_rounded, color: negativeRed, size: 28),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Nemáš vybraný žiadny balíček!",
+                              style: TextStyle(color: negativeRed, fontWeight: FontWeight.bold, fontSize: 14),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              "Klikni sem pre výber aktívneho balíčka (min. 5 kariet).",
+                              style: TextStyle(color: primaryText, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.arrow_forward_ios_rounded, color: negativeRed, size: 16),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             child: _buildSwitchCard(
               title: 'Learning Mode',
               subtitle: _isLearningMode ? 'Zamerané na opakovanie a učenie sa.' : 'Zamerané na výkon a získavanie času.',
@@ -127,7 +245,6 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
             ),
           ),
 
-          // AK JE LEARNING MODE VYPÚTNÝ -> UKÁŽ KVÍZ
           if (!_isLearningMode) ...[
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -175,32 +292,121 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                 children: [
                   const Text('ZÁKLADNÉ NASTAVENIA KVÍZU', style: TextStyle(color: secondaryText, fontSize: 13, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
-                  _buildSliderCard(title: 'Počet otázok', valueLabel: '${_questionCount.toInt()} otázok', value: _questionCount, min: 3, max: 10, divisions: 7, onChanged: (val) { setState(() => _questionCount = val); _saveDouble('test_questionCount', val); }),
+                  _buildSliderCard(
+                    title: 'Počet otázok', 
+                    valueLabel: '${_questionCount.toInt()} otázok', 
+                    value: _questionCount, 
+                    min: minQuestions, 
+                    max: maxQuestions, 
+                    divisions: questionDivisions, 
+                    onChanged: (val) { 
+                      setState(() => _questionCount = val); 
+                      _saveDouble('test_questionCount', val); 
+                    },
+                  ),
                   const SizedBox(height: 12),
-                  _buildSliderCard(title: 'Časový limit na otázku', valueLabel: _timeLabels[_timeLimitIndex.toInt()], multiplier: _timeMultipliers[_timeLimitIndex.toInt()], value: _timeLimitIndex, min: 0, max: 5, divisions: 5, onChanged: (val) { setState(() => _timeLimitIndex = val); _saveDouble('test_timeLimitIndex', val); }),
+                  _buildSliderCard(
+                    title: 'Časový limit na otázku', 
+                    valueLabel: _timeLabels[_timeLimitIndex.toInt()], 
+                    multiplier: _timeMultipliers[_timeLimitIndex.toInt()], 
+                    value: _timeLimitIndex, 
+                    min: 0, 
+                    max: 5, 
+                    divisions: 5, 
+                    onChanged: (val) { 
+                      setState(() => _timeLimitIndex = val); 
+                      _saveDouble('test_timeLimitIndex', val); 
+                    },
+                  ),
                   const SizedBox(height: 12),
-                  _buildSliderCard(title: 'Lockout Prah (Min. úspešnosť)', valueLabel: _lockoutLabels[_lockoutIndex.toInt()], multiplier: _lockoutMultipliers[_lockoutIndex.toInt()], value: _lockoutIndex, min: 0, max: 7, divisions: 7, onChanged: (val) { setState(() => _lockoutIndex = val); _saveDouble('test_lockoutIndex', val); }),
+                  _buildSliderCard(
+                    title: 'Lockout Prah (Min. úspešnosť)', 
+                    valueLabel: lockoutLabel, 
+                    multiplier: double.parse(_effectiveLockoutMultiplier.toStringAsFixed(2)), 
+                    value: _lockoutIndex, 
+                    min: 0, 
+                    max: 7, 
+                    divisions: 7, 
+                    onChanged: (val) { 
+                      setState(() => _lockoutIndex = val); 
+                      _saveDouble('test_lockoutIndex', val); 
+                    },
+                  ),
                   const SizedBox(height: 24),
                   const Text('MODIFIKÁTORY', style: TextStyle(color: secondaryText, fontSize: 13, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
-                  _buildSwitchCard(title: '3 Možnosti', subtitle: 'O jednu nesprávnu odpoveď menej.', multiplier: 0.7, value: _is3Options, isDisabled: _isHardcore, onChanged: (val) { setState(() => _is3Options = val); _saveBool('test_is3Options', val); }),
+                  _buildSwitchCard(
+                    title: '3 Možnosti', 
+                    subtitle: 'O jednu nesprávnu odpoveď menej.', 
+                    multiplier: 0.7, 
+                    value: _is3Options, 
+                    isDisabled: _isHardcore, 
+                    onChanged: (val) { 
+                      setState(() => _is3Options = val); 
+                      _saveBool('test_is3Options', val); 
+                    },
+                  ),
                   const SizedBox(height: 12),
-                  _buildSwitchCard(title: 'Druhá šanca', subtitle: 'Prvá nesprávna odpoveď sa ti odpustí.', multiplier: 0.8, value: _isSecondChance, onChanged: (val) { setState(() => _isSecondChance = val); _saveBool('test_isSecondChance', val); }),
+                  _buildSwitchCard(
+                    title: 'Druhá šanca', 
+                    subtitle: 'Prvá nesprávna odpoveď sa ti odpustí.', 
+                    multiplier: 0.8, 
+                    value: _isSecondChance, 
+                    onChanged: (val) { 
+                      setState(() => _isSecondChance = val); 
+                      _saveBool('test_isSecondChance', val); 
+                    },
+                  ),
                   const SizedBox(height: 12),
-                  _buildSwitchCard(title: 'Confusion', subtitle: 'Pridaná možnosť "Žiadna z odpovedí".', multiplier: 1.1, value: _isConfusion, isDisabled: _isHardcore, onChanged: (val) { setState(() => _isConfusion = val); _saveBool('test_isConfusion', val); }),
+                  _buildSwitchCard(
+                    title: 'Confusion', 
+                    subtitle: 'Pridaná možnosť "Žiadna z odpovedí".', 
+                    multiplier: 1.1, 
+                    value: _isConfusion, 
+                    isDisabled: _isHardcore, 
+                    onChanged: (val) { 
+                      setState(() => _isConfusion = val); 
+                      _saveBool('test_isConfusion', val); 
+                    },
+                  ),
                   const SizedBox(height: 12),
-                  _buildSwitchCard(title: 'Hardcore (Write-in)', subtitle: 'Bez možností. Odpoveď musíš ručne napísať.', multiplier: 1.5, value: _isHardcore, isGold: true, onChanged: (val) {
-                    setState(() {
-                      _isHardcore = val;
-                      _saveBool('test_isHardcore', val);
-                      if (_isHardcore) { _is3Options = false; _isConfusion = false; _saveBool('test_is3Options', false); _saveBool('test_isConfusion', false); }
-                    });
-                  }),
+                  _buildSwitchCard(
+                    title: 'Double Test', 
+                    subtitle: 'Musíš zvládnuť 2 testy po sebe. Odmenu dostaneš až po druhom.', 
+                    multiplier: 1.75, 
+                    value: _isDoubleTest, 
+                    isGold: true,
+                    onChanged: (val) { 
+                      setState(() {
+                        _isDoubleTest = val;
+                        _saveBool('test_isDoubleTest', val);
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _buildSwitchCard(
+                    title: 'Hardcore (Write-in)', 
+                    subtitle: 'Bez možností. Odpoveď musíš ručne napísať.', 
+                    multiplier: 1.5, 
+                    value: _isHardcore, 
+                    isGold: true, 
+                    onChanged: (val) {
+                      setState(() {
+                        _isHardcore = val;
+                        _saveBool('test_isHardcore', val);
+                        if (_isHardcore) { 
+                          _is3Options = false; 
+                          _isConfusion = false; 
+                          _saveBool('test_is3Options', false); 
+                          _saveBool('test_isConfusion', false); 
+                        }
+                      });
+                    },
+                  ),
                 ],
               ),
             ),
           ] 
-          // AK JE LEARNING MODE ZAPNUTÝ -> UKÁŽ UČIACE NASTAVENIA
           else ...[
             Expanded(
               child: ListView(
@@ -211,10 +417,15 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                   const SizedBox(height: 12),
                   _buildSliderCard(
                     title: 'Počet kartičiek v dávke',
-                    valueLabel: '${_learnCardCount.toInt()} kartičiek',
-                    value: _learnCardCount,
-                    min: 5, max: 20, divisions: 15,
-                    onChanged: (val) { setState(() => _learnCardCount = val); _saveDouble('test_learnCardCount', val); },
+                    valueLabel: '${currentLearnValue.toInt()} kartičiek',
+                    value: currentLearnValue,
+                    min: minLearnCards, 
+                    max: maxLearnCards, 
+                    divisions: learnDivisions,
+                    onChanged: (val) { 
+                      setState(() => _learnCardCount = val); 
+                      _saveDouble('test_learnCardCount', val); 
+                    },
                   ),
                   const SizedBox(height: 12),
                   _buildSliderCard(
@@ -222,7 +433,10 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     valueLabel: 'Každé ${_learnInterval.toInt()} min.',
                     value: _learnInterval,
                     min: 1, max: 5, divisions: 4,
-                    onChanged: (val) { setState(() => _learnInterval = val); _saveDouble('test_learnInterval', val); },
+                    onChanged: (val) { 
+                      setState(() => _learnInterval = val); 
+                      _saveDouble('test_learnInterval', val); 
+                    },
                   ),
                   const SizedBox(height: 12),
                   _buildSwitchCard(
@@ -231,7 +445,10 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     multiplier: 1.0,
                     showMultiplier: false,
                     value: _learnRepeat,
-                    onChanged: (val) { setState(() => _learnRepeat = val); _saveBool('test_learnRepeat', val); },
+                    onChanged: (val) { 
+                      setState(() => _learnRepeat = val); 
+                      _saveBool('test_learnRepeat', val); 
+                    },
                   ),
                 ],
               ),

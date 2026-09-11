@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../services/prefs_helper.dart';
+import '../themes/theme_provider.dart';
 import 'quiz_overlay_screen.dart';
 
 class BlockChoiceScreen extends StatefulWidget {
@@ -42,7 +44,7 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
       try {
         await platform.invokeMethod('unlockApp', {'minutes': 1});
       } catch (e) {
-        print("Chyba: $e");
+        debugPrint("Chyba: $e");
       }
     }
   }
@@ -59,6 +61,11 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Načítanie aktuálnej témy z ThemeProvideru
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final currentTheme = themeProvider.currentThemeData;
+    final theme = currentTheme.theme;
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Center(
@@ -66,33 +73,62 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
           width: MediaQuery.of(context).size.width * 0.85,
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: const [
-              BoxShadow(color: Colors.black26, blurRadius: 20, spreadRadius: 5)
-            ],
+            color: theme.cardColor,
+            borderRadius: currentTheme.cardBorderRadius,
+            border: currentTheme.id == 2 
+                ? Border.all(color: Colors.black, width: 3.5) 
+                : currentTheme.cardBorder,
+            boxShadow: currentTheme.id == 2 
+                ? const [BoxShadow(color: Colors.black, offset: Offset(5, 5), blurRadius: 0)]
+                : (currentTheme.cardShadows ?? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.25), 
+                      blurRadius: 20, 
+                      spreadRadius: 5,
+                    )
+                  ]),
+            gradient: currentTheme.id == 2 ? null : currentTheme.cardGradient,
           ),
           child: isLoading
-              ? const CircularProgressIndicator()
+              ? Center(
+                  child: CircularProgressIndicator(
+                    color: theme.colorScheme.primary,
+                  ),
+                )
               : Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.warning_amber_rounded, size: 50, color: Colors.orange),
+                    Icon(
+                      Icons.warning_amber_rounded, 
+                      size: 50, 
+                      color: currentTheme.id == 2 ? Colors.black : theme.colorScheme.tertiary,
+                    ),
                     const SizedBox(height: 16),
-                    const Text(
+                    Text(
                       "Zablokované!",
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 22, 
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
+                      ),
                     ),
                     const SizedBox(height: 20),
                     
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 50),
-                        backgroundColor: Colors.deepPurple,
-                        foregroundColor: Colors.white,
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: theme.colorScheme.onPrimary,
+                        elevation: currentTheme.id == 2 ? 0 : 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: currentTheme.buttonBorderRadius,
+                          side: currentTheme.id == 2 
+                              ? const BorderSide(color: Colors.black, width: 2.5) 
+                              : BorderSide.none,
+                        ),
                       ),
                       onPressed: _startTest,
-                      child: const Text("Spustiť TEST (5 minút)", style: TextStyle(fontSize: 16)),
+                      child: const Text("Spustiť TEST (5 minút)", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
 
                     if (!widget.isFromNotification) ...[
@@ -103,14 +139,22 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
                           padding: EdgeInsets.only(top: 10),
                           child: Text(
                             "Čas vypršal! Teraz ťa zachráni už len test.",
-                            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                            style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
                           ),
                         )
                       else if (remainingGrace > 0)
                         OutlinedButton(
                           style: OutlinedButton.styleFrom(
                             minimumSize: const Size(double.infinity, 50),
-                            foregroundColor: Colors.black87,
+                            foregroundColor: theme.colorScheme.onSurface,
+                            side: currentTheme.id == 2 
+                                ? const BorderSide(color: Colors.black, width: 2.5)
+                                : BorderSide(
+                                    color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                                  ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: currentTheme.buttonBorderRadius,
+                            ),
                           ),
                           onPressed: _useGracePeriod,
                           child: Text("Odpustok na 1 min. ($remainingGrace/3 dnes)"),
@@ -120,7 +164,7 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
                           padding: EdgeInsets.only(top: 10),
                           child: Text(
                             "Dnešné odpustky si už vyčerpal!",
-                            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                            style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
                           ),
                         ),
                     ],

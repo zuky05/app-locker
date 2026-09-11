@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/database_helper.dart';
+import '../themes/theme_provider.dart';
+import '../themes/app_themes.dart';
 import 'deck_manager_screen.dart';
 
 class TestSetupScreen extends StatefulWidget {
@@ -11,16 +14,6 @@ class TestSetupScreen extends StatefulWidget {
 }
 
 class _TestSetupScreenState extends State<TestSetupScreen> {
-  // --- FAREBNÁ PALETA ---
-  static const Color bgColor = Color(0xFFEBE8E0);
-  static const Color cardColor = Colors.white;
-  static const Color primaryText = Color(0xFF2C2241);
-  static const Color secondaryText = Color(0xFF7D7789);
-  static const Color deepPurple = Color(0xFF352655);
-  static const Color goldAccent = Color(0xFFD4A034);
-  static const Color positiveGreen = Color(0xFF268B6C);
-  static const Color negativeRed = Color(0xFFD66943);
-
   SharedPreferences? _prefs;
   bool _isLoading = true;
   int? _activeDeckId;
@@ -39,7 +32,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
   bool _isSecondChance = false;
   bool _isConfusion = false;
   bool _isHardcore = false;
-  bool _isDoubleTest = false; // <-- Nový modifikátor pre Double Test
+  bool _isDoubleTest = false;
 
   // --- STAV PRE LEARNING MODE ---
   bool _isLearningMode = false;
@@ -91,7 +84,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
       _isSecondChance = _prefs!.getBool('test_isSecondChance') ?? false;
       _isConfusion = _prefs!.getBool('test_isConfusion') ?? false;
       _isHardcore = _prefs!.getBool('test_isHardcore') ?? false;
-      _isDoubleTest = _prefs!.getBool('test_isDoubleTest') ?? false; // Načítanie stavu
+      _isDoubleTest = _prefs!.getBool('test_isDoubleTest') ?? false;
 
       _isLearningMode = _prefs!.getBool('test_isLearningMode') ?? false;
       _learnInterval = _prefs!.getDouble('test_learnInterval') ?? 1;
@@ -113,7 +106,6 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
   double get _effectiveLockoutMultiplier {
     double realRatio = _requiredCorrectQuestions / _questionCount;
     
-    // 50% -> 1.0x | 100% -> 1.5x
     double mult = 1.0 + (realRatio - 0.5);
     
     if (mult < 0.6) return 0.6;
@@ -130,7 +122,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     if (_isSecondChance) mult *= 0.8;
     if (_isConfusion && !_isHardcore) mult *= 1.1;
     if (_isHardcore) mult *= 1.5;
-    if (_isDoubleTest) mult *= 1.75; // <-- Zapracovaný Double Test násobič
+    if (_isDoubleTest) mult *= 1.75;
     return mult;
   }
 
@@ -146,8 +138,15 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final currentTheme = themeProvider.currentThemeData;
+    final theme = currentTheme.theme;
+
     if (_isLoading) {
-      return const Scaffold(backgroundColor: bgColor, body: Center(child: CircularProgressIndicator(color: deepPurple)));
+      return Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor, 
+        body: Center(child: CircularProgressIndicator(color: theme.colorScheme.primary)),
+      );
     }
 
     double maxQuestions = _availableCardCount < 10 ? _availableCardCount.toDouble() : 10;
@@ -172,14 +171,14 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     String lockoutLabel = "$targetPctInt% (min. $_requiredCorrectQuestions / ${_questionCount.toInt()})";
 
     return Scaffold(
-      backgroundColor: bgColor,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+        backgroundColor: theme.appBarTheme.backgroundColor ?? Colors.transparent,
+        elevation: theme.appBarTheme.elevation ?? 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
-        iconTheme: const IconThemeData(color: primaryText),
-        title: const Text('Nastavenie Testu', style: TextStyle(color: primaryText, fontWeight: FontWeight.bold)),
+        iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
+        title: Text('Nastavenie Testu', style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold)),
       ),
       body: Column(
         children: [
@@ -194,35 +193,36 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                   );
                   _loadSettings();
                 },
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: currentTheme.cardBorderRadius,
                 child: Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: negativeRed.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: negativeRed, width: 1.5),
+                    color: Colors.red.withValues(alpha: 0.12),
+                    borderRadius: currentTheme.cardBorderRadius,
+                    border: Border.all(color: Colors.red, width: currentTheme.id == 2 ? 3.5 : 1.5),
+                    boxShadow: currentTheme.id == 2 ? const [BoxShadow(color: Colors.black, offset: Offset(3, 3))] : null,
                   ),
                   child: Row(
-                    children: const [
-                      Icon(Icons.warning_amber_rounded, color: negativeRed, size: 28),
-                      SizedBox(width: 12),
+                    children: [
+                      const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            const Text(
                               "Nemáš vybraný žiadny balíček!",
-                              style: TextStyle(color: negativeRed, fontWeight: FontWeight.bold, fontSize: 14),
+                              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 14),
                             ),
-                            SizedBox(height: 2),
+                            const SizedBox(height: 2),
                             Text(
                               "Klikni sem pre výber aktívneho balíčka (min. 5 kariet).",
-                              style: TextStyle(color: primaryText, fontSize: 12),
+                              style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 12),
                             ),
                           ],
                         ),
                       ),
-                      Icon(Icons.arrow_forward_ios_rounded, color: negativeRed, size: 16),
+                      const Icon(Icons.arrow_forward_ios_rounded, color: Colors.red, size: 16),
                     ],
                   ),
                 ),
@@ -238,6 +238,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
               value: _isLearningMode,
               isGold: true,
               showMultiplier: false,
+              currentTheme: currentTheme,
               onChanged: (val) {
                 setState(() => _isLearningMode = val);
                 _saveBool('test_isLearningMode', val);
@@ -246,51 +247,104 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
           ),
 
           if (!_isLearningMode) ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(color: deepPurple, borderRadius: BorderRadius.circular(24)),
-                child: Column(
-                  children: [
-                    const Text('ODMENA ZA 1 SPRÁVNU ODPOVEĎ', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 12),
-                    Text(_formatTime(_timePerQuestion), style: const TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.w900)),
-                    const SizedBox(height: 20),
-                    Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                      decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('Celkový násobič', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                              Text('x${_currentMultiplier.toStringAsFixed(2)}', style: TextStyle(color: _currentMultiplier >= 1.0 ? Colors.greenAccent : Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 18)),
-                            ],
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              const Text('Max potenciál testu', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                              Text(_formatTime(_totalTimePotential), style: const TextStyle(color: goldAccent, fontWeight: FontWeight.bold, fontSize: 18)),
-                            ],
-                          ),
-                        ],
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: theme.cardColor, 
+                    borderRadius: currentTheme.cardBorderRadius,
+                    border: currentTheme.id == 2
+                        ? Border.all(color: Colors.black, width: 3.5)
+                        : (currentTheme.id == 0 
+                            ? Border.all(color: const Color(0xFFBD00FF), width: 1.5) 
+                            : (currentTheme.cardBorder ?? Border.all(color: theme.colorScheme.primary, width: 1.5))),
+                    boxShadow: currentTheme.id == 2 
+                        ? const [BoxShadow(color: Colors.black, offset: Offset(4, 4))] 
+                        : currentTheme.cardShadows,
+                    gradient: currentTheme.id == 0 || currentTheme.id == 2 ? null : currentTheme.cardGradient,
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'ODMENA ZA 1 SPRÁVNU ODPOVEĎ', 
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6), 
+                          fontSize: 12, 
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.1,
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 8),
+                      Text(
+                        _formatTime(_timePerQuestion), 
+                        style: TextStyle(
+                          color: currentTheme.id == 0 ? const Color(0xFF00F5FF) : theme.colorScheme.primary, 
+                          fontSize: 44, 
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.05), 
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onSurface.withValues(alpha: 0.1), width: currentTheme.id == 2 ? 2 : 1),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Celkový násobič', 
+                                  style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 12),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'x${_currentMultiplier.toStringAsFixed(2)}', 
+                                  style: TextStyle(
+                                    color: _currentMultiplier >= 1.0 ? Colors.green.shade700 : Colors.red, 
+                                    fontWeight: FontWeight.bold, 
+                                    fontSize: 18,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  'Max potenciál testu', 
+                                  style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 12),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  _formatTime(_totalTimePotential), 
+                                  style: TextStyle(
+                                    color: theme.colorScheme.tertiary,
+                                    fontWeight: FontWeight.bold, 
+                                    fontSize: 18,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
             
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.all(20),
                 physics: const BouncingScrollPhysics(),
                 children: [
-                  const Text('ZÁKLADNÉ NASTAVENIA KVÍZU', style: TextStyle(color: secondaryText, fontSize: 13, fontWeight: FontWeight.bold)),
+                  Text('ZÁKLADNÉ NASTAVENIA KVÍZU', style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 13, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
                   _buildSliderCard(
                     title: 'Počet otázok', 
@@ -299,6 +353,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     min: minQuestions, 
                     max: maxQuestions, 
                     divisions: questionDivisions, 
+                    currentTheme: currentTheme,
                     onChanged: (val) { 
                       setState(() => _questionCount = val); 
                       _saveDouble('test_questionCount', val); 
@@ -313,6 +368,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     min: 0, 
                     max: 5, 
                     divisions: 5, 
+                    currentTheme: currentTheme,
                     onChanged: (val) { 
                       setState(() => _timeLimitIndex = val); 
                       _saveDouble('test_timeLimitIndex', val); 
@@ -327,13 +383,14 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     min: 0, 
                     max: 7, 
                     divisions: 7, 
+                    currentTheme: currentTheme,
                     onChanged: (val) { 
                       setState(() => _lockoutIndex = val); 
                       _saveDouble('test_lockoutIndex', val); 
                     },
                   ),
                   const SizedBox(height: 24),
-                  const Text('MODIFIKÁTORY', style: TextStyle(color: secondaryText, fontSize: 13, fontWeight: FontWeight.bold)),
+                  Text('MODIFIKÁTORY', style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 13, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
                   _buildSwitchCard(
                     title: '3 Možnosti', 
@@ -341,6 +398,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     multiplier: 0.7, 
                     value: _is3Options, 
                     isDisabled: _isHardcore, 
+                    currentTheme: currentTheme,
                     onChanged: (val) { 
                       setState(() => _is3Options = val); 
                       _saveBool('test_is3Options', val); 
@@ -352,6 +410,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     subtitle: 'Prvá nesprávna odpoveď sa ti odpustí.', 
                     multiplier: 0.8, 
                     value: _isSecondChance, 
+                    currentTheme: currentTheme,
                     onChanged: (val) { 
                       setState(() => _isSecondChance = val); 
                       _saveBool('test_isSecondChance', val); 
@@ -364,6 +423,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     multiplier: 1.1, 
                     value: _isConfusion, 
                     isDisabled: _isHardcore, 
+                    currentTheme: currentTheme,
                     onChanged: (val) { 
                       setState(() => _isConfusion = val); 
                       _saveBool('test_isConfusion', val); 
@@ -376,6 +436,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     multiplier: 1.75, 
                     value: _isDoubleTest, 
                     isGold: true,
+                    currentTheme: currentTheme,
                     onChanged: (val) { 
                       setState(() {
                         _isDoubleTest = val;
@@ -390,6 +451,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     multiplier: 1.5, 
                     value: _isHardcore, 
                     isGold: true, 
+                    currentTheme: currentTheme,
                     onChanged: (val) {
                       setState(() {
                         _isHardcore = val;
@@ -413,7 +475,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                 padding: const EdgeInsets.all(20),
                 physics: const BouncingScrollPhysics(),
                 children: [
-                  const Text('NASTAVENIA UČENIA', style: TextStyle(color: secondaryText, fontSize: 13, fontWeight: FontWeight.bold)),
+                  Text('NASTAVENIA UČENIA', style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 13, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
                   _buildSliderCard(
                     title: 'Počet kartičiek v dávke',
@@ -422,6 +484,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     min: minLearnCards, 
                     max: maxLearnCards, 
                     divisions: learnDivisions,
+                    currentTheme: currentTheme,
                     onChanged: (val) { 
                       setState(() => _learnCardCount = val); 
                       _saveDouble('test_learnCardCount', val); 
@@ -433,6 +496,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     valueLabel: 'Každé ${_learnInterval.toInt()} min.',
                     value: _learnInterval,
                     min: 1, max: 5, divisions: 4,
+                    currentTheme: currentTheme,
                     onChanged: (val) { 
                       setState(() => _learnInterval = val); 
                       _saveDouble('test_learnInterval', val); 
@@ -445,6 +509,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     multiplier: 1.0,
                     showMultiplier: false,
                     value: _learnRepeat,
+                    currentTheme: currentTheme,
                     onChanged: (val) { 
                       setState(() => _learnRepeat = val); 
                       _saveBool('test_learnRepeat', val); 
@@ -463,31 +528,56 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
   Widget _buildMultiplierBadge(double mult) {
     if (mult == 1.0) return const SizedBox.shrink();
     bool isPositive = mult > 1.0;
+    Color badgeColor = isPositive ? Colors.green : Colors.red;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(color: isPositive ? positiveGreen.withOpacity(0.15) : negativeRed.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
-      child: Text('x$mult', style: TextStyle(color: isPositive ? positiveGreen : negativeRed, fontWeight: FontWeight.bold, fontSize: 12)),
+      decoration: BoxDecoration(color: badgeColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8)),
+      child: Text('x$mult', style: TextStyle(color: badgeColor, fontWeight: FontWeight.bold, fontSize: 12)),
     );
   }
 
-  Widget _buildSliderCard({required String title, required String valueLabel, required double value, required double min, required double max, required int divisions, required ValueChanged<double> onChanged, double? multiplier}) {
+  Widget _buildSliderCard({
+    required String title, 
+    required String valueLabel, 
+    required double value, 
+    required double min, 
+    required double max, 
+    required int divisions, 
+    required ValueChanged<double> onChanged, 
+    required AppThemeData currentTheme,
+    double? multiplier,
+  }) {
+    final theme = currentTheme.theme;
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-      decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4))]),
+      decoration: BoxDecoration(
+        color: theme.cardColor, 
+        borderRadius: currentTheme.cardBorderRadius, 
+        border: currentTheme.id == 2 
+            ? Border.all(color: Colors.black, width: 3.5) 
+            : (currentTheme.cardBorder ?? Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.12))),
+        boxShadow: currentTheme.id == 2 ? const [BoxShadow(color: Colors.black, offset: Offset(4, 4))] : currentTheme.cardShadows,
+        gradient: currentTheme.id == 2 ? null : currentTheme.cardGradient,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(title, style: const TextStyle(color: primaryText, fontWeight: FontWeight.bold, fontSize: 16)),
+              Text(title, style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 16)),
               if (multiplier != null) _buildMultiplierBadge(multiplier),
             ],
           ),
           const SizedBox(height: 12),
-          Text(valueLabel, style: const TextStyle(color: deepPurple, fontWeight: FontWeight.bold, fontSize: 18)),
+          Text(valueLabel, style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 18)),
           SliderTheme(
-            data: SliderTheme.of(context).copyWith(activeTrackColor: deepPurple, inactiveTrackColor: bgColor, thumbColor: deepPurple, trackHeight: 6.0),
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: theme.colorScheme.primary, 
+              inactiveTrackColor: theme.colorScheme.onSurface.withValues(alpha: 0.12), 
+              thumbColor: theme.colorScheme.primary, 
+              trackHeight: 6.0,
+            ),
             child: Slider(value: value, min: min, max: max, divisions: divisions, onChanged: onChanged),
           ),
         ],
@@ -495,12 +585,35 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     );
   }
 
-  Widget _buildSwitchCard({required String title, required String subtitle, required double multiplier, required bool value, required ValueChanged<bool> onChanged, bool isDisabled = false, bool isGold = false, bool showMultiplier = true}) {
+  Widget _buildSwitchCard({
+    required String title, 
+    required String subtitle, 
+    required double multiplier, 
+    required bool value, 
+    required ValueChanged<bool> onChanged, 
+    required AppThemeData currentTheme,
+    bool isDisabled = false, 
+    bool isGold = false, 
+    bool showMultiplier = true,
+  }) {
+    final theme = currentTheme.theme;
+    final Color highlightColor = isGold ? theme.colorScheme.tertiary : theme.colorScheme.primary;
+
     return Opacity(
       opacity: isDisabled ? 0.4 : 1.0,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(20), border: isGold && value ? Border.all(color: goldAccent, width: 2) : null, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4))]),
+        decoration: BoxDecoration(
+          color: theme.cardColor, 
+          borderRadius: currentTheme.cardBorderRadius, 
+          border: currentTheme.id == 2
+              ?  Border.all(color: Colors.black, width: 3.5)
+              : (isGold && value 
+                  ? Border.all(color: highlightColor, width: 2) 
+                  : (currentTheme.cardBorder ?? Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.12)))), 
+          boxShadow: currentTheme.id == 2 ? const [BoxShadow(color: Colors.black, offset: Offset(4, 4))] : currentTheme.cardShadows,
+          gradient: currentTheme.id == 2 ? null : currentTheme.cardGradient,
+        ),
         child: Row(
           children: [
             Expanded(
@@ -509,17 +622,28 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                 children: [
                   Row(
                     children: [
-                      Text(title, style: TextStyle(color: isGold ? goldAccent : primaryText, fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text(
+                        title, 
+                        style: TextStyle(
+                          color: isGold ? highlightColor : theme.colorScheme.onSurface, 
+                          fontWeight: FontWeight.bold, 
+                          fontSize: 16,
+                        ),
+                      ),
                       const SizedBox(width: 8),
                       if (showMultiplier) _buildMultiplierBadge(multiplier),
                     ],
                   ),
                   const SizedBox(height: 6),
-                  Text(subtitle, style: const TextStyle(color: secondaryText, fontSize: 13)),
+                  Text(subtitle, style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 13)),
                 ],
               ),
             ),
-            Switch(value: value, onChanged: isDisabled ? null : onChanged, activeColor: isGold ? goldAccent : deepPurple),
+            Switch(
+              value: value, 
+              onChanged: isDisabled ? null : onChanged, 
+              activeColor: currentTheme.id == 2 ? Colors.black : highlightColor,
+            ),
           ],
         ),
       ),

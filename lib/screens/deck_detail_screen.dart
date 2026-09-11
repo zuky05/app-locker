@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
 import '../services/database_helper.dart';
 import '../models/deck_model.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import '../themes/theme_provider.dart';
 
 class DeckDetailScreen extends StatefulWidget {
   final Deck deck;
@@ -20,7 +22,6 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
   List<Map<String, dynamic>> cards = [];
   bool isLoading = true;
 
-  // Sledujeme, na ktorej kartičke sme a či sme ju "otočili"
   int currentIndex = 0;
   bool showAnswer = false;
 
@@ -64,7 +65,6 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
     final int indexToDelete = currentIndex;
     final int cardId = cards[indexToDelete]['id'];
 
-    // 1. Animácia preč (nech to vyzerá plynulo)
     if (cards.length > 1) {
       if (indexToDelete < cards.length - 1) {
         await _pageController.nextPage(
@@ -75,22 +75,18 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
       }
     }
 
-    // 2. Zmazať v databáze
     await DatabaseHelper.instance.removeCard(cardId);
-
-    // 3. Stiahneme ÚPLNE NOVÝ zoznam (tým Flutteru dokážeme, že sa niečo zmenilo)
     final freshCards = await DatabaseHelper.instance.getCardsForDeck(widget.deck.id!);
 
-    // 4. Bezpečné zarovnanie (Bez blikania!)
     setState(() {
       cards = freshCards;
       showAnswer = false;
 
       if (cards.isNotEmpty) {
         if (indexToDelete < cards.length) {
-          _pageController.jumpToPage(indexToDelete); // Potichu skočíme tam, kde máme byť
+          _pageController.jumpToPage(indexToDelete);
         } else {
-          _pageController.jumpToPage(cards.length - 1); // Ak sme zmazali poslednú
+          _pageController.jumpToPage(cards.length - 1);
         }
       }
     });
@@ -99,27 +95,52 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
   void _showAddCardDialog() {
     final promptController = TextEditingController();
     final answerController = TextEditingController();
+    final currentTheme = Provider.of<ThemeProvider>(context, listen: false).currentThemeData;
+    final theme = currentTheme.theme;
+    final Color sectionColor = currentTheme.decksColor;
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Nová kartička'),
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: currentTheme.id == 2 ? Colors.white : theme.cardColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: currentTheme.cardBorderRadius,
+          side: currentTheme.id == 2 ? const BorderSide(color: Colors.black, width: 3.5) : BorderSide.none,
+        ),
+        title: Text('Nová kartička', style: TextStyle(color: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onSurface, fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: promptController,
-              decoration: const InputDecoration(labelText: 'Otázka / Pojem'),
+              style: TextStyle(color: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onSurface),
+              decoration: InputDecoration(
+                labelText: 'Otázka / Pojem',
+                labelStyle: TextStyle(color: currentTheme.id == 2 ? Colors.black54 : theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: currentTheme.id == 2 ? Colors.black : sectionColor),
+                ),
+              ),
             ),
             const SizedBox(height: 10),
             TextField(
               controller: answerController,
-              decoration: const InputDecoration(labelText: 'Správna odpoveď'),
+              style: TextStyle(color: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onSurface),
+              decoration: InputDecoration(
+                labelText: 'Správna odpoveď',
+                labelStyle: TextStyle(color: currentTheme.id == 2 ? Colors.black54 : theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: currentTheme.id == 2 ? Colors.black : sectionColor),
+                ),
+              ),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Zrušiť')),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext), 
+            child: Text('Zrušiť', style: TextStyle(color: currentTheme.id == 2 ? Colors.black54 : theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+          ),
           ElevatedButton(
             onPressed: () async {
               if (promptController.text.isNotEmpty && answerController.text.isNotEmpty) {
@@ -129,16 +150,13 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                   answerController.text,
                 );
 
-                if (!context.mounted) return;
-                Navigator.pop(context); // Najprv zavrieme okienko
+                if (!mounted) return;
+                Navigator.pop(dialogContext);
 
-                // 1. POČKÁME, kým sa vytiahnu nové dáta z databázy
                 await _loadCards();
 
-                // 2. Dáme Flutteru "mikropauzu" (100 ms), aby stihol novú kartu reálne vykresliť
                 Future.delayed(const Duration(milliseconds: 100), () {
                   if (cards.isNotEmpty) {
-                    // 3. Odscrollujeme úplne na koniec zoznamu k novej karte
                     _pageController.animateToPage(
                       cards.length - 1,
                       duration: const Duration(milliseconds: 300),
@@ -148,7 +166,14 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                 });
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: currentTheme.id == 2 ? Colors.black : sectionColor,
+              foregroundColor: currentTheme.id == 2 ? Colors.white : (sectionColor.computeLuminance() > 0.5 ? Colors.black : Colors.white),
+              shape: RoundedRectangleBorder(
+                borderRadius: currentTheme.buttonBorderRadius,
+                side: currentTheme.id == 2 ? const BorderSide(color: Colors.black, width: 2) : BorderSide.none,
+              ),
+            ),
             child: const Text('Pridať'),
           ),
         ],
@@ -158,35 +183,51 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final currentTheme = themeProvider.currentThemeData;
+    final theme = currentTheme.theme;
+
+    // Sekcová farba pre Decks zdedená z témy
+    final Color sectionColor = currentTheme.decksColor;
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(widget.deck.name),
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
+        backgroundColor: theme.appBarTheme.backgroundColor ?? Colors.transparent,
+        foregroundColor: theme.colorScheme.onSurface,
+        elevation: theme.appBarTheme.elevation ?? 0,
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator(color: sectionColor))
           : cards.isEmpty
-              ? const Center(child: Text("Tento balíček je zatiaľ prázdny."))
+              ? Center(
+                  child: Text(
+                    "Tento balíček je zatiaľ prázdny.",
+                    style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.7)),
+                  ),
+                )
               : Column(
                   children: [
-                    // Zobrazenie počítadla (napr. 1 / 70)
+                    // Počítadlo kariet
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 20),
                       child: Text(
                         "${currentIndex + 1} / ${cards.length}",
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.deepPurple),
+                        style: TextStyle(
+                          fontSize: 18, 
+                          fontWeight: FontWeight.bold, 
+                          color: sectionColor,
+                        ),
                       ),
                     ),
 
-                    // Hlavná kartička
+                    // Kartička
                     Expanded(
                       child: PageView.builder(
                         controller: _pageController,
                         physics: const BouncingScrollPhysics(),
                         onPageChanged: (index) {
-                          // Keď preswipujeme na novú kartu, vždy skryjeme odpoveď
                           setState(() {
                             currentIndex = index;
                             showAnswer = false;
@@ -195,17 +236,31 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                         itemCount: cards.length,
                         itemBuilder: (context, index) {
                           final card = cards[index];
+
+                          // Pozadie a štýl pre prednú a zadnú stranu využívajúci sekcovú farbu
+                          final Color cardBg = showAnswer
+                              ? (currentTheme.id == 2 ? sectionColor : sectionColor.withValues(alpha: 0.15))
+                              : (currentTheme.id == 2 ? sectionColor : theme.cardColor);
+
+                          final Border cardBorder = currentTheme.id == 2
+                              ? Border.all(color: Colors.black, width: 3.5)
+                              : (showAnswer 
+                                  ? Border.all(color: sectionColor, width: 2.0)
+                                  : (currentTheme.cardBorder ?? Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.12))));
+
                           return GestureDetector(
                             key: ValueKey(card['id']),
                             onTap: _flipCard,
                             child: Container(
                               margin: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
                               decoration: BoxDecoration(
-                                color: showAnswer ? Colors.deepPurple.shade50 : Colors.white,
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: const [
-                                  BoxShadow(color: Colors.black12, blurRadius: 10, spreadRadius: 2, offset: Offset(0, 4))
-                                ],
+                                color: cardBg,
+                                borderRadius: currentTheme.cardBorderRadius,
+                                border: cardBorder,
+                                boxShadow: currentTheme.id == 2
+                                    ? const [BoxShadow(color: Colors.black, offset: Offset(5, 5), blurRadius: 0)]
+                                    : (showAnswer ? [BoxShadow(color: sectionColor.withValues(alpha: 0.35), blurRadius: 10)] : currentTheme.cardShadows),
+                                gradient: currentTheme.id == 2 || showAnswer ? null : currentTheme.cardGradient,
                               ),
                               child: Center(
                                 child: Padding(
@@ -213,13 +268,14 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      // 1. Malý nadpis na vrchu
                                       Text(
                                         showAnswer ? "ODPOVEĎ" : "OTÁZKA",
                                         style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.grey.shade500,
+                                          color: currentTheme.id == 2 
+                                              ? Colors.black87 
+                                              : (showAnswer ? sectionColor : theme.colorScheme.onSurface.withValues(alpha: 0.5)),
                                           letterSpacing: 2,
                                         ),
                                       ),
@@ -230,30 +286,42 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                                         ClipRRect(
                                           borderRadius: BorderRadius.circular(8),
                                           child: SvgPicture.asset(
-                                            card['prompt'], // Správny kľúč pre cestu k SVG!
+                                            card['prompt'],
                                             height: 120,
                                             fit: BoxFit.contain,
                                           ),
                                         ),
+                                        const SizedBox(height: 10),
                                         Text(
-                                          showAnswer ? card['correct_answer'] : 'Komu patrí táto vlajka?',
+                                          'Komu patrí táto vlajka?',
                                           textAlign: TextAlign.center,
-                                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
+                                          style: TextStyle(
+                                            fontSize: 22, 
+                                            fontWeight: FontWeight.w600,
+                                            color: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onSurface,
+                                          ),
                                         ),
                                       ] else ...[
                                         Text(
                                           showAnswer ? card['correct_answer'] : card['prompt'],
                                           textAlign: TextAlign.center,
-                                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
+                                          style: TextStyle(
+                                            fontSize: 24, 
+                                            fontWeight: FontWeight.w600,
+                                            color: currentTheme.id == 2 
+                                                ? Colors.black 
+                                                : (showAnswer ? sectionColor : theme.colorScheme.onSurface),
+                                          ),
                                         ),
                                       ],
 
                                       const SizedBox(height: 30),
 
-                                      // 3. Ikona ruky
                                       Icon(
                                         Icons.touch_app,
-                                        color: Colors.grey.shade300,
+                                        color: currentTheme.id == 2 
+                                            ? Colors.black54 
+                                            : theme.colorScheme.onSurface.withValues(alpha: 0.3),
                                         size: 30,
                                       ),
                                     ],
@@ -266,7 +334,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                       ),
                     ),
 
-                    // Tlačidlá so šípkami naspodku
+                    // Tlačidlá navigácie (šípky)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 40, top: 10),
                       child: Row(
@@ -275,14 +343,18 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                           IconButton(
                             onPressed: _prevCard,
                             icon: const Icon(Icons.arrow_back_ios),
-                            color: currentIndex > 0 ? Colors.deepPurple : Colors.grey,
+                            color: currentIndex > 0 
+                                ? sectionColor 
+                                : theme.colorScheme.onSurface.withValues(alpha: 0.25),
                             iconSize: 30,
                           ),
                           const SizedBox(width: 40),
                           IconButton(
                             onPressed: _nextCard,
                             icon: const Icon(Icons.arrow_forward_ios),
-                            color: currentIndex < cards.length - 1 ? Colors.deepPurple : Colors.grey,
+                            color: currentIndex < cards.length - 1 
+                                ? sectionColor 
+                                : theme.colorScheme.onSurface.withValues(alpha: 0.25),
                             iconSize: 30,
                           ),
                         ],
@@ -295,26 +367,29 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
               mainAxisAlignment: MainAxisAlignment.end,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                // 1. Tlačidlo: VYMAZAŤ KARTIČKU
                 if (cards.isNotEmpty)
                   FloatingActionButton(
                     heroTag: 'delete_btn',
                     onPressed: _deleteCard,
                     backgroundColor: Colors.redAccent,
                     foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: currentTheme.cardBorderRadius),
                     child: const Icon(Icons.delete),
                   ),
 
                 const SizedBox(height: 16),
 
-                // 2. Tlačidlo: PRIDAŤ KARTIČKU
                 FloatingActionButton.extended(
                   heroTag: 'add_btn',
                   onPressed: _showAddCardDialog,
                   icon: const Icon(Icons.add),
                   label: const Text("Pridať"),
-                  backgroundColor: Colors.deepPurple,
-                  foregroundColor: Colors.white,
+                  backgroundColor: currentTheme.id == 2 ? Colors.black : sectionColor,
+                  foregroundColor: currentTheme.id == 2 ? Colors.white : (sectionColor.computeLuminance() > 0.5 ? Colors.black : Colors.white),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: currentTheme.cardBorderRadius,
+                    side: currentTheme.id == 2 ? const BorderSide(color: Colors.black, width: 2.5) : BorderSide.none,
+                  ),
                 ),
               ],
             )

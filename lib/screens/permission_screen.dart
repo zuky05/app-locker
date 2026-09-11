@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
 import 'home_screen.dart';
+import '../themes/theme_provider.dart';
+import '../themes/app_themes.dart';
 
 class PermissionScreen extends StatefulWidget {
   const PermissionScreen({super.key});
@@ -94,16 +97,21 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final currentTheme = themeProvider.currentThemeData;
+    final theme = currentTheme.theme;
+
     if (isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator(color: Colors.deepPurple)),
+      return Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: Center(child: CircularProgressIndicator(color: theme.colorScheme.primary)),
       );
     }
 
     final bool allGranted = isOverlayGranted && isAccessibilityGranted && isNotificationGranted;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(28.0),
@@ -111,26 +119,31 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              // Kruhový kontajner pre ikonu bezpečnosti
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.deepPurple.shade50,
+                  color: currentTheme.id == 2 ? theme.colorScheme.primary : theme.colorScheme.primary.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
+                  border: currentTheme.id == 2 
+                      ? Border.all(color: Colors.black, width: 3.5) 
+                      : (currentTheme.cardBorder ?? Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.3))),
+                  boxShadow: currentTheme.id == 2 ? const [BoxShadow(color: Colors.black, offset: Offset(4, 4))] : null,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.security_rounded,
                   size: 70,
-                  color: Colors.deepPurple,
+                  color: currentTheme.id == 2 ? Colors.black : theme.colorScheme.primary,
                 ),
               ),
               const SizedBox(height: 32),
-              const Text(
+              Text(
                 "Vyžaduje sa aktivácia",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 14),
@@ -139,7 +152,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 15,
-                  color: Colors.grey.shade700,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   height: 1.4,
                 ),
               ),
@@ -149,6 +162,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
               _buildPermissionTile(
                 title: "Prekrytie aplikácií (Overlay)",
                 isGranted: isOverlayGranted,
+                currentTheme: currentTheme,
               ),
 
               const SizedBox(height: 10),
@@ -157,6 +171,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
               _buildPermissionTile(
                 title: "Zjednodušenie prístupu (Accessibility)",
                 isGranted: isAccessibilityGranted,
+                currentTheme: currentTheme,
               ),
 
               const SizedBox(height: 10),
@@ -165,11 +180,12 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
               _buildPermissionTile(
                 title: "Upozornenia a odpočet času (Notifications)",
                 isGranted: isNotificationGranted,
+                currentTheme: currentTheme,
               ),
 
               const SizedBox(height: 32),
 
-              // Dynamic Button
+              // Dynamické tlačidlo
               ElevatedButton.icon(
                 onPressed: allGranted ? _navigateToMain : _openSettingsOrRequest,
                 icon: Icon(allGranted ? Icons.arrow_forward : Icons.settings),
@@ -181,13 +197,21 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
                           : (!isAccessibilityGranted
                               ? "Povoliť Zjednodušenie prístupu"
                               : "Povoliť Upozornenia")),
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 16, 
+                    fontWeight: FontWeight.bold,
+                    color: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onPrimary,
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 54),
-                  backgroundColor: Colors.deepPurple,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: currentTheme.buttonBorderRadius,
+                    side: currentTheme.id == 2 ? const BorderSide(color: Colors.black, width: 3.5) : BorderSide.none,
+                  ),
+                  elevation: currentTheme.id == 2 ? 0 : 2,
                 ),
               ),
             ],
@@ -197,16 +221,42 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
     );
   }
 
-  Widget _buildPermissionTile({required String title, required bool isGranted}) {
-    return Card(
-      elevation: 0,
-      color: isGranted ? Colors.green.shade50 : Colors.amber.shade50,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: isGranted ? Colors.green : Colors.amber.shade700,
-          width: 1,
+  Widget _buildPermissionTile({
+    required String title, 
+    required bool isGranted,
+    required AppThemeData currentTheme,
+  }) {
+    final theme = currentTheme.theme;
+    final bool isLight = theme.brightness == Brightness.light;
+    
+    // Dynamické farby - prispôsobia sa aj svetlým, aj tmavým témam
+    final Color successAccent = const Color(0xFF00E676);
+    final Color successBgLight = Colors.green.shade100;
+    final Color successBgDark = successAccent.withValues(alpha: 0.15);
+
+    final Color bgColor = isGranted
+        ? (currentTheme.id == 2 ? successAccent : (isLight ? successBgLight : successBgDark))
+        : theme.cardColor;
+
+    final Color borderColor = isGranted
+        ? (currentTheme.id == 2 ? Colors.black : successAccent)
+        : (currentTheme.id == 2 ? Colors.black : theme.colorScheme.onSurface.withValues(alpha: 0.15));
+
+    final Color contentColor = isGranted
+        ? (currentTheme.id == 2 ? Colors.black : (isLight ? Colors.green.shade800 : successAccent))
+        : theme.colorScheme.onSurface.withValues(alpha: 0.7);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: currentTheme.cardBorderRadius,
+        border: Border.all(
+          color: borderColor, 
+          width: currentTheme.id == 2 ? 3.5 : 1.5,
         ),
+        boxShadow: isGranted && currentTheme.id != 2 
+            ? [BoxShadow(color: successAccent.withValues(alpha: 0.25), blurRadius: 8)] 
+            : currentTheme.cardShadows,
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -214,7 +264,9 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
           children: [
             Icon(
               isGranted ? Icons.check_circle : Icons.warning_amber_rounded,
-              color: isGranted ? Colors.green : Colors.amber.shade900,
+              color: isGranted 
+                  ? (currentTheme.id == 2 ? Colors.black : successAccent) 
+                  : const Color(0xFFFF9100),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -222,7 +274,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
                 title,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: isGranted ? Colors.green.shade900 : Colors.amber.shade900,
+                  color: contentColor,
                 ),
               ),
             ),

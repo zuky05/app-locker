@@ -41,84 +41,147 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Získame prístup k nášmu ThemeProvideru
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final currentTheme = themeProvider.currentThemeData;
+    final theme = currentTheme.theme;
 
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Settings', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          'Settings',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
+        backgroundColor: theme.appBarTheme.backgroundColor ?? Colors.transparent,
+        foregroundColor: theme.colorScheme.onSurface,
+        elevation: theme.appBarTheme.elevation ?? 0,
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator(color: theme.colorScheme.primary))
           : ListView(
               padding: const EdgeInsets.all(16.0),
+              physics: const BouncingScrollPhysics(),
               children: [
                 // --- SEKCIA: VIBRÁCIE ---
-                Card(
-                  elevation: 1,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                Container(
+                  decoration: BoxDecoration(
+                    color: theme.cardColor,
+                    borderRadius: currentTheme.cardBorderRadius,
+                    border: currentTheme.cardBorder ??
+                        Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.12)),
+                    boxShadow: currentTheme.cardShadows,
+                    gradient: currentTheme.cardGradient,
+                  ),
                   child: SwitchListTile(
-                    secondary: Icon(Icons.vibration, color: Theme.of(context).colorScheme.primary),
-                    title: const Text(
+                    secondary: Icon(Icons.vibration, color: theme.colorScheme.primary),
+                    title: Text(
                       "Vibrovanie pri chybe",
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
+                      ),
                     ),
-                    subtitle: const Text("Zavibruje pri nesprávnej odpovedi v kvíze"),
+                    subtitle: Text(
+                      "Zavibruje pri nesprávnej odpovedi v kvíze",
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                    ),
                     value: isVibrationEnabled,
-                    activeColor: Theme.of(context).colorScheme.primary,
+                    activeColor: theme.colorScheme.primary,
                     onChanged: _saveVibrationSetting,
                   ),
                 ),
-                
-                const SizedBox(height: 24),
+
+                const SizedBox(height: 28),
 
                 // --- SEKCIA: VÝBER TÉMY ---
-                const Text(
+                Text(
                   "Vizuálny štýl aplikácie",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface,
+                  ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
 
-                // Vygenerujeme zoznam všetkých 6 tém z AppThemes
+                // Vygenerujeme zoznam všetkých tém z AppThemes
                 ...AppThemes.availableThemes.map((appTheme) {
-                  final bool isSelected = themeProvider.currentThemeData.id == appTheme.id;
+                  final bool isSelected = currentTheme.id == appTheme.id;
+                  final itemTheme = appTheme.theme;
 
                   return Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: Card(
-                      elevation: isSelected ? 3 : 1,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(
-                          color: isSelected 
-                              ? Theme.of(context).colorScheme.primary 
-                              : Colors.transparent,
-                          width: 2,
-                        ),
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: theme.cardColor,
+                      borderRadius: currentTheme.cardBorderRadius,
+                      border: isSelected
+                          ? Border.all(color: theme.colorScheme.primary, width: 2.5)
+                          : (currentTheme.cardBorder ??
+                              Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.12))),
+                      boxShadow: isSelected ? currentTheme.cardShadows : null,
+                      gradient: currentTheme.cardGradient,
+                    ),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      leading: Icon(
+                        isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+                        color: isSelected
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.onSurface.withValues(alpha: 0.4),
                       ),
-                      child: ListTile(
-                        leading: Icon(
-                          isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        title: Text(
-                          appTheme.name,
-                          style: TextStyle(
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      title: Row(
+                        children: [
+                          Text(
+                            appTheme.name,
+                            style: TextStyle(
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              color: theme.colorScheme.onSurface,
+                            ),
                           ),
-                        ),
-                        subtitle: Text(
-                          appTheme.isPremium ? "Premium štýl" : "Základný štýl",
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                        trailing: appTheme.isPremium
-                            ? const Icon(Icons.star_rounded, color: Colors.amber, size: 20)
-                            : null,
-                        onTap: () {
-                          // Okamžitá zmena témy cez provider
-                          themeProvider.setTheme(appTheme.id);
-                        },
+                          const SizedBox(width: 10),
+                          // Farebné kolieska na ukážku primárnej a akcentovej farby
+                          Row(
+                            children: [
+                              Container(
+                                width: 12,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: itemTheme.colorScheme.primary,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Container(
+                                width: 12,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: appTheme.decksColor,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
+                      subtitle: Text(
+                        appTheme.isPremium ? "Premium štýl" : "Základný štýl",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        ),
+                      ),
+                      trailing: appTheme.isPremium
+                          ? Icon(Icons.star_rounded, color: theme.colorScheme.tertiary, size: 22)
+                          : null,
+                      onTap: () {
+                        // Okamžitá zmena témy cez provider podľa int ID
+                        themeProvider.setTheme(appTheme.id);
+                      },
                     ),
                   );
                 }),

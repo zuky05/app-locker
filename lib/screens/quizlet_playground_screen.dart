@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:provider/provider.dart';
 import 'dart:convert';
 import '../services/database_helper.dart';
+import '../themes/theme_provider.dart';
 
 class QuizletPlaygroundScreen extends StatefulWidget {
   const QuizletPlaygroundScreen({super.key});
@@ -32,21 +34,19 @@ class _QuizletPlaygroundScreenState extends State<QuizletPlaygroundScreen> {
       ..loadRequest(Uri.parse('https://quizlet.com/search?query=medicine&type=sets'));
   }
 
-  // Funkcia, ktorá vstrekne náš kód do Quizlet stránky
+  // Funkcia, ktorá vstrekne kód do Quizlet stránky
   void _extractCards() async {
     setState(() {
       isExtracting = true;
       statusMessage = "Rolujem, klikám na 'See more' a zbieram dáta... 👻";
     });
 
-    // VYLEPŠENÝ JAVASCRIPT: Auto-Scroller s automatickým klikaním!
     const String jsCode = '''
       async function extractAll() {
         try {
           var extracted = new Map(); 
           var scrollAttempts = 0;
           
-          // Zber toho, čo je práve na obrazovke
           function collectVisible() {
             var termElements = document.querySelectorAll('.TermText');
             for (var i = 0; i < termElements.length - 1; i += 2) {
@@ -60,14 +60,12 @@ class _QuizletPlaygroundScreenState extends State<QuizletPlaygroundScreen> {
             }
           }
 
-          // NOVÁ FUNKCIA: Hľadáčik na tlačidlo "See more"
           function clickSeeMore() {
             var buttons = document.querySelectorAll('button');
             for (var i = 0; i < buttons.length; i++) {
-              // Hľadáme tlačidlo, ktoré obsahuje text "See more" (odignorujeme veľké/malé písmená)
               if (buttons[i].innerText && buttons[i].innerText.toLowerCase().includes('see more')) {
-                buttons[i].click(); // KLIK!
-                return; // Našli sme a klikli, môžeme ísť ďalej
+                buttons[i].click();
+                return;
               }
             }
           }
@@ -75,11 +73,9 @@ class _QuizletPlaygroundScreenState extends State<QuizletPlaygroundScreen> {
           window.scrollTo(0, 0);
           await new Promise(r => setTimeout(r, 500));
           
-          // Zvýšili sme limit na 4 pokusy, aby robot počkal aj pri veľmi dlhých balíčkoch
           while (scrollAttempts < 4) {
             collectVisible(); 
-            
-            clickSeeMore(); // Pred rolovaním robot skontroluje, či netreba otvoriť ďalšie karty!
+            clickSeeMore();
             
             var oldY = window.scrollY;
             window.scrollBy(0, 1000); 
@@ -92,7 +88,7 @@ class _QuizletPlaygroundScreenState extends State<QuizletPlaygroundScreen> {
             }
           }
           
-          collectVisible(); // Posledný zber na dne
+          collectVisible();
           
           var cards = [];
           extracted.forEach(function(value, key) {
@@ -111,14 +107,14 @@ class _QuizletPlaygroundScreenState extends State<QuizletPlaygroundScreen> {
     await controller.runJavaScript(jsCode);
   }
 
-  // Funkcia, ktorá spracuje dáta z JS
+  // Funkcia na spracovanie dát z JS
   void _processExtractedData(String data) async {
     if (data.startsWith("ERROR:")) {
-       setState(() {
-         isExtracting = false;
-         statusMessage = "Chyba na webe: ${data.substring(6)}";
-       });
-       return;
+      setState(() {
+        isExtracting = false;
+        statusMessage = "Chyba na webe: ${data.substring(6)}";
+      });
+      return;
     }
 
     try {
@@ -132,13 +128,11 @@ class _QuizletPlaygroundScreenState extends State<QuizletPlaygroundScreen> {
         return;
       }
 
-      // Vytvoríme testovací balíček v našej databáze
       String deckName = "Quizlet Test ${DateTime.now().minute}:${DateTime.now().second}";
       await DatabaseHelper.instance.addNewDeck(deckName, "Playground");
       final decks = await DatabaseHelper.instance.getDecks();
       final newDeck = decks.last;
 
-      // Uložíme všetky vytiahnuté kartičky
       for (var card in cards) {
         await DatabaseHelper.instance.addNewCard(newDeck.id!, card['q'], card['a']);
       }
@@ -150,30 +144,48 @@ class _QuizletPlaygroundScreenState extends State<QuizletPlaygroundScreen> {
 
     } catch (e) {
       setState(() {
-         isExtracting = false;
-         statusMessage = "Chyba pri spracovaní dát: $e";
-       });
+        isExtracting = false;
+        statusMessage = "Chyba pri spracovaní dát: $e";
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final currentTheme = themeProvider.currentThemeData;
+    final theme = currentTheme.theme;
+
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text("Quizlet Lab 🕷️"),
-        backgroundColor: Colors.blueGrey,
-        foregroundColor: Colors.white,
+        backgroundColor: theme.appBarTheme.backgroundColor ?? Colors.transparent,
+        foregroundColor: theme.colorScheme.onSurface,
+        elevation: theme.appBarTheme.elevation ?? 0,
       ),
       body: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(12),
             width: double.infinity,
-            color: Colors.blueGrey.shade100,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withValues(alpha: 0.12),
+              border: Border(
+                bottom: BorderSide(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                  width: 1,
+                ),
+              ),
+            ),
             child: Text(
               statusMessage,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: TextStyle(
+                fontWeight: FontWeight.bold, 
+                fontSize: 15,
+                color: theme.colorScheme.onSurface,
+              ),
             ),
           ),
           Expanded(
@@ -182,17 +194,17 @@ class _QuizletPlaygroundScreenState extends State<QuizletPlaygroundScreen> {
         ],
       ),
       floatingActionButton: isExtracting
-          ? const FloatingActionButton(
+          ? FloatingActionButton(
               onPressed: null,
-              backgroundColor: Colors.grey,
-              child: CircularProgressIndicator(color: Colors.white),
+              backgroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+              child: CircularProgressIndicator(color: theme.colorScheme.onPrimary),
             )
           : FloatingActionButton.extended(
               onPressed: _extractCards,
               icon: const Icon(Icons.downloading),
-              label: const Text("Vytiahnuť kartičky"),
-              backgroundColor: Colors.blueGrey,
-              foregroundColor: Colors.white,
+              label: const Text("Vytiahnuť kartičky", style: TextStyle(fontWeight: FontWeight.bold)),
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
             ),
     );
   }

@@ -133,7 +133,6 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     return "${s}s";
   }
 
-  // Dedenie farby outline priamo z akcentu tlačidla v menu (žiadne natvrdo dané fialové farby)
   BoxDecoration _getCardDecoration(AppThemeData currentTheme, Color accentColor) {
     final theme = currentTheme.theme;
     Border border;
@@ -291,7 +290,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                       Text(
                         'ODMENA ZA 1 SPRÁVNU ODPOVEĎ', 
                         style: TextStyle(
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6), 
+                          color: currentTheme.id == 2 ? Colors.black.withValues(alpha: 0.7) : theme.colorScheme.onSurface.withValues(alpha: 0.6), 
                           fontSize: 12, 
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1.1,
@@ -301,7 +300,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                       Text(
                         _formatTime(_timePerQuestion), 
                         style: TextStyle(
-                          color: currentTheme.id == 0 ? const Color(0xFF00F5FF) : theme.colorScheme.primary, 
+                          color: currentTheme.id == 0 ? const Color(0xFF00F5FF) : (currentTheme.id == 2 ? Colors.black : theme.colorScheme.primary), 
                           fontSize: 44, 
                           fontWeight: FontWeight.w900,
                         ),
@@ -310,9 +309,12 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.05), 
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onSurface.withValues(alpha: 0.1), width: currentTheme.id == 2 ? 2 : 1),
+                          color: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onSurface.withValues(alpha: 0.05), 
+                          borderRadius: BorderRadius.circular(currentTheme.id == 2 ? 10 : 12),
+                          border: Border.all(
+                            color: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onSurface.withValues(alpha: 0.1), 
+                            width: currentTheme.id == 2 ? 2.5 : 1,
+                          ),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -322,13 +324,19 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                               children: [
                                 Text(
                                   'Celkový násobič', 
-                                  style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 12),
+                                  style: TextStyle(
+                                    color: currentTheme.id == 2 ? Colors.white70 : theme.colorScheme.onSurface.withValues(alpha: 0.6), 
+                                    fontSize: 12,
+                                    fontWeight: currentTheme.id == 2 ? FontWeight.bold : FontWeight.normal,
+                                  ),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
                                   'x${_currentMultiplier.toStringAsFixed(2)}', 
                                   style: TextStyle(
-                                    color: _currentMultiplier >= 1.0 ? Colors.green.shade400 : Colors.red.shade400, // Zmenené na svetlejšiu zelenú
+                                    color: currentTheme.id == 2 
+                                        ? (_currentMultiplier >= 1.0 ? const Color(0xFF00E676) : const Color(0xFFFF5252))
+                                        : (_currentMultiplier >= 1.0 ? Colors.green.shade400 : Colors.red.shade400),
                                     fontWeight: FontWeight.bold, 
                                     fontSize: 18,
                                   ),
@@ -340,13 +348,17 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                               children: [
                                 Text(
                                   'Max potenciál testu', 
-                                  style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 12),
+                                  style: TextStyle(
+                                    color: currentTheme.id == 2 ? Colors.white70 : theme.colorScheme.onSurface.withValues(alpha: 0.6), 
+                                    fontSize: 12,
+                                    fontWeight: currentTheme.id == 2 ? FontWeight.bold : FontWeight.normal,
+                                  ),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
                                   _formatTime(_totalTimePotential), 
                                   style: TextStyle(
-                                    color: theme.colorScheme.tertiary,
+                                    color: currentTheme.id == 2 ? Colors.white : theme.colorScheme.tertiary,
                                     fontWeight: FontWeight.bold, 
                                     fontSize: 18,
                                   ),
@@ -366,7 +378,14 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                 padding: const EdgeInsets.all(20),
                 physics: const BouncingScrollPhysics(),
                 children: [
-                  Text('ZÁKLADNÉ NASTAVENIA KVÍZU', style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 13, fontWeight: FontWeight.bold)),
+                  Text(
+                    'ZÁKLADNÉ NASTAVENIA KVÍZU', 
+                    style: TextStyle(
+                      color: currentTheme.id == 2 ? Colors.black.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.6), 
+                      fontSize: 13, 
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   _buildSliderCard(
                     title: 'Počet otázok', 
@@ -415,7 +434,14 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     },
                   ),
                   const SizedBox(height: 24),
-                  Text('MODIFIKÁTORY', style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 13, fontWeight: FontWeight.bold)),
+                  Text(
+                    'MODIFIKÁTORY', 
+                    style: TextStyle(
+                      color: currentTheme.id == 2 ? Colors.black.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.6), 
+                      fontSize: 13, 
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   _buildSwitchCard(
                     title: '3 Možnosti', 
@@ -505,7 +531,14 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                 padding: const EdgeInsets.all(20),
                 physics: const BouncingScrollPhysics(),
                 children: [
-                  Text('NASTAVENIA UČENIA', style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 13, fontWeight: FontWeight.bold)),
+                  Text(
+                    'NASTAVENIA UČENIA', 
+                    style: TextStyle(
+                      color: currentTheme.id == 2 ? Colors.black.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.6), 
+                      fontSize: 13, 
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   _buildSliderCard(
                     title: 'Počet kartičiek v dávke',
@@ -558,9 +591,29 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
   }
 
   // --- POMOCNÉ WIDGETY ---
-  Widget _buildMultiplierBadge(double mult) {
+  Widget _buildMultiplierBadge(double mult, AppThemeData currentTheme) {
     if (mult == 1.0) return const SizedBox.shrink();
     bool isPositive = mult > 1.0;
+
+    if (currentTheme.id == 2) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: Colors.black, width: 1.5),
+        ),
+        child: Text(
+          'x$mult',
+          style: TextStyle(
+            color: isPositive ? const Color(0xFF00E676) : const Color(0xFFFF5252),
+            fontWeight: FontWeight.w900,
+            fontSize: 12,
+          ),
+        ),
+      );
+    }
+
     Color badgeColor = isPositive ? Colors.green.shade400 : Colors.red.shade400;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -582,6 +635,12 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     double? multiplier,
   }) {
     final theme = currentTheme.theme;
+    final Color titleColor = currentTheme.id == 2 ? Colors.black : theme.colorScheme.onSurface;
+    
+    final Color activeAccentColor = currentTheme.id == 2 
+        ? Colors.black 
+        : (currentTheme.id == 0 ? const Color(0xFFFFE600) : theme.colorScheme.primary);
+
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
       decoration: _getCardDecoration(currentTheme, accentColor),
@@ -591,17 +650,28 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(title, style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 16)),
-              if (multiplier != null) _buildMultiplierBadge(multiplier),
+              Text(title, style: TextStyle(color: titleColor, fontWeight: FontWeight.bold, fontSize: 16)),
+              if (multiplier != null) _buildMultiplierBadge(multiplier, currentTheme),
             ],
           ),
           const SizedBox(height: 12),
-          Text(valueLabel, style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 18)),
+          Text(
+            valueLabel, 
+            style: TextStyle(
+              color: activeAccentColor, 
+              fontWeight: FontWeight.w900, 
+              fontSize: 18,
+            ),
+          ),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: theme.colorScheme.primary, 
-              inactiveTrackColor: theme.colorScheme.onSurface.withValues(alpha: 0.12), 
-              thumbColor: theme.colorScheme.primary, 
+              activeTrackColor: activeAccentColor, 
+              inactiveTrackColor: currentTheme.id == 2 
+                  ? Colors.black26 
+                  : (currentTheme.id == 0 
+                      ? activeAccentColor.withValues(alpha: 0.2) 
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.12)), 
+              thumbColor: activeAccentColor, 
               trackHeight: 6.0,
             ),
             child: Slider(value: value, min: min, max: max, divisions: divisions, onChanged: onChanged),
@@ -625,6 +695,15 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
   }) {
     final theme = currentTheme.theme;
     final Color highlightColor = isGold ? theme.colorScheme.tertiary : theme.colorScheme.primary;
+    
+    // Názov položky bude vždy biely v tmavých témach a čierny v Neo-Brutalizme
+    final Color titleColor = currentTheme.id == 2 ? Colors.black : theme.colorScheme.onSurface;
+    final Color subtitleColor = currentTheme.id == 2 ? Colors.black87 : theme.colorScheme.onSurface.withValues(alpha: 0.6);
+
+    // V Cyberpunku (id == 0) nastavíme neónovo tyrkysovo-modrú (0xFF00F5FF) pre štandardné prepínače
+    final Color switchActiveColor = currentTheme.id == 2 
+        ? Colors.black 
+        : (currentTheme.id == 0 && !isGold ? const Color(0xFF00F5FF) : highlightColor);
 
     return Opacity(
       opacity: isDisabled ? 0.4 : 1.0,
@@ -642,24 +721,27 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                       Text(
                         title, 
                         style: TextStyle(
-                          color: isGold ? highlightColor : theme.colorScheme.onSurface, 
+                          color: titleColor, 
                           fontWeight: FontWeight.bold, 
                           fontSize: 16,
                         ),
                       ),
                       const SizedBox(width: 8),
-                      if (showMultiplier) _buildMultiplierBadge(multiplier),
+                      if (showMultiplier) _buildMultiplierBadge(multiplier, currentTheme),
                     ],
                   ),
                   const SizedBox(height: 6),
-                  Text(subtitle, style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 13)),
+                  Text(subtitle, style: TextStyle(color: subtitleColor, fontSize: 13)),
                 ],
               ),
             ),
             Switch(
               value: value, 
               onChanged: isDisabled ? null : onChanged, 
-              activeColor: currentTheme.id == 2 ? Colors.black : highlightColor,
+              activeColor: switchActiveColor,
+              activeTrackColor: currentTheme.id == 2 
+                  ? const Color(0xFF00E676) 
+                  : (currentTheme.id == 0 && !isGold ? const Color(0xFF00F5FF).withValues(alpha: 0.4) : null),
             ),
           ],
         ),

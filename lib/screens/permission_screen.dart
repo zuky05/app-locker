@@ -123,7 +123,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: currentTheme.id == 2 ? theme.colorScheme.primary : theme.colorScheme.primary.withValues(alpha: 0.12),
+                  color: currentTheme.id == 2 ? Colors.white : theme.colorScheme.primary.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                   border: currentTheme.id == 2 
                       ? Border.all(color: Colors.black, width: 3.5) 
@@ -200,7 +200,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
                 ),
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 54),
-                  backgroundColor: theme.colorScheme.primary,
+                  backgroundColor: currentTheme.id == 2 ? const Color(0xFF00E676) : theme.colorScheme.primary,
                   foregroundColor: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onPrimary,
                   shape: RoundedRectangleBorder(
                     borderRadius: currentTheme.buttonBorderRadius,

@@ -94,23 +94,18 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Pomocná metóda na vytvorenie dekorácie karty s vlastnou akcentovou farbou okroja
   BoxDecoration _getCustomCardDecoration(AppThemeData currentTheme, Color accentColor) {
     final theme = currentTheme.theme;
 
-    // Pre Cyberpunk / Brutalism vytvoríme dynamický okraj podľa akcentu karty
     Border border;
     if (currentTheme.id == 0) {
-      // Cyberpunk Dark: Neónový okraj vo farbe karty
       border = Border.all(color: accentColor, width: 1.5);
     } else if (currentTheme.id == 2) {
-      // Neo Brutalism: Hrubý čierny okraj
       border = Border.all(color: Colors.black, width: 3.5);
     } else {
       border = currentTheme.cardBorder ?? Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.12));
     }
 
-    // Pre Cyberpunk spravíme aj žiaru (glow) vo farbe danej karty
     List<BoxShadow>? shadows;
     if (currentTheme.id == 0) {
       shadows = [
@@ -124,7 +119,6 @@ class _HomeScreenState extends State<HomeScreen> {
       shadows = currentTheme.cardShadows;
     }
 
-    // Pre Neo Brutalism zafarbíme celú kartu akcentovou farbou
     Color cardBgColor = currentTheme.id == 2 ? accentColor : theme.cardColor;
 
     return BoxDecoration(
@@ -180,7 +174,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       
-      // STICKY BOTTOM BAR (Quick Import)
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: theme.scaffoldBackgroundColor,
@@ -254,18 +247,18 @@ class _HomeScreenState extends State<HomeScreen> {
               physics: const BouncingScrollPhysics(),
               children: [
                 
-                // 1. DAILY GOAL
+                // 1. DAILY GOAL (Zmenené na zelenú / decksColor)
                 Container(
                   height: 200,
                   padding: const EdgeInsets.all(20),
-                  decoration: _getCustomCardDecoration(currentTheme, currentTheme.dailyGoalColor),
+                  decoration: _getCustomCardDecoration(currentTheme, currentTheme.decksColor),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
                         'DAILY GOAL',
                         style: TextStyle(
-                          color: currentTheme.id == 2 ? Colors.black : currentTheme.dailyGoalColor,
+                          color: currentTheme.id == 2 ? Colors.black : currentTheme.decksColor,
                           fontSize: 13,
                           letterSpacing: 1.2,
                           fontWeight: FontWeight.w800,
@@ -296,7 +289,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           value: 15 / 20,
                           minHeight: 10,
                           backgroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.12),
-                          valueColor: AlwaysStoppedAnimation<Color>(currentTheme.dailyGoalColor),
+                          valueColor: AlwaysStoppedAnimation<Color>(currentTheme.decksColor),
                         ),
                       ),
                     ],
@@ -312,7 +305,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFB800), // ZLATÁ FARBA
+                      color: const Color(0xFFFFB800),
                       borderRadius: currentTheme.cardBorderRadius,
                       border: currentTheme.id == 2 
                           ? Border.all(color: Colors.black, width: 3.5) 
@@ -347,7 +340,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 const SizedBox(height: 16),
 
-                // 3. DECKS
+                // 3. DECKS (Zmenené na fialovú / dailyGoalColor)
                 InkWell(
                   onTap: () async {
                     await Navigator.push(
@@ -359,14 +352,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   borderRadius: currentTheme.cardBorderRadius,
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
-                    decoration: _getCustomCardDecoration(currentTheme, currentTheme.decksColor),
+                    decoration: _getCustomCardDecoration(currentTheme, currentTheme.dailyGoalColor),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
                           Icons.style_rounded, 
                           size: 52, 
-                          color: currentTheme.id == 2 ? Colors.black : currentTheme.decksColor,
+                          color: currentTheme.id == 2 ? Colors.black : currentTheme.dailyGoalColor,
                         ),
                         const SizedBox(height: 8),
                         Text(

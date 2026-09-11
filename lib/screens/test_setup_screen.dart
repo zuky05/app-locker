@@ -105,12 +105,9 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
 
   double get _effectiveLockoutMultiplier {
     double realRatio = _requiredCorrectQuestions / _questionCount;
-    
     double mult = 1.0 + (realRatio - 0.5);
-    
     if (mult < 0.6) return 0.6;
     if (mult > 1.5) return 1.5;
-    
     return mult;
   }
 
@@ -134,6 +131,42 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     int s = seconds % 60;
     if (m > 0) return "${m}m ${s}s";
     return "${s}s";
+  }
+
+  // Dedenie farby outline priamo z akcentu tlačidla v menu (žiadne natvrdo dané fialové farby)
+  BoxDecoration _getCardDecoration(AppThemeData currentTheme, Color accentColor) {
+    final theme = currentTheme.theme;
+    Border border;
+    if (currentTheme.id == 0) {
+      border = Border.all(color: accentColor, width: 1.5);
+    } else if (currentTheme.id == 2) {
+      border = Border.all(color: Colors.black, width: 3.5);
+    } else {
+      border = Border.all(color: accentColor, width: 1.5);
+    }
+
+    List<BoxShadow>? shadows;
+    if (currentTheme.id == 0) {
+      shadows = [
+        BoxShadow(
+          color: accentColor.withValues(alpha: 0.35),
+          blurRadius: 10,
+          spreadRadius: 1,
+        )
+      ];
+    } else {
+      shadows = currentTheme.cardShadows;
+    }
+
+    Color cardBgColor = currentTheme.id == 2 ? accentColor : theme.cardColor;
+
+    return BoxDecoration(
+      color: cardBgColor,
+      borderRadius: currentTheme.cardBorderRadius,
+      border: border,
+      boxShadow: shadows,
+      gradient: currentTheme.id == 2 ? null : currentTheme.cardGradient,
+    );
   }
 
   @override
@@ -239,6 +272,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
               isGold: true,
               showMultiplier: false,
               currentTheme: currentTheme,
+              accentColor: currentTheme.testSetupColor,
               onChanged: (val) {
                 setState(() => _isLearningMode = val);
                 _saveBool('test_isLearningMode', val);
@@ -251,19 +285,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Container(
                   padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: theme.cardColor, 
-                    borderRadius: currentTheme.cardBorderRadius,
-                    border: currentTheme.id == 2
-                        ? Border.all(color: Colors.black, width: 3.5)
-                        : (currentTheme.id == 0 
-                            ? Border.all(color: const Color(0xFFBD00FF), width: 1.5) 
-                            : (currentTheme.cardBorder ?? Border.all(color: theme.colorScheme.primary, width: 1.5))),
-                    boxShadow: currentTheme.id == 2 
-                        ? const [BoxShadow(color: Colors.black, offset: Offset(4, 4))] 
-                        : currentTheme.cardShadows,
-                    gradient: currentTheme.id == 0 || currentTheme.id == 2 ? null : currentTheme.cardGradient,
-                  ),
+                  decoration: _getCardDecoration(currentTheme, currentTheme.testSetupColor),
                   child: Column(
                     children: [
                       Text(
@@ -306,7 +328,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                                 Text(
                                   'x${_currentMultiplier.toStringAsFixed(2)}', 
                                   style: TextStyle(
-                                    color: _currentMultiplier >= 1.0 ? Colors.green.shade700 : Colors.red, 
+                                    color: _currentMultiplier >= 1.0 ? Colors.green.shade400 : Colors.red.shade400, // Zmenené na svetlejšiu zelenú
                                     fontWeight: FontWeight.bold, 
                                     fontSize: 18,
                                   ),
@@ -354,6 +376,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     max: maxQuestions, 
                     divisions: questionDivisions, 
                     currentTheme: currentTheme,
+                    accentColor: currentTheme.testSetupColor,
                     onChanged: (val) { 
                       setState(() => _questionCount = val); 
                       _saveDouble('test_questionCount', val); 
@@ -369,6 +392,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     max: 5, 
                     divisions: 5, 
                     currentTheme: currentTheme,
+                    accentColor: currentTheme.testSetupColor,
                     onChanged: (val) { 
                       setState(() => _timeLimitIndex = val); 
                       _saveDouble('test_timeLimitIndex', val); 
@@ -384,6 +408,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     max: 7, 
                     divisions: 7, 
                     currentTheme: currentTheme,
+                    accentColor: currentTheme.testSetupColor,
                     onChanged: (val) { 
                       setState(() => _lockoutIndex = val); 
                       _saveDouble('test_lockoutIndex', val); 
@@ -399,6 +424,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     value: _is3Options, 
                     isDisabled: _isHardcore, 
                     currentTheme: currentTheme,
+                    accentColor: currentTheme.testSetupColor,
                     onChanged: (val) { 
                       setState(() => _is3Options = val); 
                       _saveBool('test_is3Options', val); 
@@ -411,6 +437,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     multiplier: 0.8, 
                     value: _isSecondChance, 
                     currentTheme: currentTheme,
+                    accentColor: currentTheme.testSetupColor,
                     onChanged: (val) { 
                       setState(() => _isSecondChance = val); 
                       _saveBool('test_isSecondChance', val); 
@@ -424,6 +451,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     value: _isConfusion, 
                     isDisabled: _isHardcore, 
                     currentTheme: currentTheme,
+                    accentColor: currentTheme.testSetupColor,
                     onChanged: (val) { 
                       setState(() => _isConfusion = val); 
                       _saveBool('test_isConfusion', val); 
@@ -437,6 +465,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     value: _isDoubleTest, 
                     isGold: true,
                     currentTheme: currentTheme,
+                    accentColor: currentTheme.testSetupColor,
                     onChanged: (val) { 
                       setState(() {
                         _isDoubleTest = val;
@@ -452,6 +481,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     value: _isHardcore, 
                     isGold: true, 
                     currentTheme: currentTheme,
+                    accentColor: currentTheme.testSetupColor,
                     onChanged: (val) {
                       setState(() {
                         _isHardcore = val;
@@ -485,6 +515,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     max: maxLearnCards, 
                     divisions: learnDivisions,
                     currentTheme: currentTheme,
+                    accentColor: currentTheme.testSetupColor,
                     onChanged: (val) { 
                       setState(() => _learnCardCount = val); 
                       _saveDouble('test_learnCardCount', val); 
@@ -497,6 +528,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     value: _learnInterval,
                     min: 1, max: 5, divisions: 4,
                     currentTheme: currentTheme,
+                    accentColor: currentTheme.testSetupColor,
                     onChanged: (val) { 
                       setState(() => _learnInterval = val); 
                       _saveDouble('test_learnInterval', val); 
@@ -510,6 +542,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     showMultiplier: false,
                     value: _learnRepeat,
                     currentTheme: currentTheme,
+                    accentColor: currentTheme.testSetupColor,
                     onChanged: (val) { 
                       setState(() => _learnRepeat = val); 
                       _saveBool('test_learnRepeat', val); 
@@ -528,7 +561,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
   Widget _buildMultiplierBadge(double mult) {
     if (mult == 1.0) return const SizedBox.shrink();
     bool isPositive = mult > 1.0;
-    Color badgeColor = isPositive ? Colors.green : Colors.red;
+    Color badgeColor = isPositive ? Colors.green.shade400 : Colors.red.shade400;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(color: badgeColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8)),
@@ -545,20 +578,13 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     required int divisions, 
     required ValueChanged<double> onChanged, 
     required AppThemeData currentTheme,
+    required Color accentColor,
     double? multiplier,
   }) {
     final theme = currentTheme.theme;
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-      decoration: BoxDecoration(
-        color: theme.cardColor, 
-        borderRadius: currentTheme.cardBorderRadius, 
-        border: currentTheme.id == 2 
-            ? Border.all(color: Colors.black, width: 3.5) 
-            : (currentTheme.cardBorder ?? Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.12))),
-        boxShadow: currentTheme.id == 2 ? const [BoxShadow(color: Colors.black, offset: Offset(4, 4))] : currentTheme.cardShadows,
-        gradient: currentTheme.id == 2 ? null : currentTheme.cardGradient,
-      ),
+      decoration: _getCardDecoration(currentTheme, accentColor),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -592,6 +618,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     required bool value, 
     required ValueChanged<bool> onChanged, 
     required AppThemeData currentTheme,
+    required Color accentColor,
     bool isDisabled = false, 
     bool isGold = false, 
     bool showMultiplier = true,
@@ -603,17 +630,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
       opacity: isDisabled ? 0.4 : 1.0,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        decoration: BoxDecoration(
-          color: theme.cardColor, 
-          borderRadius: currentTheme.cardBorderRadius, 
-          border: currentTheme.id == 2
-              ?  Border.all(color: Colors.black, width: 3.5)
-              : (isGold && value 
-                  ? Border.all(color: highlightColor, width: 2) 
-                  : (currentTheme.cardBorder ?? Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.12)))), 
-          boxShadow: currentTheme.id == 2 ? const [BoxShadow(color: Colors.black, offset: Offset(4, 4))] : currentTheme.cardShadows,
-          gradient: currentTheme.id == 2 ? null : currentTheme.cardGradient,
-        ),
+        decoration: _getCardDecoration(currentTheme, accentColor),
         child: Row(
           children: [
             Expanded(

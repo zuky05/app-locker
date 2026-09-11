@@ -118,7 +118,6 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     }
   }
 
-  // --- VÝPOČET POŽADOVANÝCH SPRÁVNYCH OTÁZOK ---
   int get _requiredCorrectQuestions {
     if (_isRemedialQuiz) {
       return (_questionCount * 0.8).ceil();
@@ -127,7 +126,6 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     return (targetPct * _questionCount).round();
   }
 
-  // --- VÝPOČET DYNAMICKÉHO LOCKOUT NÁSOBIČA ---
   double get _effectiveLockoutMultiplier {
     double realRatio = _requiredCorrectQuestions / _questionCount;
     double mult = 1.0 + (realRatio - 0.5);
@@ -149,10 +147,6 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     if (_isDoubleTest) mult *= 1.75; 
     return mult;
   }
-
-  // ==========================================
-  //         LOGIKA PRE OPRAVNÝ REŽIM
-  // ==========================================
 
   Future<void> _startRemedialLearning() async {
     setState(() => _isLoading = true);
@@ -250,10 +244,6 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     });
   }
 
-  // ==========================================
-  //         LOGIKA PRE LEARNING MODE
-  // ==========================================
-
   Future<void> _startLearningMode() async {
     setState(() => _isLoading = true);
     
@@ -311,10 +301,6 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       _isCardFlipped = false;
     });
   }
-
-  // ==========================================
-  //         LOGIKA PRE KLASICKÝ KVÍZ
-  // ==========================================
 
   Future<void> _loadNextQuizQuestion() async {
     _timer?.cancel();
@@ -535,10 +521,6 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     SystemNavigator.pop();
   }
 
-  // ==========================================
-  //                  UI
-  // ==========================================
-
   @override
   Widget build(BuildContext context) {
     final bool isPractice = widget.practiceDeckId != null;
@@ -547,43 +529,54 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     final theme = currentTheme.theme;
 
     return Scaffold(
+      // Zosvetlené pozadie pod overlayom
       backgroundColor: isPractice 
           ? theme.scaffoldBackgroundColor 
-          : Colors.black.withValues(alpha: 0.5),
+          : Colors.black.withValues(alpha: 0.3),
       body: Center(
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Vonkajší kontajner s bielym základom, aby gradient žiaril
               Container(
                 width: MediaQuery.of(context).size.width * 0.9,
-                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: theme.cardColor, 
-                  borderRadius: currentTheme.cardBorderRadius, 
-                  border: currentTheme.cardBorder ?? Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.12)),
-                  boxShadow: currentTheme.cardShadows,
-                  gradient: currentTheme.cardGradient,
+                  color: Colors.white, 
+                  borderRadius: currentTheme.cardBorderRadius,
+                  border: currentTheme.id == 2 
+                      ? Border.all(color: Colors.black, width: 3.5) 
+                      : (currentTheme.cardBorder ?? Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.2))),
+                  boxShadow: currentTheme.id == 2 
+                      ? const [BoxShadow(color: Colors.black, offset: Offset(4, 4))] 
+                      : const [BoxShadow(color: Colors.black26, blurRadius: 15, spreadRadius: 2)],
                 ),
-                child: _isLoading 
-                    ? SizedBox(
-                        height: 200, 
-                        child: Center(
-                          child: CircularProgressIndicator(color: theme.colorScheme.primary),
-                        ),
-                      ) 
-                    : _buildContent(currentTheme),
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    borderRadius: currentTheme.cardBorderRadius,
+                    gradient: currentTheme.id == 2 ? null : currentTheme.cardGradient,
+                  ),
+                  child: _isLoading 
+                      ? SizedBox(
+                          height: 200, 
+                          child: Center(
+                            child: CircularProgressIndicator(color: theme.colorScheme.primary),
+                          ),
+                        ) 
+                      : _buildContent(currentTheme),
+                ),
               ),
 
               if (isPractice) ...[
                 const SizedBox(height: 16),
                 TextButton.icon(
                   onPressed: _closeOrExitScreen,
-                  icon: Icon(Icons.close_rounded, color: theme.colorScheme.onSurface.withValues(alpha: 0.6), size: 20),
-                  label: Text(
+                  icon: const Icon(Icons.close_rounded, color: Colors.white70, size: 20),
+                  label: const Text(
                     "Zrušiť test", 
                     style: TextStyle(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6), 
+                      color: Colors.white70, 
                       fontWeight: FontWeight.bold, 
                       fontSize: 15,
                     ),
@@ -644,8 +637,12 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             style: ElevatedButton.styleFrom(
               minimumSize: const Size(double.infinity, 50), 
               backgroundColor: theme.colorScheme.primary, 
-              foregroundColor: theme.colorScheme.onPrimary, 
-              shape: RoundedRectangleBorder(borderRadius: currentTheme.cardBorderRadius),
+              foregroundColor: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onPrimary, 
+              shape: RoundedRectangleBorder(
+                borderRadius: currentTheme.buttonBorderRadius,
+                side: currentTheme.id == 2 ? const BorderSide(color: Colors.black, width: 3.5) : BorderSide.none,
+              ),
+              elevation: currentTheme.id == 2 ? 0 : 2,
             ),
             onPressed: _finishAndUnlock,
             child: const Text("Zatvoriť"),
@@ -697,14 +694,15 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                 ? Colors.green.withValues(alpha: 0.12) 
                 : Colors.red.withValues(alpha: 0.12), 
             borderRadius: currentTheme.cardBorderRadius,
-            border: Border.all(color: isSuccess ? Colors.green : Colors.red, width: 1.5),
+            border: Border.all(color: isSuccess ? Colors.green : Colors.red, width: currentTheme.id == 2 ? 3.5 : 1.5),
+            boxShadow: currentTheme.id == 2 ? const [BoxShadow(color: Colors.black, offset: Offset(3, 3))] : null,
           ),
           child: Text(
             isSuccess ? "Získaný čas: ${m}m ${s}s" : "Nesplnil si podmienku pre zisk času.", 
             style: TextStyle(
               fontSize: 18, 
               fontWeight: FontWeight.bold, 
-              color: isSuccess ? Colors.green : Colors.red,
+              color: isSuccess ? Colors.green.shade700 : Colors.red,
             ), 
             textAlign: TextAlign.center,
           ),
@@ -722,8 +720,12 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
           style: ElevatedButton.styleFrom(
             minimumSize: const Size(double.infinity, 50), 
             backgroundColor: theme.colorScheme.primary, 
-            foregroundColor: theme.colorScheme.onPrimary, 
-            shape: RoundedRectangleBorder(borderRadius: currentTheme.cardBorderRadius),
+            foregroundColor: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onPrimary, 
+            shape: RoundedRectangleBorder(
+              borderRadius: currentTheme.buttonBorderRadius,
+              side: currentTheme.id == 2 ? const BorderSide(color: Colors.black, width: 3.5) : BorderSide.none,
+            ),
+            elevation: currentTheme.id == 2 ? 0 : 2,
           ),
           onPressed: _finishAndUnlock,
           child: Text(isSuccess && !isPractice ? "Odomknúť aplikácie" : "Zatvoriť test"),
@@ -732,7 +734,6 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     );
   }
 
-  // --- LEARNING / REMEDIAL UI ---
   Widget _buildLearningUI(AppThemeData currentTheme) {
     final theme = currentTheme.theme;
     final card = _learningCardsQueue.first;
@@ -748,7 +749,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             decoration: BoxDecoration(
               color: Colors.red.withValues(alpha: 0.12), 
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.red, width: 1),
+              border: Border.all(color: Colors.red, width: currentTheme.id == 2 ? 3.5 : 1),
             ),
             child: const Text(
               "POVINNÉ OPAKOVANIE ZA TREST", 
@@ -762,7 +763,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
                 color: Colors.transparent, 
-                border: Border.all(color: Colors.orange, width: 2), 
+                border: Border.all(color: Colors.orange, width: currentTheme.id == 2 ? 3.5 : 2), 
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text("${_failedCards.length}", style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 16)),
@@ -774,14 +775,14 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                   style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 if (_learningRound > 1) 
-                  Text("Kolo $_learningRound", style: TextStyle(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.bold)),
+                  Text("Kolo $_learningRound", style: const TextStyle(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.bold)),
               ],
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
                 color: Colors.transparent, 
-                border: Border.all(color: Colors.green, width: 2), 
+                border: Border.all(color: Colors.green, width: currentTheme.id == 2 ? 3.5 : 2), 
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text("$_masteredCount", style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16)),
@@ -806,7 +807,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             decoration: BoxDecoration(
               color: Colors.green.withValues(alpha: 0.15), 
               borderRadius: currentTheme.cardBorderRadius, 
-              border: Border.all(color: Colors.green, width: 2),
+              border: Border.all(color: Colors.green, width: currentTheme.id == 2 ? 3.5 : 2),
             ),
             child: const Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -824,7 +825,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             decoration: BoxDecoration(
               color: Colors.orange.withValues(alpha: 0.15), 
               borderRadius: currentTheme.cardBorderRadius, 
-              border: Border.all(color: Colors.orange, width: 2),
+              border: Border.all(color: Colors.orange, width: currentTheme.id == 2 ? 3.5 : 2),
             ),
             child: const Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -861,10 +862,10 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 16), 
                     backgroundColor: Colors.orange.withValues(alpha: 0.12), 
                     foregroundColor: Colors.orange, 
-                    elevation: 0,
+                    elevation: currentTheme.id == 2 ? 0 : 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: currentTheme.cardBorderRadius, 
-                      side: const BorderSide(color: Colors.orange, width: 1.5),
+                      borderRadius: currentTheme.buttonBorderRadius, 
+                      side: BorderSide(color: Colors.orange, width: currentTheme.id == 2 ? 3.5 : 1.5),
                     ),
                   ),
                   onPressed: _isCardFlipped ? () => _handleLearningAnswer(false) : null,
@@ -879,10 +880,10 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 16), 
                     backgroundColor: Colors.green.withValues(alpha: 0.12), 
                     foregroundColor: Colors.green, 
-                    elevation: 0,
+                    elevation: currentTheme.id == 2 ? 0 : 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: currentTheme.cardBorderRadius, 
-                      side: const BorderSide(color: Colors.green, width: 1.5),
+                      borderRadius: currentTheme.buttonBorderRadius, 
+                      side: BorderSide(color: Colors.green, width: currentTheme.id == 2 ? 3.5 : 1.5),
                     ),
                   ),
                   onPressed: _isCardFlipped ? () => _handleLearningAnswer(true) : null,
@@ -907,8 +908,10 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       decoration: BoxDecoration(
         color: theme.cardColor, 
         borderRadius: currentTheme.cardBorderRadius, 
-        border: currentTheme.cardBorder ?? Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.3), width: 2),
-        boxShadow: currentTheme.cardShadows,
+        border: currentTheme.id == 2 
+            ? Border.all(color: Colors.black, width: 3.5) 
+            : (currentTheme.cardBorder ?? Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.3), width: 2)),
+        boxShadow: currentTheme.id == 2 ? const [BoxShadow(color: Colors.black, offset: Offset(4, 4))] : currentTheme.cardShadows,
         gradient: currentTheme.cardGradient,
       ),
       child: Column(
@@ -942,8 +945,8 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       decoration: BoxDecoration(
         color: theme.colorScheme.primary.withValues(alpha: 0.12), 
         borderRadius: currentTheme.cardBorderRadius, 
-        border: Border.all(color: theme.colorScheme.primary, width: 2),
-        boxShadow: currentTheme.cardShadows,
+        border: Border.all(color: currentTheme.id == 2 ? Colors.black : theme.colorScheme.primary, width: currentTheme.id == 2 ? 3.5 : 2),
+        boxShadow: currentTheme.id == 2 ? const [BoxShadow(color: Colors.black, offset: Offset(4, 4))] : currentTheme.cardShadows,
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -972,19 +975,21 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
 
   Widget _buildQuizUI(AppThemeData currentTheme) {
     final theme = currentTheme.theme;
-    Color hardcoreFillCol = theme.colorScheme.onSurface.withValues(alpha: 0.05);
-    Color hardcoreBorderCol = theme.colorScheme.onSurface.withValues(alpha: 0.2);
+    Color hardcoreFillCol = Colors.white.withValues(alpha: 0.9);
+    Color hardcoreBorderCol = currentTheme.id == 2 ? Colors.black : Colors.black.withValues(alpha: 0.1);
     Widget? hardcoreFeedbackWidget;
 
     if (_isHardcore && _isAnswerChecked) {
       String typed = _selectedAnswer ?? "";
       String expected = _actualCorrectAnswer.trim().toLowerCase();
       if (typed == expected && typed.isNotEmpty) {
-        hardcoreFillCol = Colors.green.withValues(alpha: 0.12); hardcoreBorderCol = Colors.green;
-        hardcoreFeedbackWidget = const Text("Výborne!", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold));
+        hardcoreFillCol = Colors.green.shade600; 
+        hardcoreBorderCol = currentTheme.id == 2 ? Colors.black : Colors.green;
+        hardcoreFeedbackWidget = const Text("Výborne!", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold));
       } else {
-        hardcoreFillCol = Colors.red.withValues(alpha: 0.12); hardcoreBorderCol = Colors.red;
-        if (!_hideCorrectAnswer) hardcoreFeedbackWidget = Text("Odpoveď bola: $_actualCorrectAnswer", style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold));
+        hardcoreFillCol = Colors.red.shade600; 
+        hardcoreBorderCol = currentTheme.id == 2 ? Colors.black : Colors.red;
+        if (!_hideCorrectAnswer) hardcoreFeedbackWidget = Text("Odpoveď bola: $_actualCorrectAnswer", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold));
       }
     }
 
@@ -1001,7 +1006,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             Text(
               topTitleText, 
               style: TextStyle(
-                color: _isRemedialQuiz ? Colors.red : theme.colorScheme.onSurface.withValues(alpha: 0.6), 
+                color: _isRemedialQuiz ? Colors.red : theme.colorScheme.onSurface.withValues(alpha: 0.8), 
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -1039,14 +1044,14 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             controller: _hardcoreController,
             textAlign: TextAlign.center,
             enabled: !_isAnswerChecked, 
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _isAnswerChecked ? Colors.white : Colors.black87),
             decoration: InputDecoration(
               hintText: "Napíš odpoveď sem...",
               hintStyle: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
               filled: true, 
               fillColor: hardcoreFillCol,
-              border: OutlineInputBorder(borderRadius: currentTheme.cardBorderRadius, borderSide: BorderSide(color: hardcoreBorderCol, width: 2)),
-              enabledBorder: OutlineInputBorder(borderRadius: currentTheme.cardBorderRadius, borderSide: BorderSide(color: hardcoreBorderCol, width: 2)),
+              border: OutlineInputBorder(borderRadius: currentTheme.cardBorderRadius, borderSide: BorderSide(color: hardcoreBorderCol, width: currentTheme.id == 2 ? 3.5 : 1)),
+              enabledBorder: OutlineInputBorder(borderRadius: currentTheme.cardBorderRadius, borderSide: BorderSide(color: hardcoreBorderCol, width: currentTheme.id == 2 ? 3.5 : 1)),
             ),
             onSubmitted: (_) => _checkQuizAnswer(""), 
           ),
@@ -1056,28 +1061,37 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             style: ElevatedButton.styleFrom(
               minimumSize: const Size(double.infinity, 50), 
               backgroundColor: _isAnswerChecked ? theme.colorScheme.onSurface.withValues(alpha: 0.3) : theme.colorScheme.primary, 
-              foregroundColor: theme.colorScheme.onPrimary, 
-              shape: RoundedRectangleBorder(borderRadius: currentTheme.cardBorderRadius),
+              foregroundColor: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onPrimary, 
+              shape: RoundedRectangleBorder(
+                borderRadius: currentTheme.buttonBorderRadius,
+                side: currentTheme.id == 2 ? const BorderSide(color: Colors.black, width: 3.5) : BorderSide.none,
+              ),
+              elevation: currentTheme.id == 2 ? 0 : 2,
             ),
             onPressed: _isAnswerChecked ? () {} : () => _checkQuizAnswer(""),
             child: const Text("Potvrdiť", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ),
         ] else ...[
           ..._currentOptions.map((option) {
-            Color btnColor = theme.colorScheme.primary.withValues(alpha: 0.12);
-            Color textColor = theme.colorScheme.primary;
-            BorderSide borderSide = BorderSide.none;
+            Color btnColor = Colors.white.withValues(alpha: 0.92);
+            Color textColor = Colors.black87;
+            BorderSide borderSide = currentTheme.id == 2 
+                ? const BorderSide(color: Colors.black, width: 3.5) 
+                : BorderSide(color: Colors.black.withValues(alpha: 0.1), width: 1);
 
             if (_isAnswerChecked) {
               if (option == _actualCorrectAnswer && !_hideCorrectAnswer) {
-                btnColor = Colors.green.withValues(alpha: 0.15); 
-                textColor = Colors.green; 
+                btnColor = Colors.green.shade600; 
+                textColor = Colors.white; 
                 borderSide = const BorderSide(color: Colors.green, width: 2);
               } else if (option == _selectedAnswer) {
-                btnColor = Colors.red.withValues(alpha: 0.15); 
-                textColor = Colors.red; 
+                btnColor = Colors.red.shade600; 
+                textColor = Colors.white; 
                 borderSide = const BorderSide(color: Colors.red, width: 2);
               }
+            } else if (currentTheme.id == 2) {
+              btnColor = Colors.white;
+              textColor = Colors.black;
             }
 
             return Padding(
@@ -1087,11 +1101,14 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                   minimumSize: const Size(double.infinity, 55), 
                   backgroundColor: btnColor, 
                   foregroundColor: textColor, 
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: currentTheme.cardBorderRadius, side: borderSide),
+                  elevation: currentTheme.id == 2 ? 0 : 3,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: currentTheme.buttonBorderRadius, 
+                    side: borderSide,
+                  ),
                 ),
                 onPressed: _isAnswerChecked ? () {} : () => _checkQuizAnswer(option),
-                child: Text(option, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600), textAlign: TextAlign.center),
+                child: Text(option, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
               ),
             );
           }),

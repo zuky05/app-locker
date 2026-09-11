@@ -278,51 +278,56 @@ class AppThemes {
 
   // 6. VIBRANT GRADIENTS
   static final AppThemeData _vibrantGradientTheme = AppThemeData(
-    id: 5,
-    name: 'Vibrant Gradients',
-    isPremium: true,
-    cardBorderRadius: BorderRadius.circular(30),
-    buttonBorderRadius: BorderRadius.circular(30),
-    cardShadows: [
-      BoxShadow(
-        color: const Color(0xFFD53369).withValues(alpha: 0.25),
-        blurRadius: 15,
-        offset: const Offset(0, 8),
+      id: 5,
+      name: 'Vibrant Gradients',
+      isPremium: true,
+      cardBorderRadius: BorderRadius.circular(30),
+      buttonBorderRadius: BorderRadius.circular(30),
+      cardBorder: Border.all(
+        color: Colors.white.withValues(alpha: 0.4), // Jemný biely okraj pre ohraničenie
+        width: 1.5,
       ),
-    ],
-    cardGradient: const LinearGradient(
-      begin: Alignment.centerLeft,
-      end: Alignment.centerRight,
-      colors: [
-        Color(0xFFD53369),
-        Color(0xFFDAAE51),
+      cardShadows: [
+        BoxShadow(
+          color: const Color(0xFFD53369).withValues(alpha: 0.15), // Jemnejší tieň
+          blurRadius: 15,
+          offset: const Offset(0, 8),
+        ),
       ],
-    ),
-    dailyGoalColor: const Color(0xFFD53369),
-    decksColor: const Color(0xFF00C9FF),
-    testSetupColor: const Color(0xFF8A2BE2),
-    blockedAppsColor: const Color(0xFFFF8C00),
-    quickImportColor: const Color(0xFF00E676),
-    theme: ThemeData(
-      brightness: Brightness.light,
-      scaffoldBackgroundColor: const Color(0xFFF8F9FA),
-      cardColor: const Color(0xFFD53369),
-      primaryColor: const Color(0xFFD53369),
-      colorScheme: const ColorScheme.light(
-        primary: Color(0xFFD53369),
-        secondary: Color(0xFF00C9FF),
-        surface: Colors.white,
-        onPrimary: Colors.white,
-        onSurface: Color(0xFF1A1A1A),
-        onSecondaryContainer: Color(0xFF9E9E9E),
-        tertiary: Color(0xFFFF8C00),
+      // ZJEMNENÝ A PRIEHĽADNEJŠÍ GRADIENT
+      cardGradient: LinearGradient(
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+        colors: [
+          const Color(0xFFD53369).withValues(alpha: 0.55), // 55% priehľadnosť ružovej
+          const Color(0xFFDAAE51).withValues(alpha: 0.45), // 45% priehľadnosť jemnej zlatej
+        ],
       ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: IconThemeData(color: Color(0xFF1A1A1A)),
-        titleTextStyle: TextStyle(color: Color(0xFF1A1A1A), fontSize: 22, fontWeight: FontWeight.bold),
+      dailyGoalColor: const Color(0xFFD53369),
+      decksColor: const Color(0xFF00C9FF),
+      testSetupColor: const Color(0xFF8A2BE2),
+      blockedAppsColor: const Color(0xFFFF8C00),
+      quickImportColor: const Color(0xFF00E676),
+      theme: ThemeData(
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: const Color(0xFFF8F9FA),
+        cardColor: const Color(0xFFD53369),
+        primaryColor: const Color(0xFFD53369),
+        colorScheme: const ColorScheme.light(
+          primary: Color(0xFFD53369),
+          secondary: Color(0xFF00C9FF),
+          surface: Colors.white,
+          onPrimary: Colors.white,
+          onSurface: Color(0xFF111111), // Ďalšie stmavenie pre maximálnu čitateľnosť textu
+          onSecondaryContainer: Color(0xFF666666),
+          tertiary: Color(0xFFFF8C00),
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          iconTheme: IconThemeData(color: Color(0xFF1A1A1A)),
+          titleTextStyle: TextStyle(color: Color(0xFF1A1A1A), fontSize: 22, fontWeight: FontWeight.bold),
+        ),
       ),
-    ),
-  );
+    );
 }

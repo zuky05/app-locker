@@ -152,7 +152,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 15,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                   height: 1.4,
                 ),
               ),
@@ -197,11 +197,6 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
                           : (!isAccessibilityGranted
                               ? "Povoliť Zjednodušenie prístupu"
                               : "Povoliť Upozornenia")),
-                  style: TextStyle(
-                    fontSize: 16, 
-                    fontWeight: FontWeight.bold,
-                    color: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onPrimary,
-                  ),
                 ),
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 54),
@@ -229,22 +224,22 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
     final theme = currentTheme.theme;
     final bool isLight = theme.brightness == Brightness.light;
     
-    // Dynamické farby - prispôsobia sa aj svetlým, aj tmavým témam
     final Color successAccent = const Color(0xFF00E676);
     final Color successBgLight = Colors.green.shade100;
     final Color successBgDark = successAccent.withValues(alpha: 0.15);
 
+    // Ak je splnené -> zelené pozadie, ak nie -> pevná biela (resp. cardColor ak je tmavý režim), aby nebola priehľadná
     final Color bgColor = isGranted
         ? (currentTheme.id == 2 ? successAccent : (isLight ? successBgLight : successBgDark))
-        : theme.cardColor;
+        : (isLight ? Colors.white : theme.cardColor);
 
     final Color borderColor = isGranted
         ? (currentTheme.id == 2 ? Colors.black : successAccent)
-        : (currentTheme.id == 2 ? Colors.black : theme.colorScheme.onSurface.withValues(alpha: 0.15));
+        : (currentTheme.id == 2 ? Colors.black : const Color(0xFFFF9100)); // Výrazná oranžová pre neaktívne
 
     final Color contentColor = isGranted
         ? (currentTheme.id == 2 ? Colors.black : (isLight ? Colors.green.shade800 : successAccent))
-        : theme.colorScheme.onSurface.withValues(alpha: 0.7);
+        : theme.colorScheme.onSurface;
 
     return Container(
       decoration: BoxDecoration(
@@ -252,11 +247,9 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
         borderRadius: currentTheme.cardBorderRadius,
         border: Border.all(
           color: borderColor, 
-          width: currentTheme.id == 2 ? 3.5 : 1.5,
+          width: currentTheme.id == 2 ? 3.5 : 2.0,
         ),
-        boxShadow: isGranted && currentTheme.id != 2 
-            ? [BoxShadow(color: successAccent.withValues(alpha: 0.25), blurRadius: 8)] 
-            : currentTheme.cardShadows,
+        boxShadow: currentTheme.id == 2 ? const [BoxShadow(color: Colors.black, offset: Offset(3, 3))] : currentTheme.cardShadows,
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -275,6 +268,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: contentColor,
+                  fontSize: 15,
                 ),
               ),
             ),

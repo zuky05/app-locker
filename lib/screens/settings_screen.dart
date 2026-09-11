@@ -70,9 +70,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   decoration: BoxDecoration(
                     color: theme.cardColor,
                     borderRadius: currentTheme.cardBorderRadius,
-                    border: currentTheme.cardBorder ??
-                        Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.12)),
-                    boxShadow: currentTheme.cardShadows,
+                    border: currentTheme.id == 2
+                        ? Border.all(color: Colors.black, width: 3.5)
+                        : (currentTheme.cardBorder ??
+                            Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.12))),
+                    boxShadow: currentTheme.id == 2
+                        ? const [BoxShadow(color: Colors.black, offset: Offset(4, 4))]
+                        : currentTheme.cardShadows,
                     gradient: currentTheme.cardGradient,
                   ),
                   child: SwitchListTile(
@@ -91,7 +95,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ),
                     value: isVibrationEnabled,
-                    activeColor: theme.colorScheme.primary,
+                    activeColor: currentTheme.id == 2 ? Colors.black : theme.colorScheme.primary,
                     onChanged: _saveVibrationSetting,
                   ),
                 ),
@@ -119,11 +123,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     decoration: BoxDecoration(
                       color: theme.cardColor,
                       borderRadius: currentTheme.cardBorderRadius,
-                      border: isSelected
-                          ? Border.all(color: theme.colorScheme.primary, width: 2.5)
-                          : (currentTheme.cardBorder ??
-                              Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.12))),
-                      boxShadow: isSelected ? currentTheme.cardShadows : null,
+                      border: currentTheme.id == 2
+                          ?  Border.all(color: Colors.black, width: 3.5)
+                          : (isSelected
+                              ? Border.all(color: theme.colorScheme.primary, width: 2.5)
+                              : (currentTheme.cardBorder ??
+                                  Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.12)))),
+                      boxShadow: currentTheme.id == 2
+                          ? const [BoxShadow(color: Colors.black, offset: Offset(4, 4))]
+                          : (isSelected ? currentTheme.cardShadows : null),
                       gradient: currentTheme.cardGradient,
                     ),
                     child: ListTile(
@@ -153,6 +161,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 decoration: BoxDecoration(
                                   color: itemTheme.colorScheme.primary,
                                   shape: BoxShape.circle,
+                                  border: currentTheme.id == 2 ? Border.all(color: Colors.black, width: 1) : null,
                                 ),
                               ),
                               const SizedBox(width: 4),
@@ -162,6 +171,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 decoration: BoxDecoration(
                                   color: appTheme.decksColor,
                                   shape: BoxShape.circle,
+                                  border: currentTheme.id == 2 ? Border.all(color: Colors.black, width: 1) : null,
                                 ),
                               ),
                             ],

@@ -24,7 +24,6 @@ class _QuizletPlaygroundScreenState extends State<QuizletPlaygroundScreen> {
     // Inicializácia webového prehliadača
     controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      // Komunikačný kanál
       ..addJavaScriptChannel(
         'QuizletChannel',
         onMessageReceived: (JavaScriptMessage message) {
@@ -34,7 +33,6 @@ class _QuizletPlaygroundScreenState extends State<QuizletPlaygroundScreen> {
       ..loadRequest(Uri.parse('https://quizlet.com/search?query=medicine&type=sets'));
   }
 
-  // Funkcia, ktorá vstrekne kód do Quizlet stránky
   void _extractCards() async {
     setState(() {
       isExtracting = true;
@@ -107,7 +105,6 @@ class _QuizletPlaygroundScreenState extends State<QuizletPlaygroundScreen> {
     await controller.runJavaScript(jsCode);
   }
 
-  // Funkcia na spracovanie dát z JS
   void _processExtractedData(String data) async {
     if (data.startsWith("ERROR:")) {
       setState(() {
@@ -156,6 +153,9 @@ class _QuizletPlaygroundScreenState extends State<QuizletPlaygroundScreen> {
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
 
+    // Dedenie farby priamo z akcentu Quick Import tlačidla v menu pre danú tému
+    final Color accentColor = currentTheme.quickImportColor;
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
@@ -170,11 +170,11 @@ class _QuizletPlaygroundScreenState extends State<QuizletPlaygroundScreen> {
             padding: const EdgeInsets.all(12),
             width: double.infinity,
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withValues(alpha: 0.12),
+              color: accentColor.withValues(alpha: 0.15),
               border: Border(
                 bottom: BorderSide(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.2),
-                  width: 1,
+                  color: currentTheme.id == 2 ? Colors.black : accentColor.withValues(alpha: 0.3),
+                  width: currentTheme.id == 2 ? 3.5 : 1,
                 ),
               ),
             ),
@@ -197,14 +197,23 @@ class _QuizletPlaygroundScreenState extends State<QuizletPlaygroundScreen> {
           ? FloatingActionButton(
               onPressed: null,
               backgroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.3),
-              child: CircularProgressIndicator(color: theme.colorScheme.onPrimary),
+              shape: RoundedRectangleBorder(
+                borderRadius: currentTheme.buttonBorderRadius,
+                side: currentTheme.id == 2 ? const BorderSide(color: Colors.black, width: 3.5) : BorderSide.none,
+              ),
+              child: CircularProgressIndicator(color: accentColor),
             )
           : FloatingActionButton.extended(
               onPressed: _extractCards,
               icon: const Icon(Icons.downloading),
               label: const Text("Vytiahnuť kartičky", style: TextStyle(fontWeight: FontWeight.bold)),
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: theme.colorScheme.onPrimary,
+              backgroundColor: accentColor,
+              foregroundColor: currentTheme.id == 2 ? Colors.black : (accentColor.computeLuminance() > 0.5 ? Colors.black : Colors.white),
+              shape: RoundedRectangleBorder(
+                borderRadius: currentTheme.buttonBorderRadius,
+                side: currentTheme.id == 2 ? const BorderSide(color: Colors.black, width: 3.5) : BorderSide.none,
+              ),
+              elevation: currentTheme.id == 2 ? 0 : 2,
             ),
     );
   }

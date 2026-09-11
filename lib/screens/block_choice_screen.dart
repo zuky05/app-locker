@@ -5,6 +5,9 @@ import '../services/prefs_helper.dart';
 import '../themes/theme_provider.dart';
 import 'quiz_overlay_screen.dart';
 
+// --- IMPORT REVENUECAT ---
+import '../services/revenuecat_service.dart';
+
 class BlockChoiceScreen extends StatefulWidget {
   final bool isTimeout;
   final bool isFromNotification;
@@ -22,27 +25,52 @@ class BlockChoiceScreen extends StatefulWidget {
 class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
   int remainingGrace = 0;
   bool isLoading = true;
+  bool isPremium = false; // PRIDANÝ STAV PRE PREMIUM
 
   @override
   void initState() {
     super.initState();
-    _loadGraceCount();
+    _loadGraceCountAndPremium();
   }
 
-  Future<void> _loadGraceCount() async {
+  // NAČÍTA POČET ODPUSTKOV A ZÁROVEŇ ZISTÍ PREMIUM STAV
+  Future<void> _loadGraceCountAndPremium() async {
     int count = await PrefsHelper.getRemainingGraceAttempts();
-    setState(() {
-      remainingGrace = count;
-      isLoading = false;
-    });
+    bool premiumStatus = await RevenueCatService.isPremium(); 
+    
+    if (mounted) {
+      setState(() {
+        remainingGrace = count;
+        isPremium = premiumStatus;
+        isLoading = false;
+      });
+    }
   }
 
   void _useGracePeriod() async {
+    // Ak má Premium, len ho pustíme dnu bez strhávania "pokusov"
+    if (isPremium) {
+      const platform = MethodChannel('brainlock.channel');
+      try {
+        // ZMENENÉ Z 'minutes': 1 NA 'seconds': 60 a 'maxCap': 60
+        await platform.invokeMethod('unlockApp', {'seconds': 60, 'maxCap': 60});
+        // PRIDANÉ ZATVORENIE OBRAZOVKY (Aby zámok zmizol)
+        if (mounted) SystemNavigator.pop(); 
+      } catch (e) {
+        debugPrint("Chyba: $e");
+      }
+      return;
+    }
+
+    // Pre Free používateľov strhneme pokus cez PrefsHelper
     bool success = await PrefsHelper.useGraceAttempt();
     if (success) {
       const platform = MethodChannel('brainlock.channel');
       try {
-        await platform.invokeMethod('unlockApp', {'minutes': 1});
+        // ZMENENÉ Z 'minutes': 1 NA 'seconds': 60 a 'maxCap': 60
+        await platform.invokeMethod('unlockApp', {'seconds': 60, 'maxCap': 60});
+        // PRIDANÉ ZATVORENIE OBRAZOVKY
+        if (mounted) SystemNavigator.pop();
       } catch (e) {
         debugPrint("Chyba: $e");
       }
@@ -141,6 +169,7 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
                             if (!widget.isFromNotification) ...[
                               const SizedBox(height: 12),
 
+                              // TOTO JE TO HLAVNÉ ROZHODOVANIE:
                               if (widget.isTimeout)
                                 const Padding(
                                   padding: EdgeInsets.only(top: 10),
@@ -149,7 +178,8 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
                                     style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
                                   ),
                                 )
-                              else if (remainingGrace > 0)
+                              // Ak nemá Timeout, môže si zobrať odpustok. Má Premium alebo mu ešte zostali pokusy?
+                              else if (isPremium || remainingGrace > 0)
                                 ElevatedButton(
                                   style: ElevatedButton.styleFrom(
                                     minimumSize: const Size(double.infinity, 50),
@@ -164,8 +194,14 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
                                     ),
                                   ),
                                   onPressed: _useGracePeriod,
-                                  child: Text("Odpustok na 1 min. ($remainingGrace/3 dnes)", style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  child: Text(
+                                    isPremium 
+                                        ? "Odomknúť na 1 minútu" // Text pre Premium (žiaden limit v názve)
+                                        : "Odpustok na 1 min. ($remainingGrace/3 dnes)", 
+                                    style: const TextStyle(fontWeight: FontWeight.bold)
+                                  ),
                                 )
+                              // Ak nemá Timeout, nemá Premium a nemá už pokusy:
                               else
                                 const Padding(
                                   padding: EdgeInsets.only(top: 10),

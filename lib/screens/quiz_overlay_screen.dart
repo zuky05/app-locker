@@ -9,6 +9,9 @@ import '../services/database_helper.dart';
 import '../themes/theme_provider.dart';
 import '../themes/app_themes.dart';
 
+// --- IMPORT REVENUECAT ---
+import '../services/revenuecat_service.dart';
+
 class QuizOverlayScreen extends StatefulWidget {
   final int? practiceDeckId; 
   const QuizOverlayScreen({super.key, this.practiceDeckId});
@@ -482,14 +485,84 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     }
   }
 
+  // --- UPRAVENÁ FUNKCIA PRE ZÁMOK S PREMIUM LOGIKOU ---
   void _finishAndUnlock() async {
     if (widget.practiceDeckId != null) {
       _closeOrExitScreen();
       return;
     }
 
+    // 1. ZISTÍME, ČI MÁ POUŽÍVATEĽ PREMIUM
+    final isPremium = await RevenueCatService.isPremium();
+
+    // 2. KONTROLA "ODPUSTKOV" PRE FREE POUŽÍVATEĽOV
+    if (!isPremium) {
+      final prefs = await SharedPreferences.getInstance();
+      
+      // Získame dnešný dátum vo formáte YYYY-MM-DD
+      final today = DateTime.now().toString().split(' ')[0];
+      final lastDate = prefs.getString('last_unlock_date') ?? '';
+      
+      int unlocksToday = 0;
+      if (lastDate == today) {
+         unlocksToday = prefs.getInt('unlocks_today_count') ?? 0;
+      }
+
+      // AK SI UŽ DNES FREE POUŽÍVATEĽ MINUL VŠETKY ODPUSTKY (nastavené na 3 denne):
+      if (unlocksToday >= 3) {
+        if (!mounted) return;
+        
+        showDialog(
+          context: context,
+          barrierDismissible: false, 
+          builder: (dialogContext) => AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.timer_off, color: Colors.red),
+                SizedBox(width: 8),
+                Text("Limit dosiahnutý", style: TextStyle(fontWeight: FontWeight.bold)),
+              ],
+            ),
+            content: const Text(
+              "Dnes si si už vyčerpal všetky 3 bezplatné odomknutia aplikácií cez test.\n\nPre nekonečné odomykanie a žiadne limity si aktivuj Brainlock Premium!",
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext); 
+                  SystemNavigator.pop(); 
+                },
+                child: const Text("Zostať zablokovaný", style: TextStyle(color: Colors.grey)),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.amber.shade700, foregroundColor: Colors.black),
+                onPressed: () async {
+                  Navigator.pop(dialogContext); 
+                  final success = await RevenueCatService.presentPaywall(); 
+                  
+                  if (success) {
+                    _finishAndUnlock(); 
+                  } else {
+                    SystemNavigator.pop(); 
+                  }
+                },
+                child: const Text("Získať Premium", style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
+        return; 
+      }
+
+      // Ak ešte má odpustky, zvýšime mu počítadlo pre dnešok
+      await prefs.setString('last_unlock_date', today);
+      await prefs.setInt('unlocks_today_count', unlocksToday + 1);
+    }
+
+    // 3. LOGIKA PRE ODOMKNUTIE APLIKÁCIE (Učenie)
     if (_isLearningMode) {
-      int earnedSeconds = (_learnInterval * 60).round();
+      int earnedSeconds = isPremium ? 7200 : (_learnInterval * 60).round();
+      
       const platform = MethodChannel('brainlock.channel');
       try { 
         await platform.invokeMethod('unlockApp', {'seconds': earnedSeconds, 'maxCap': earnedSeconds}); 
@@ -500,6 +573,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       return;
     }
 
+    // 4. LOGIKA PRE ODOMKNUTIE APLIKÁCIE (Kvíz)
     double mult = _calculatedTotalMultiplier;
     bool isSuccess = _correctAnswersCount >= _requiredCorrectQuestions;
 
@@ -507,7 +581,13 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     if (isSuccess) {
       earnedSeconds = (_correctAnswersCount * 30 * mult).round();
     }
-    int maxCapSeconds = (_questionCount * 30 * mult).round();
+    
+    // Ak má Premium, dostane trojnásobný čas
+    if (isPremium && isSuccess) {
+      earnedSeconds = earnedSeconds * 3; 
+    }
+
+    int maxCapSeconds = isPremium ? 86400 : (_questionCount * 30 * mult).round(); 
 
     if (earnedSeconds > 0) {
       const platform = MethodChannel('brainlock.channel');

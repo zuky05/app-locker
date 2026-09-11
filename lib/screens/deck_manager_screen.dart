@@ -12,6 +12,9 @@ import 'quiz_overlay_screen.dart';
 import 'quizlet_playground_screen.dart';
 import '../services/anki_importer.dart';
 
+// 1. IMPORT REVENUECAT
+import '../services/revenuecat_service.dart';
+
 class DeckManagerScreen extends StatefulWidget {
   const DeckManagerScreen({super.key});
 
@@ -23,6 +26,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
   List<Deck> myDecks = [];
   List<Deck> premadeDecks = [];
   bool isLoading = true;
+  bool isPremium = false; // 2. PRIDANÁ PREMENNÁ PRE PREMIUM
   
   int? expandedDeckId;
   int? activeBlockerDeckId;
@@ -66,10 +70,15 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
       }
     }
     
+    // 3. NAČÍTAME STAV PREDPLATNÉHO
+    final premiumStatus = await RevenueCatService.isPremium();
+    if (!mounted) return;
+
     setState(() {
       myDecks = loadedDecks.where((d) => d.isPremade == 0 || d.isPremade == false).toList();
       premadeDecks = loadedDecks.where((d) => d.isPremade == 1 || d.isPremade == true).toList();
       activeBlockerDeckId = activeId;
+      isPremium = premiumStatus;
       isLoading = false;
     });
   }
@@ -91,14 +100,10 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
 
   Future<void> _handleAnkiImport() async {
     final String? result = await AnkiImporter.importApkgDirect();
-
     if (result == null) return;
 
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(result)),
-    );
-
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result)));
     _loadDecks();
   }
 
@@ -110,7 +115,6 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     return Icons.folder_special;
   }
 
-  // Zjednocujeme fialový akcent presne tak, ako ho má Decks karta na main screene
   Color get _decksAccentColor => const Color(0xFFBD00FF);
 
   BoxDecoration _getCardDecoration(AppThemeData currentTheme, Color accentColor, {bool isActive = false}) {
@@ -163,11 +167,12 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     final theme = currentTheme.theme;
     final Color sectionColor = _decksAccentColor;
 
-    if (customCount >= 3) {
+    // 4. KĽÚČOVÁ ZMENA: Dialóg sa ukáže len ak NEMÁ premium a má >= 3 balíčky
+    if (customCount >= 3 && !isPremium) {
       if (!mounted) return;
       showDialog(
         context: context,
-        builder: (context) => AlertDialog(
+        builder: (dialogContext) => AlertDialog(
           backgroundColor: currentTheme.id == 2 ? Colors.white : theme.cardColor,
           shape: RoundedRectangleBorder(
             borderRadius: currentTheme.cardBorderRadius,
@@ -192,7 +197,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
           actionsAlignment: MainAxisAlignment.center,
           actions: [
             ElevatedButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
                 foregroundColor: Colors.white,
@@ -202,9 +207,17 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
               child: const Text("Zrušiť"),
             ),
             ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                debugPrint("Navigovať na nákup Premium");
+              onPressed: () async {
+                Navigator.pop(dialogContext); // Zavrieme dialóg
+                // 5. TLAČIDLO TERAZ OTVÁRA PAYWALL
+                final success = await RevenueCatService.presentPaywall();
+                if (success) {
+                  _loadDecks(); // Obnovíme stav
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Vitaj v Premium klube! 🎉"), backgroundColor: Colors.green),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.amber.shade700,
@@ -850,13 +863,14 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
       floatingActionButton: _tabController.index == 0
           ? FloatingActionButton(
               onPressed: _showAddDeckDialog,
-              backgroundColor: currentTheme.id == 2 ? Colors.black : (myDecks.length >= 3 ? Colors.amber : sectionColor),
+              // 6. KĽÚČOVÁ ZMENA: Ak máš Premium, tlačidlo je vždy prístupné (+) a vo farbe
+              backgroundColor: currentTheme.id == 2 ? Colors.black : ((myDecks.length >= 3 && !isPremium) ? Colors.amber : sectionColor),
               foregroundColor: currentTheme.id == 2 ? Colors.white : (sectionColor.computeLuminance() > 0.5 ? Colors.black : Colors.white),
               shape: RoundedRectangleBorder(
                 borderRadius: currentTheme.cardBorderRadius,
                 side: currentTheme.id == 2 ? const BorderSide(color: Colors.black, width: 2.5) : BorderSide.none,
               ),
-              child: Icon(myDecks.length >= 3 ? Icons.block : Icons.add),
+              child: Icon((myDecks.length >= 3 && !isPremium) ? Icons.block : Icons.add),
             )
           : null,
     );

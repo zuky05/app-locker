@@ -6,6 +6,9 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../themes/theme_provider.dart';
 
+// 1. IMPORT REVENUECAT
+import '../services/revenuecat_service.dart';
+
 class AppSelectorScreen extends StatefulWidget {
   const AppSelectorScreen({super.key});
 
@@ -17,6 +20,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
   List<AppInfo> installedApps = [];
   Set<String> blockedPackages = {};
   bool isLoading = true;
+  bool isPremium = false; // 2. PRIDANÁ PREMENNÁ PRE PREMIUM
   static const platform = MethodChannel('brainlock.channel');
 
   @override
@@ -26,12 +30,10 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
   }
 
   Future<void> _loadAppsAndSettings() async {
-    // 1. Načítame zoznam blokovaných balíčkov z pamäte
     final prefs = await SharedPreferences.getInstance();
     final savedList = prefs.getStringList('blocked_apps') ?? ['com.android.chrome'];
     blockedPackages = savedList.toSet();
 
-    // 2. Načítame všetky reálne aplikácie s ikonami (vylúčime systémové služby)
     List<AppInfo> apps = await InstalledApps.getInstalledApps(
       excludeNonLaunchableApps: true, 
       excludeSystemApps: false, 
@@ -39,12 +41,14 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
     );
     
     apps.removeWhere((app) => app.packageName == 'com.example.brainlock');
-
-    // Zoradíme ich podľa abecedy
     apps.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+
+    // 3. NAČÍTAME STAV PREDPLATNÉHO
+    final premiumStatus = await RevenueCatService.isPremium();
 
     setState(() {
       installedApps = apps;
+      isPremium = premiumStatus;
       isLoading = false;
     });
   }
@@ -55,7 +59,8 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
     setState(() {
       if (blockedPackages.contains(packageName)) {
         blockedPackages.remove(packageName);
-      } else if (blockedPackages.length < 3) {
+      } else if (isPremium || blockedPackages.length < 3) { 
+        // 4. KĽÚČOVÁ ZMENA: Ak má Premium, limit 3 sa ignoruje!
         blockedPackages.add(packageName);
       } else {
         showDialog(
@@ -75,7 +80,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
               ],
             ),
             content: const Text(
-              "Dosiahol si limit 3 zablokovaných aplikácií zadarmo.\n\nPre neobmedzené vytváranie kartičiek a prístup ku všetkým balíčkom si aktivuj Premium.",
+              "Dosiahol si limit 3 zablokovaných aplikácií zadarmo.\n\nPre neobmedzené blokovanie aplikácií si aktivuj Premium.",
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 15),
             ),
@@ -92,9 +97,16 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
                 child: const Text("Zrušiť"),
               ),
               ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(dialogContext);
-                  debugPrint("Navigovať na nákup Premium");
+                onPressed: () async {
+                  Navigator.pop(dialogContext); // Zatvoríme dialóg
+                  // 5. TLAČIDLO TERAZ OTVÁRA PAYWALL
+                  final success = await RevenueCatService.presentPaywall();
+                  if (success) {
+                    setState(() {
+                      isPremium = true;
+                      blockedPackages.add(packageName); // Automaticky mu pridáme appku, keď zaplatil
+                    });
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.amber.shade700,
@@ -111,11 +123,9 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
       }
     });
 
-    // Uložíme zmenu do pamäte
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList('blocked_apps', blockedPackages.toList());
 
-    // Odošleme nový zoznam priamo Ninjovi do Kotlinu
     try {
       await platform.invokeMethod('setBlockedApps', {'apps': blockedPackages.toList()});
     } catch (e) {
@@ -125,12 +135,9 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 1. Získame aktívnu tému z nášho ThemeProvideru
     final themeProvider = Provider.of<ThemeProvider>(context);
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
-
-    // Červeno-oranžová akcentová farba pre blokované aplikácie z témy
     final Color activeColor = currentTheme.blockedAppsColor;
 
     return Scaffold(
@@ -142,11 +149,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
         elevation: theme.appBarTheme.elevation ?? 0,
       ),
       body: isLoading
-          ? Center(
-              child: CircularProgressIndicator(
-                color: theme.colorScheme.primary,
-              ),
-            )
+          ? Center(child: CircularProgressIndicator(color: theme.colorScheme.primary))
           : Padding(
               padding: const EdgeInsets.all(8.0),
               child: GridView.builder(
@@ -161,12 +164,10 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
                   final app = installedApps[index];
                   final isBlocked = blockedPackages.contains(app.packageName);
 
-                  // Pozadie pre vybranú / nevybranú appku
                   final Color cardBgColor = isBlocked
                       ? (currentTheme.id == 2 ? activeColor : activeColor.withValues(alpha: 0.18))
                       : theme.cardColor;
 
-                  // Všetky karty majú teraz červeno-oranžový okraj (prípadne hrubý čierny pri Brutalisme)
                   final Border cardBorder = currentTheme.id == 2
                       ? Border.all(color: Colors.black, width: 3.5)
                       : Border.all(color: activeColor, width: isBlocked ? 2.0 : 1.5);
@@ -179,12 +180,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
                         borderRadius: currentTheme.cardBorderRadius,
                         border: cardBorder,
                         boxShadow: isBlocked && currentTheme.id != 2
-                            ? [
-                                BoxShadow(
-                                  color: activeColor.withValues(alpha: 0.35),
-                                  blurRadius: 8,
-                                )
-                              ]
+                            ? [BoxShadow(color: activeColor.withValues(alpha: 0.35), blurRadius: 8)]
                             : (isBlocked ? currentTheme.cardShadows : null),
                         gradient: isBlocked ? null : currentTheme.cardGradient,
                       ),
@@ -192,7 +188,6 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          // Ikona aplikácie
                           Stack(
                             alignment: Alignment.topRight,
                             children: [
@@ -212,7 +207,6 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
                             ],
                           ),
                           const SizedBox(height: 8),
-                          // Názov aplikácie (pri zapnutej appke zostáva biely, v brutalisme čierny)
                           Text(
                             app.name,
                             textAlign: TextAlign.center,

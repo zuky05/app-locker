@@ -10,6 +10,9 @@ import '../themes/app_themes.dart';
 import 'settings_screen.dart';
 import 'test_setup_screen.dart';
 
+// 1. IMPORTUJEME NÁŠ REVENUECAT SERVIS
+import '../services/revenuecat_service.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -19,6 +22,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int customDeckCount = 0;
+  bool isPremium = false; // Pridali sme stavovú premennú pre Premium
   bool isLoading = true;
 
   @override
@@ -27,10 +31,14 @@ class _HomeScreenState extends State<HomeScreen> {
     _checkDeckCount();
   }
 
+  // 2. KONTROLUJEME AJ STAV PREMIUM PRI NAČÍTANÍ DOMOVSKEJ OBRAZOVKY
   Future<void> _checkDeckCount() async {
     final count = await DatabaseHelper.instance.getCustomDeckCount();
+    final premiumStatus = await RevenueCatService.isPremium();
+    
     setState(() {
       customDeckCount = count;
+      isPremium = premiumStatus;
       isLoading = false;
     });
   }
@@ -50,7 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog( // Zmenené z "context" na "dialogContext" pre bezpečnosť
         backgroundColor: theme.cardColor,
         shape: RoundedRectangleBorder(borderRadius: currentTheme.cardBorderRadius),
         title: const Column(
@@ -72,7 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
         actionsAlignment: MainAxisAlignment.center,
         actions: [
           ElevatedButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red.shade400,
               foregroundColor: Colors.white,
@@ -81,7 +89,23 @@ class _HomeScreenState extends State<HomeScreen> {
             child: const Text("Zrušiť"),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(context),
+            // 3. TOTO TLAČIDLO TERAZ OTVÁRA PAYWALL
+            onPressed: () async {
+              Navigator.pop(dialogContext); // Zatvoríme dialóg
+              
+              // Zavoláme RevenueCat Paywall
+              final success = await RevenueCatService.presentPaywall();
+              
+              // Ak používateľ nakúpil (alebo obnovil nákup)
+              if (success) {
+                _checkDeckCount(); // Obnovíme stav (Zruší sa limit!)
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Vitaj v Premium klube! 🎉"), backgroundColor: Colors.green),
+                  );
+                }
+              }
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFFFB800),
               foregroundColor: Colors.black,
@@ -135,7 +159,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
-    final bool isLimitReached = customDeckCount >= 3;
+    
+    // 4. KĽÚČOVÁ ZMENA LIMITU: Ak má Premium, limit už neplatí (isLimitReached bude false)
+    final bool isLimitReached = customDeckCount >= 3 && !isPremium; 
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -154,7 +180,15 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.star_rounded, color: Color(0xFFFFB800), size: 30),
             tooltip: 'Premium',
-            onPressed: _showPremiumDialog,
+            onPressed: () async {
+              // Horná ikonka hviezdičky - funguje rovnako, otvorí buď správu alebo paywall
+              if (isPremium) {
+                RevenueCatService.showCustomerCenter();
+              } else {
+                final success = await RevenueCatService.presentPaywall();
+                if (success) _checkDeckCount();
+              }
+            },
           ),
           IconButton(
             icon: Icon(
@@ -298,9 +332,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 const SizedBox(height: 16),
 
-                // 2. PREMIUM ACCESS BANNER (VŽDY ZLATÝ)
+                // 5. PREMIUM ACCESS BANNER
                 InkWell(
-                  onTap: _showPremiumDialog,
+                  onTap: () async {
+                    if (isPremium) {
+                      // Ak už má Premium, otvoríme Customer Center
+                      RevenueCatService.showCustomerCenter();
+                    } else {
+                      // Ak nemá, zobrazíme Paywall
+                      final success = await RevenueCatService.presentPaywall();
+                      if (success) _checkDeckCount();
+                    }
+                  },
                   borderRadius: currentTheme.cardBorderRadius,
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
@@ -319,14 +362,15 @@ class _HomeScreenState extends State<HomeScreen> {
                               )
                             ],
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.star_rounded, color: Colors.black, size: 26),
-                        SizedBox(width: 10),
+                        const Icon(Icons.star_rounded, color: Colors.black, size: 26),
+                        const SizedBox(width: 10),
                         Text(
-                          'PREMIUM ACCESS',
-                          style: TextStyle(
+                          // Ak má Premium, text na banneri sa jemne zmení
+                          isPremium ? 'MANAGE PREMIUM' : 'PREMIUM ACCESS',
+                          style: const TextStyle(
                             color: Colors.black,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 1.2,
@@ -340,7 +384,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 const SizedBox(height: 16),
 
-                // 3. DECKS (Zmenené na fialovú / dailyGoalColor)
+                // 3. DECKS 
                 InkWell(
                   onTap: () async {
                     await Navigator.push(

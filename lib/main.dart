@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'themes/app_themes.dart';
 import 'themes/theme_provider.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -12,11 +11,17 @@ import 'screens/permission_screen.dart';
 import 'services/permission_guard.dart';
 import 'services/database_helper.dart';
 
+// 1. IMPORT REVENUECAT SERVISU
+import 'services/revenuecat_service.dart'; 
+
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 late PermissionGuard permissionGuard;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 2. INICIALIZÁCIA REVENUECAT PRI ŠTARTE APPKY
+  await RevenueCatService.initialize();
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -211,7 +216,11 @@ class _MyAppState extends State<MyApp> {
       final int customCount = await DatabaseHelper.instance.getCustomDeckCount();
       final int remainingDecks = 3 - customCount;
 
-      if (customCount >= 3) {
+      // 3. SKONTROLUJEME, ČI MÁ POUŽÍVATEĽ PREMIUM
+      final bool isPremium = await RevenueCatService.isPremium();
+
+      // Ak má 3 a viac balíčkov A ZÁROVEŇ NEMÁ Premium, zastavíme ho
+      if (customCount >= 3 && !isPremium) {
         if (!context.mounted) return;
         showDialog(
           context: context,
@@ -246,9 +255,18 @@ class _MyAppState extends State<MyApp> {
                 child: const Text("Zrušiť"),
               ),
               ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(dialogContext);
-                  debugPrint("Navigovať na nákup Premium");
+                // OTVÁRAME NÁKUPNÚ OBRAZOVKU!
+                onPressed: () async {
+                  Navigator.pop(dialogContext); // Zatvoríme tento dialog
+                  
+                  // Zavoláme Paywall z RevenueCatu
+                  final success = await RevenueCatService.presentPaywall();
+                  
+                  // Ak nákup prebehol úspešne, reštartujeme funkciu a balíček sa mu už naimportuje!
+                  if (success) {
+                    debugPrint("Nákup úspešný! Importujem balíček...");
+                    _importDeckFromData(base64Data);
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.amber.shade700,
@@ -264,6 +282,7 @@ class _MyAppState extends State<MyApp> {
         return;
       }
 
+      // Ak prešiel (buď má menej ako 3 balíčky, alebo má Premium), prebehne klasický import
       if (!context.mounted) return;
       showDialog(
         context: context,
@@ -271,7 +290,9 @@ class _MyAppState extends State<MyApp> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text("Importovať '$title'?"),
           content: Text(
-            "Tento zdieľaný balíček obsahuje ${cards.length} kartičiek.\n\nVoľné sloty na custom balíčky: $remainingDecks/3",
+            isPremium 
+                ? "Tento zdieľaný balíček obsahuje ${cards.length} kartičiek.\n\n(Premium používateľ: Voľné sloty sú neobmedzené!)"
+                : "Tento zdieľaný balíček obsahuje ${cards.length} kartičiek.\n\nVoľné sloty na custom balíčky: $remainingDecks/3",
           ),
           actions: [
             TextButton(

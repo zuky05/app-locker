@@ -12,11 +12,24 @@ class AppThemeData {
   final Gradient? cardGradient;
   final ThemeData theme;
 
+  // Akcentové farby jednotlivých sekcií
   final Color dailyGoalColor;
   final Color decksColor;
   final Color testSetupColor;
   final Color blockedAppsColor;
   final Color quickImportColor;
+
+  // Systémové a stavové farby
+  final Color successColor;
+  final Color warningColor;
+  final Color errorColor;
+
+  // Základné prvky tlačidiel a avatarov
+  final Color primaryButtonBg;
+  final Color primaryButtonFg;
+  final BorderSide buttonBorder;
+  final Color circleAvatarBg;
+  final Border circleAvatarBorder;
 
   AppThemeData({
     required this.id,
@@ -34,7 +47,173 @@ class AppThemeData {
     required this.testSetupColor,
     required this.blockedAppsColor,
     required this.quickImportColor,
+    required this.successColor,
+    required this.warningColor,
+    required this.errorColor,
+    required this.primaryButtonBg,
+    required this.primaryButtonFg,
+    required this.buttonBorder,
+    required this.circleAvatarBg,
+    required this.circleAvatarBorder,
   });
+
+  // --- UNIVERSAL UI HELPER METHODS ---
+
+  /// Vráti dynamický BorderSide pre button/element podľa akcentu sekcie, kde sa nachádza
+  BorderSide getButtonBorderSide([Color? accentColor]) {
+    final Color activeAccent = accentColor ?? primaryButtonBg;
+
+    if (id == 2) {
+      // NEO BRUTALISM: Vždy hrubý čierny okraj
+      return const BorderSide(color: Colors.black, width: 3.5);
+    } else if (id == 0) {
+      // CYBERPUNK: Dynamický okraj vo farbe sekcie (ružová pre decks, zelená pre daily goal...)
+      return BorderSide(color: activeAccent, width: 1.5);
+    } else if (id == 4) {
+      // STARLIGHT GLASS: Jemný sklenený okraj vo farbe akcentu
+      return BorderSide(color: activeAccent.withValues(alpha: 0.4), width: 1.0);
+    }  else if (id == 1) {
+    // SOFT NEUMORPHISM: Tu nastavíš ten jednoduchý tmavý/čierny okraj pre štít a button
+    return const BorderSide(color: Color(0xFF2C2C3E), width: 1.5);
+    }
+
+    // Bez okrajov pre témy bez button borderov
+    return BorderSide.none;
+  }
+
+  /// Vráti univerzálnu dekoráciu pre kartu / button podľa akcentovej farby danej sekcie
+  BoxDecoration getCardDecoration(Color accentColor, {bool isSelected = false}) {
+    if (id == 2) {
+      // NEO BRUTALISM: Plná farba akcentu, hrubý čierny border a tvrdý tieň
+      return BoxDecoration(
+        color: accentColor,
+        borderRadius: cardBorderRadius,
+        border: Border.all(color: Colors.black, width: 3.5),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black,
+            offset: Offset(4, 4),
+            blurRadius: 0,
+          ),
+        ],
+      );
+    } else if (id == 0) {
+      // CYBERPUNK: Okraj AJ neónová žiara VŽDY striktne používajú accentColor konkrétnej karty
+      return BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: cardBorderRadius,
+        border: Border.all(color: accentColor, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: accentColor.withValues(alpha: 0.35),
+            blurRadius: 10,
+            spreadRadius: 1,
+          ),
+        ],
+      );
+    } else if (id == 1) {
+  // SOFT NEUMORPHISM: Pozadie dostane 8% tónovanie z akcentu danej sekcie
+      return BoxDecoration(
+        color: Color.alphaBlend(accentColor.withValues(alpha: 0.08), theme.cardColor),
+        borderRadius: cardBorderRadius,
+        border: isSelected 
+            ? Border.all(color: accentColor, width: 2) 
+            : Border.all(color: accentColor.withValues(alpha: 0.2), width: 2),
+        boxShadow: cardShadows,
+      );
+      } else if (id == 5) {
+      // VIBRANT GRADIENTS
+      return BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            accentColor.withValues(alpha: 0.85),
+            accentColor.withValues(alpha: 0.65),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: cardBorderRadius,
+        border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: accentColor.withValues(alpha: 0.25),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      );
+    } else {
+      // CLEAN MINIMAL & STARLIGHT GLASS
+      return BoxDecoration(
+        color: isGlass ? Colors.white.withValues(alpha: 0.1) : theme.cardColor,
+        borderRadius: cardBorderRadius,
+        border: cardBorder ?? Border.all(color: accentColor.withValues(alpha: 0.4), width: 1.5),
+        gradient: cardGradient,
+        boxShadow: cardShadows,
+      );
+    }
+  }
+
+  /// Zabezpečí čistú čitateľnosť textu pre všetky neónové aj tmavé tlačidlá
+  Color getContrastTextColor(Color accentColor) {
+    if (id == 2) {
+      return Colors.black; // Neo-Brutalism má vždy čierny text
+    }
+    
+    // Ak je farba jasne žltá (Quick Import), použijeme čierny text pre čitateľnosť
+    if (accentColor.value == quickImportColor.value || accentColor.value == warningColor.value) {
+      
+      return Colors.black;
+    }
+
+    // Pre Cyberpunk a tmavé témy je text biely a čitateľný
+    if (id == 0 || theme.brightness == Brightness.dark) {
+      return Colors.white;
+    }
+
+
+    return theme.colorScheme.onSurface;
+  }
+
+  /// Vráti farbu ikony pre konkrétny button/element
+  Color getIconColor(Color accentColor) {
+    if (id == 2) {
+      return Colors.black;
+    }
+    if (id == 0) {
+      return accentColor; // V Cyberpunku ikony svietia akcentom
+    }
+    return getContrastTextColor(accentColor);
+  }
+
+  /// Pomocník pre stavové dlaždice (PermissionScreen / App Tiles)
+  Color getTileBg({required bool isGranted, required Color accentColor}) {
+    if (isGranted) {
+      return id == 2 ? successColor : successColor.withValues(alpha: 0.15);
+    }
+    return id == 2 ? accentColor : theme.cardColor;
+  }
+
+  Color getTileBorderColor({required bool isGranted, required Color accentColor}) {
+    if (id == 2) {
+      return Colors.black;
+    }
+    if (isGranted) {
+      return successColor;
+    }
+    return accentColor;
+  }
+
+  /// Okraje tlačidiel pre kvíz/test
+  BorderSide getQuizButtonBorder({required bool isChecked, Color? customColor}) {
+    if (id == 2) {
+      return const BorderSide(color: Colors.black, width: 3.5);
+    }
+    return BorderSide(
+      color: customColor ?? testSetupColor.withValues(alpha: isChecked ? 1.0 : 0.6),
+      width: isChecked ? 2.0 : 1.5,
+    );
+  }
 }
 
 class AppThemes {
@@ -52,37 +231,48 @@ class AppThemes {
     id: 0,
     name: 'Cyberpunk Dark',
     isPremium: true,
-    cardBorderRadius: BorderRadius.circular(8),
-    buttonBorderRadius: BorderRadius.circular(6),
-    cardBorder: Border.all(color: const Color(0xFFBD00FF), width: 1.5),
+    cardBorderRadius: BorderRadius.circular(12),
+    buttonBorderRadius: BorderRadius.circular(10),
+    cardBorder: Border.all(color: const Color(0xFF00F5FF), width: 1.5),
     cardShadows: [
       BoxShadow(
-        color: const Color(0xFFBD00FF).withValues(alpha: 0.35),
-        blurRadius: 10,
+        color: const Color(0xFF00F5FF).withValues(alpha: 0.25),
+        blurRadius: 12,
         spreadRadius: 1,
       ),
     ],
     cardGradient: const LinearGradient(
-      colors: [Color(0xFF131524), Color(0xFF0D0E17)],
+      colors: [Color(0xFF101625), Color(0xFF0A0D16)],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     ),
-    dailyGoalColor: const Color(0xFFBD00FF),    // Neónová fialová
-    decksColor: const Color(0xFF00E676),        // Neónová zelená
-    testSetupColor: const Color(0xFF00F5FF),    // Neónová azúrová/cyan
-    blockedAppsColor: const Color(0xFFFF3D00),  // Červeno-oranžová pre blokované appky
-    quickImportColor: const Color(0xFFFFB800),  // Zlatá
+    dailyGoalColor: const Color(0xFF00E676),    // Neónová zelená pre Daily Goal
+    decksColor: const Color(0xFFFF007F),        // Neónová ružová pre Decks
+    testSetupColor: const Color(0xFF00F5FF),    // Neónová azúrová pre Test Setup
+    blockedAppsColor: const Color(0xFFFF3D00),  // Neónová oranžová pre Blocked Apps
+    quickImportColor: const Color(0xFFFFE600),  // Neónová žltá
+    successColor: const Color(0xFF00E676),      // Neónová zelená
+    warningColor: const Color(0xFFFFE600),      // Neónová žltá
+    errorColor: const Color(0xFFFF3D00),        // Neónová červená/oranžová
+    primaryButtonBg: const Color(0xFF00F5FF),
+    primaryButtonFg: Colors.black,
+    buttonBorder: const BorderSide(color: Color(0xFF00F5FF), width: 1.5),
+    circleAvatarBg: const Color(0xFF101625),
+    circleAvatarBorder: Border.all(color: const Color(0xFF00F5FF), width: 2.0),
     theme: ThemeData(
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: const Color(0xFF08090E),
-      cardColor: const Color(0xFF131524),
-      primaryColor: const Color(0xFFBD00FF),
+      scaffoldBackgroundColor: const Color(0xFF06080C),
+      cardColor: const Color(0xFF101625),
+      primaryColor: const Color(0xFF00F5FF),
       colorScheme: const ColorScheme.dark(
-        primary: Color(0xFFBD00FF),
-        onPrimary: Colors.white,
-        secondary: Color(0xFF00F5FF), // Azúrová pre texty odpovedí v kvíze!
-        tertiary: Color(0xFF00F5FF),
+        primary: Color(0xFF00F5FF),
+        onPrimary: Colors.black,
+        secondary: Color(0xFFFFE600),
+        onSecondary: Colors.black,
+        tertiary: Color(0xFFFF007F),
+        surface: Color(0xFF101625),
         onSurface: Colors.white,
+        error: Color(0xFFFF3D00),
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
@@ -101,9 +291,9 @@ class AppThemes {
     cardBorderRadius: BorderRadius.circular(20),
     buttonBorderRadius: BorderRadius.circular(16),
     cardShadows: [
-      BoxShadow(
-        color: const Color(0xFFD1D9E6),
-        offset: const Offset(6, 6),
+       BoxShadow(
+        color: Colors.black.withValues(alpha: 0.15),
+        offset: Offset(6, 6),
         blurRadius: 12,
       ),
       const BoxShadow(
@@ -112,11 +302,19 @@ class AppThemes {
         blurRadius: 12,
       ),
     ],
-    dailyGoalColor: const Color(0xFF4A4A68),
-    decksColor: const Color(0xFF4DB6AC),
+    dailyGoalColor: const Color(0xFF5C6BC0),
+    decksColor: const Color(0xFF26A69A),
     testSetupColor: const Color(0xFF7986CB),
-    blockedAppsColor: const Color(0xFFE57373),
-    quickImportColor: const Color(0xFF90A4AE),
+    blockedAppsColor: const Color(0xFFEC407A),
+    quickImportColor: const Color(0xFF78909C),
+    successColor: const Color(0xFF26A69A),
+    warningColor: const Color(0xFFFFA726),
+    errorColor: const Color(0xFFEF5350),
+    primaryButtonBg: const Color(0xFF4A4A68),
+    primaryButtonFg: Colors.white,
+    buttonBorder: BorderSide.none,
+    circleAvatarBg: const Color(0xFFF0F0F3),
+    circleAvatarBorder: Border.all(color: const Color(0xFFD1D9E6), width: 1.5),
     theme: ThemeData(
       brightness: Brightness.light,
       scaffoldBackgroundColor: const Color(0xFFF0F0F3),
@@ -124,12 +322,13 @@ class AppThemes {
       primaryColor: const Color(0xFF4A4A68),
       colorScheme: const ColorScheme.light(
         primary: Color(0xFF4A4A68),
-        secondary: Color(0xFF4DB6AC),
-        surface: Color(0xFFF0F0F3),
         onPrimary: Colors.white,
+        secondary: Color(0xFF26A69A),
+        onSecondary: Colors.white,
+        tertiary: Color(0xFF7986CB),
+        surface: Color(0xFFF0F0F3),
         onSurface: Color(0xFF2C2C3E),
         onSecondaryContainer: Color(0xFF718096),
-        tertiary: Color(0xFF7986CB),
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
@@ -155,11 +354,19 @@ class AppThemes {
         blurRadius: 0,
       ),
     ],
-    dailyGoalColor: const Color(0xFFFFDE59),
+    dailyGoalColor: const Color(0xFFB57EDC),
     decksColor: const Color(0xFFFF91A4),
     testSetupColor: const Color(0xFF00E5FF),
     blockedAppsColor: const Color(0xFFFF5757),
-    quickImportColor: Colors.white,
+    quickImportColor: const Color(0xFFFFDE59),
+    successColor: const Color(0xFF00E676),
+    warningColor: const Color(0xFFFFDE59),
+    errorColor: const Color(0xFFFF5757),
+    primaryButtonBg: const Color(0xFF00E676),
+    primaryButtonFg: Colors.black,
+    buttonBorder: const BorderSide(color: Colors.black, width: 3.5),
+    circleAvatarBg: Colors.white,
+    circleAvatarBorder: Border.all(color: Colors.black, width: 3.5),
     theme: ThemeData(
       brightness: Brightness.light,
       scaffoldBackgroundColor: Colors.white,
@@ -167,12 +374,13 @@ class AppThemes {
       primaryColor: Colors.black,
       colorScheme: const ColorScheme.light(
         primary: Colors.black,
-        secondary: Color(0xFFFF91A4),
-        surface: Colors.white,
         onPrimary: Colors.white,
+        secondary: Color(0xFFFF91A4),
+        onSecondary: Colors.black,
+        tertiary: Color(0xFFFFDE59),
+        surface: Colors.white,
         onSurface: Colors.black,
         onSecondaryContainer: Colors.black87,
-        tertiary: Colors.black,
       ),
       textTheme: const TextTheme(
         bodyLarge: TextStyle(fontWeight: FontWeight.w900, color: Colors.black),
@@ -191,16 +399,24 @@ class AppThemes {
   static final AppThemeData _cleanMinimalTheme = AppThemeData(
     id: 3,
     name: 'Clean Minimal',
-    isPremium: true,
+    isPremium: false,
     cardBorderRadius: BorderRadius.circular(12),
     buttonBorderRadius: BorderRadius.circular(8),
-    cardBorder: Border.all(color: const Color(0xFFE0E0E0), width: 1.0),
-    cardShadows: [],
+    cardBorder: Border.all(color:  Colors.black, width: 1.0),
+    cardShadows: const [],
     dailyGoalColor: const Color(0xFF212121),
-    decksColor: const Color(0xFF212121),
-    testSetupColor: const Color(0xFF212121),
-    blockedAppsColor: const Color(0xFF212121),
-    quickImportColor: const Color(0xFF212121),
+    decksColor: const Color(0xFF616161),
+    testSetupColor: const Color(0xFF616161),
+    blockedAppsColor: const Color(0xFF757575),
+    quickImportColor: const Color(0xFF9E9E9E),
+    successColor: const Color(0xFF2E7D32),
+    warningColor: const Color(0xFFED6C02),
+    errorColor: const Color(0xFFD32F2F),
+    primaryButtonBg: const Color(0xFF212121),
+    primaryButtonFg: Colors.white,
+    buttonBorder: BorderSide.none,
+    circleAvatarBg: const Color(0xFFF5F5F5),
+    circleAvatarBorder: Border.all(color: const Color(0xFFE0E0E0), width: 1.0),
     theme: ThemeData(
       brightness: Brightness.light,
       scaffoldBackgroundColor: Colors.white,
@@ -208,12 +424,13 @@ class AppThemes {
       primaryColor: const Color(0xFF212121),
       colorScheme: const ColorScheme.light(
         primary: Color(0xFF212121),
-        secondary: Color(0xFF757575),
-        surface: Colors.white,
         onPrimary: Colors.white,
+        secondary: Color(0xFF757575),
+        onSecondary: Colors.white,
+        tertiary: Color(0xFF212121),
+        surface: Colors.white,
         onSurface: Color(0xFF212121),
         onSecondaryContainer: Color(0xFF9E9E9E),
-        tertiary: Color(0xFF212121),
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
@@ -232,7 +449,7 @@ class AppThemes {
     isGlass: true,
     cardBorderRadius: BorderRadius.circular(24),
     buttonBorderRadius: BorderRadius.circular(18),
-    cardBorder: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.0),
+    cardBorder: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.0),
     cardGradient: LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
@@ -248,24 +465,33 @@ class AppThemes {
         spreadRadius: -5,
       ),
     ],
-    dailyGoalColor: Colors.white,
-    decksColor: Colors.white,
-    testSetupColor: Colors.white,
-    blockedAppsColor: Colors.white,
-    quickImportColor: Colors.white,
+    dailyGoalColor: const Color(0xFF38BDF8),
+    decksColor: const Color(0xFF34D399),
+    testSetupColor: const Color(0xFFA78BFA),
+    blockedAppsColor: const Color(0xFFFB7185),
+    quickImportColor: const Color(0xFFFBBF24),
+    successColor: const Color(0xFF34D399),
+    warningColor: const Color(0xFFFBBF24),
+    errorColor: const Color(0xFFFB7185),
+    primaryButtonBg: Colors.white,
+    primaryButtonFg: const Color(0xFF0F172A),
+    buttonBorder: BorderSide(color: Colors.white.withValues(alpha: 0.3), width: 1.0),
+    circleAvatarBg: Colors.white.withValues(alpha: 0.1),
+    circleAvatarBorder: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.0),
     theme: ThemeData(
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: const Color(0xFF131B2F),
-      cardColor: Colors.white.withValues(alpha: 0.1),
+      scaffoldBackgroundColor: const Color(0xFF0F172A),
+      cardColor: const Color(0xFF1E293B),
       primaryColor: Colors.white,
-      colorScheme: ColorScheme.dark(
+      colorScheme: const ColorScheme.dark(
         primary: Colors.white,
-        secondary: Colors.white70,
-        surface: Colors.white.withValues(alpha: 0.1),
-        onPrimary: Colors.black,
+        onPrimary: Color(0xFF0F172A),
+        secondary: Color(0xFF38BDF8),
+        onSecondary: Colors.black,
+        tertiary: Color(0xFFFFD54F),
+        surface: Color(0xFF1E293B),
         onSurface: Colors.white,
         onSecondaryContainer: Colors.white60,
-        tertiary: const Color(0xFFFFD54F),
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
@@ -278,56 +504,64 @@ class AppThemes {
 
   // 6. VIBRANT GRADIENTS
   static final AppThemeData _vibrantGradientTheme = AppThemeData(
-      id: 5,
-      name: 'Vibrant Gradients',
-      isPremium: true,
-      cardBorderRadius: BorderRadius.circular(30),
-      buttonBorderRadius: BorderRadius.circular(30),
-      cardBorder: Border.all(
-        color: Colors.white.withValues(alpha: 0.4), // Jemný biely okraj pre ohraničenie
-        width: 1.5,
+    id: 5,
+    name: 'Vibrant Gradients',
+    isPremium: true,
+    cardBorderRadius: BorderRadius.circular(24),
+    buttonBorderRadius: BorderRadius.circular(20),
+    cardBorder: Border.all(
+      color: Colors.white.withValues(alpha: 0.5),
+      width: 1.5,
+    ),
+    cardShadows: [
+      BoxShadow(
+        color: const Color(0xFFD53369).withValues(alpha: 0.18),
+        blurRadius: 15,
+        offset: const Offset(0, 8),
       ),
-      cardShadows: [
-        BoxShadow(
-          color: const Color(0xFFD53369).withValues(alpha: 0.15), // Jemnejší tieň
-          blurRadius: 15,
-          offset: const Offset(0, 8),
-        ),
+    ],
+    cardGradient: LinearGradient(
+      begin: Alignment.centerLeft,
+      end: Alignment.centerRight,
+      colors: [
+        const Color(0xFFD53369).withValues(alpha: 0.85),
+        const Color(0xFFDAAE51).withValues(alpha: 0.85),
       ],
-      // ZJEMNENÝ A PRIEHĽADNEJŠÍ GRADIENT
-      cardGradient: LinearGradient(
-        begin: Alignment.centerLeft,
-        end: Alignment.centerRight,
-        colors: [
-          const Color(0xFFD53369).withValues(alpha: 0.55), // 55% priehľadnosť ružovej
-          const Color(0xFFDAAE51).withValues(alpha: 0.45), // 45% priehľadnosť jemnej zlatej
-        ],
+    ),
+    dailyGoalColor: const Color(0xFFD53369),
+    decksColor: const Color(0xFF00C9FF),
+    testSetupColor: const Color(0xFF8A2BE2),
+    blockedAppsColor: const Color(0xFFFF8C00),
+    quickImportColor: const Color(0xFF00E676),
+    successColor: const Color(0xFF00E676),
+    warningColor: const Color(0xFFFF8C00),
+    errorColor: const Color(0xFFFF3366),
+    primaryButtonBg: const Color(0xFFD53369),
+    primaryButtonFg: Colors.white,
+    buttonBorder: BorderSide.none,
+    circleAvatarBg: Colors.white,
+    circleAvatarBorder: Border.all(color: const Color(0xFFD53369).withValues(alpha: 0.3), width: 2.0),
+    theme: ThemeData(
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: const Color(0xFFF8F9FA),
+      cardColor: const Color(0xFFFFFFFF),
+      primaryColor: const Color(0xFFD53369),
+      colorScheme: const ColorScheme.light(
+        primary: Color(0xFFD53369),
+        onPrimary: Colors.white,
+        secondary: Color(0xFF00C9FF),
+        onSecondary: Colors.white,
+        tertiary: Color(0xFFFF8C00),
+        surface: Colors.white,
+        onSurface: Color(0xFF111111),
+        onSecondaryContainer: Color(0xFF666666),
       ),
-      dailyGoalColor: const Color(0xFFD53369),
-      decksColor: const Color(0xFF00C9FF),
-      testSetupColor: const Color(0xFF8A2BE2),
-      blockedAppsColor: const Color(0xFFFF8C00),
-      quickImportColor: const Color(0xFF00E676),
-      theme: ThemeData(
-        brightness: Brightness.light,
-        scaffoldBackgroundColor: const Color(0xFFF8F9FA),
-        cardColor: const Color(0xFFD53369),
-        primaryColor: const Color(0xFFD53369),
-        colorScheme: const ColorScheme.light(
-          primary: Color(0xFFD53369),
-          secondary: Color(0xFF00C9FF),
-          surface: Colors.white,
-          onPrimary: Colors.white,
-          onSurface: Color(0xFF111111), // Ďalšie stmavenie pre maximálnu čitateľnosť textu
-          onSecondaryContainer: Color(0xFF666666),
-          tertiary: Color(0xFFFF8C00),
-        ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          iconTheme: IconThemeData(color: Color(0xFF1A1A1A)),
-          titleTextStyle: TextStyle(color: Color(0xFF1A1A1A), fontSize: 22, fontWeight: FontWeight.bold),
-        ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: IconThemeData(color: Color(0xFF1A1A1A)),
+        titleTextStyle: TextStyle(color: Color(0xFF1A1A1A), fontSize: 22, fontWeight: FontWeight.bold),
       ),
-    );
+    ),
+  );
 }

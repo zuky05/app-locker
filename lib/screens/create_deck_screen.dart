@@ -32,13 +32,12 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Načítanie aktívnej témy
     final themeProvider = Provider.of<ThemeProvider>(context);
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
 
-    // Sekcová farba pre Decks (zdedená z témy)
     final Color sectionColor = currentTheme.decksColor;
+    final Color textColor = currentTheme.getContrastTextColor(sectionColor);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -53,36 +52,23 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Kontajner pre TextField obalený štýlom karty
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: theme.cardColor,
-                borderRadius: currentTheme.cardBorderRadius,
-                border: currentTheme.id == 2 
-                    ? Border.all(color: Colors.black, width: 3.5)
-                    : (currentTheme.cardBorder ?? Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.15))),
-                boxShadow: currentTheme.id == 2 
-                    ? const [BoxShadow(color: Colors.black, offset: Offset(4, 4), blurRadius: 0)]
-                    : currentTheme.cardShadows,
-                gradient: currentTheme.id == 2 ? null : currentTheme.cardGradient,
-              ),
+              decoration: currentTheme.getCardDecoration(sectionColor),
               child: TextField(
                 controller: _deckNameController,
                 style: TextStyle(
-                  color: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onSurface, 
+                  color: textColor,
                   fontWeight: FontWeight.w600,
                 ),
                 decoration: InputDecoration(
-                  labelText: "Deck Name (e.g. History)",
+                  labelText: "Deck Name (e.g. Languages)",
                   labelStyle: TextStyle(
-                    color: currentTheme.id == 2 
-                        ? Colors.black54 
-                        : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    color: textColor.withValues(alpha: 0.7),
                   ),
                   border: InputBorder.none,
                   focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: currentTheme.id == 2 ? Colors.black : sectionColor),
+                    borderSide: BorderSide(color: sectionColor, width: 2),
                   ),
                 ),
               ),
@@ -105,12 +91,12 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 50),
-                  backgroundColor: currentTheme.id == 2 ? Colors.black : sectionColor,
-                  foregroundColor: currentTheme.id == 2 ? Colors.white : (sectionColor.computeLuminance() > 0.5 ? Colors.black : Colors.white),
-                  elevation: currentTheme.id == 2 ? 0 : 2,
+                  backgroundColor: sectionColor,
+                  foregroundColor: textColor,
+                  elevation: currentTheme.cardShadows != null ? 2 : 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: currentTheme.buttonBorderRadius,
-                    side: currentTheme.id == 2 ? const BorderSide(color: Colors.black, width: 2.5) : BorderSide.none,
+                    side: currentTheme.buttonBorder,
                   ),
                 ),
                 onPressed: _saveData,
@@ -119,7 +105,7 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
                   style: TextStyle(
                     fontSize: 16, 
                     fontWeight: FontWeight.bold,
-                    color: currentTheme.id == 2 ? Colors.white : (sectionColor.computeLuminance() > 0.5 ? Colors.black : Colors.white),
+                    color: textColor,
                   ),
                 ),
               ),

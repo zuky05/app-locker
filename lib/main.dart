@@ -5,6 +5,8 @@ import 'themes/theme_provider.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:app_links/app_links.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
+
 
 import 'screens/block_choice_screen.dart';
 import 'screens/permission_screen.dart';
@@ -19,7 +21,7 @@ late PermissionGuard permissionGuard;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  await Purchases.setLogLevel(LogLevel.error);
   // 2. INICIALIZÁCIA REVENUECAT PRI ŠTARTE APPKY
   await RevenueCatService.initialize();
 

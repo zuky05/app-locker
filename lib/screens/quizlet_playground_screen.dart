@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'dart:convert';
 import '../services/database_helper.dart';
 import '../themes/theme_provider.dart';
+import '../themes/app_themes.dart';
 
 class QuizletPlaygroundScreen extends StatefulWidget {
   const QuizletPlaygroundScreen({super.key});
@@ -21,7 +22,6 @@ class _QuizletPlaygroundScreenState extends State<QuizletPlaygroundScreen> {
   void initState() {
     super.initState();
     
-    // Inicializácia webového prehliadača
     controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..addJavaScriptChannel(
@@ -153,8 +153,8 @@ class _QuizletPlaygroundScreenState extends State<QuizletPlaygroundScreen> {
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
 
-    // Dedenie farby priamo z akcentu Quick Import tlačidla v menu pre danú tému
     final Color accentColor = currentTheme.quickImportColor;
+    final Color buttonFgColor = currentTheme.getContrastTextColor(accentColor);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -170,13 +170,7 @@ class _QuizletPlaygroundScreenState extends State<QuizletPlaygroundScreen> {
             padding: const EdgeInsets.all(12),
             width: double.infinity,
             decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.15),
-              border: Border(
-                bottom: BorderSide(
-                  color: currentTheme.id == 2 ? Colors.black : accentColor.withValues(alpha: 0.3),
-                  width: currentTheme.id == 2 ? 3.5 : 1,
-                ),
-              ),
+              color: currentTheme.getTileBg(isGranted: false, accentColor: accentColor),
             ),
             child: Text(
               statusMessage,
@@ -199,7 +193,7 @@ class _QuizletPlaygroundScreenState extends State<QuizletPlaygroundScreen> {
               backgroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.3),
               shape: RoundedRectangleBorder(
                 borderRadius: currentTheme.buttonBorderRadius,
-                side: currentTheme.id == 2 ? const BorderSide(color: Colors.black, width: 3.5) : BorderSide.none,
+                side: BorderSide.none,
               ),
               child: CircularProgressIndicator(color: accentColor),
             )
@@ -208,12 +202,12 @@ class _QuizletPlaygroundScreenState extends State<QuizletPlaygroundScreen> {
               icon: const Icon(Icons.downloading),
               label: const Text("Vytiahnuť kartičky", style: TextStyle(fontWeight: FontWeight.bold)),
               backgroundColor: accentColor,
-              foregroundColor: currentTheme.id == 2 ? Colors.black : (accentColor.computeLuminance() > 0.5 ? Colors.black : Colors.white),
+              foregroundColor: buttonFgColor,
               shape: RoundedRectangleBorder(
                 borderRadius: currentTheme.buttonBorderRadius,
-                side: currentTheme.id == 2 ? const BorderSide(color: Colors.black, width: 3.5) : BorderSide.none,
+                side: BorderSide.none,
               ),
-              elevation: currentTheme.id == 2 ? 0 : 2,
+              elevation: theme.appBarTheme.elevation ?? 0,
             ),
     );
   }

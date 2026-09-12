@@ -4,8 +4,6 @@ import 'package:provider/provider.dart';
 import '../services/prefs_helper.dart';
 import '../themes/theme_provider.dart';
 import 'quiz_overlay_screen.dart';
-
-// --- IMPORT REVENUECAT ---
 import '../services/revenuecat_service.dart';
 
 class BlockChoiceScreen extends StatefulWidget {
@@ -25,7 +23,7 @@ class BlockChoiceScreen extends StatefulWidget {
 class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
   int remainingGrace = 0;
   bool isLoading = true;
-  bool isPremium = false; // PRIDANÝ STAV PRE PREMIUM
+  bool isPremium = false;
 
   @override
   void initState() {
@@ -33,7 +31,6 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
     _loadGraceCountAndPremium();
   }
 
-  // NAČÍTA POČET ODPUSTKOV A ZÁROVEŇ ZISTÍ PREMIUM STAV
   Future<void> _loadGraceCountAndPremium() async {
     int count = await PrefsHelper.getRemainingGraceAttempts();
     bool premiumStatus = await RevenueCatService.isPremium(); 
@@ -48,13 +45,10 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
   }
 
   void _useGracePeriod() async {
-    // Ak má Premium, len ho pustíme dnu bez strhávania "pokusov"
     if (isPremium) {
       const platform = MethodChannel('brainlock.channel');
       try {
-        // ZMENENÉ Z 'minutes': 1 NA 'seconds': 60 a 'maxCap': 60
         await platform.invokeMethod('unlockApp', {'seconds': 60, 'maxCap': 60});
-        // PRIDANÉ ZATVORENIE OBRAZOVKY (Aby zámok zmizol)
         if (mounted) SystemNavigator.pop(); 
       } catch (e) {
         debugPrint("Chyba: $e");
@@ -62,14 +56,11 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
       return;
     }
 
-    // Pre Free používateľov strhneme pokus cez PrefsHelper
     bool success = await PrefsHelper.useGraceAttempt();
     if (success) {
       const platform = MethodChannel('brainlock.channel');
       try {
-        // ZMENENÉ Z 'minutes': 1 NA 'seconds': 60 a 'maxCap': 60
         await platform.invokeMethod('unlockApp', {'seconds': 60, 'maxCap': 60});
-        // PRIDANÉ ZATVORENIE OBRAZOVKY
         if (mounted) SystemNavigator.pop();
       } catch (e) {
         debugPrint("Chyba: $e");
@@ -102,118 +93,112 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
             children: [
               Container(
                 width: MediaQuery.of(context).size.width * 0.85,
+                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.white, 
+                  color: theme.cardColor, 
                   borderRadius: currentTheme.cardBorderRadius,
-                  border: currentTheme.id == 2 
-                      ? Border.all(color: Colors.black, width: 3.5) 
-                      : (currentTheme.cardBorder ?? Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.2))),
-                  boxShadow: currentTheme.id == 2 
-                      ? const [BoxShadow(color: Colors.black, offset: Offset(5, 5), blurRadius: 0)]
-                      : (currentTheme.cardShadows ?? [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.25), 
-                            blurRadius: 20, 
-                            spreadRadius: 5,
-                          )
-                        ]),
+                  border: currentTheme.cardBorder ?? 
+                      Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.2)),
+                  boxShadow: currentTheme.cardShadows ?? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.25), 
+                      blurRadius: 20, 
+                      spreadRadius: 5,
+                    ),
+                  ],
+                  gradient: currentTheme.cardGradient,
                 ),
-                child: Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    borderRadius: currentTheme.cardBorderRadius,
-                    gradient: currentTheme.id == 2 ? null : currentTheme.cardGradient,
-                  ),
-                  child: isLoading
-                      ? Center(
-                          child: CircularProgressIndicator(
-                            color: theme.colorScheme.primary,
-                          ),
-                        )
-                      : Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.warning_amber_rounded, 
-                              size: 50, 
-                              color: currentTheme.id == 2 ? Colors.black : theme.colorScheme.tertiary,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              "Zablokované!",
-                              style: TextStyle(
-                                fontSize: 22, 
-                                fontWeight: FontWeight.bold,
-                                color: theme.colorScheme.onSurface,
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                minimumSize: const Size(double.infinity, 50),
-                                backgroundColor: theme.colorScheme.primary,
-                                foregroundColor: theme.colorScheme.onPrimary,
-                                elevation: currentTheme.id == 2 ? 0 : 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: currentTheme.buttonBorderRadius,
-                                  side: currentTheme.id == 2 
-                                      ? const BorderSide(color: Colors.black, width: 2.5) 
-                                      : BorderSide.none,
-                                ),
-                              ),
-                              onPressed: _startTest,
-                              child: const Text("Spustiť TEST (5 minút)", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                            ),
-
-                            if (!widget.isFromNotification) ...[
-                              const SizedBox(height: 12),
-
-                              // TOTO JE TO HLAVNÉ ROZHODOVANIE:
-                              if (widget.isTimeout)
-                                const Padding(
-                                  padding: EdgeInsets.only(top: 10),
-                                  child: Text(
-                                    "Čas vypršal! Teraz ťa zachráni už len test.",
-                                    style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
-                                  ),
-                                )
-                              // Ak nemá Timeout, môže si zobrať odpustok. Má Premium alebo mu ešte zostali pokusy?
-                              else if (isPremium || remainingGrace > 0)
-                                ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    minimumSize: const Size(double.infinity, 50),
-                                    backgroundColor: Colors.white.withValues(alpha: 0.92),
-                                    foregroundColor: Colors.black87,
-                                    elevation: currentTheme.id == 2 ? 0 : 3,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: currentTheme.buttonBorderRadius,
-                                      side: currentTheme.id == 2 
-                                          ? const BorderSide(color: Colors.black, width: 2.5)
-                                          : BorderSide(color: Colors.black.withValues(alpha: 0.1), width: 1),
-                                    ),
-                                  ),
-                                  onPressed: _useGracePeriod,
-                                  child: Text(
-                                    isPremium 
-                                        ? "Odomknúť na 1 minútu" // Text pre Premium (žiaden limit v názve)
-                                        : "Odpustok na 1 min. ($remainingGrace/3 dnes)", 
-                                    style: const TextStyle(fontWeight: FontWeight.bold)
-                                  ),
-                                )
-                              // Ak nemá Timeout, nemá Premium a nemá už pokusy:
-                              else
-                                const Padding(
-                                  padding: EdgeInsets.only(top: 10),
-                                  child: Text(
-                                    "Dnešné odpustky si už vyčerpal!",
-                                    style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                            ],
-                          ],
+                child: isLoading
+                    ? Center(
+                        child: CircularProgressIndicator(
+                          color: theme.colorScheme.primary,
                         ),
-                ),
+                      )
+                    : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.warning_amber_rounded, 
+                            size: 50, 
+                            color: currentTheme.warningColor,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            "Zablokované!",
+                            style: TextStyle(
+                              fontSize: 22, 
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: const Size(double.infinity, 50),
+                              backgroundColor: currentTheme.primaryButtonBg,
+                              foregroundColor: currentTheme.primaryButtonFg,
+                              elevation: currentTheme.cardShadows != null ? 2 : 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: currentTheme.buttonBorderRadius,
+                                side: currentTheme.buttonBorder,
+                              ),
+                            ),
+                            onPressed: _startTest,
+                            child: const Text(
+                              "Spustiť TEST (5 minút)", 
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+
+                          if (!widget.isFromNotification) ...[
+                            const SizedBox(height: 12),
+
+                            if (widget.isTimeout)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 10),
+                                child: Text(
+                                  "Čas vypršal! Teraz ťa zachráni už len test.",
+                                  style: TextStyle(
+                                    color: currentTheme.errorColor, 
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              )
+                            else if (isPremium || remainingGrace > 0)
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  minimumSize: const Size(double.infinity, 50),
+                                  backgroundColor: currentTheme.circleAvatarBg,
+                                  foregroundColor: theme.colorScheme.onSurface,
+                                  elevation: currentTheme.cardShadows != null ? 1 : 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: currentTheme.buttonBorderRadius,
+                                    side: currentTheme.buttonBorder,
+                                  ),
+                                ),
+                                onPressed: _useGracePeriod,
+                                child: Text(
+                                  isPremium 
+                                      ? "Odomknúť na 1 minútu"
+                                      : "Odpustok na 1 min. ($remainingGrace/3 dnes)", 
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              )
+                            else
+                              Padding(
+                                padding: const EdgeInsets.only(top: 10),
+                                child: Text(
+                                  "Dnešné odpustky si už vyčerpal!",
+                                  style: TextStyle(
+                                    color: currentTheme.errorColor, 
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ],
+                      ),
               ),
             ],
           ),

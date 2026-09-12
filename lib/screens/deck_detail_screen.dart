@@ -98,39 +98,43 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
     final currentTheme = Provider.of<ThemeProvider>(context, listen: false).currentThemeData;
     final theme = currentTheme.theme;
     final Color sectionColor = currentTheme.decksColor;
+    final Color textColor = currentTheme.getContrastTextColor(sectionColor);
 
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: currentTheme.id == 2 ? Colors.white : theme.cardColor,
+        backgroundColor: theme.cardColor,
         shape: RoundedRectangleBorder(
           borderRadius: currentTheme.cardBorderRadius,
-          side: currentTheme.id == 2 ? const BorderSide(color: Colors.black, width: 3.5) : BorderSide.none,
+          side: currentTheme.buttonBorder,
         ),
-        title: Text('Nová kartička', style: TextStyle(color: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onSurface, fontWeight: FontWeight.bold)),
+        title: Text(
+          'Nová kartička', 
+          style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: promptController,
-              style: TextStyle(color: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onSurface),
+              style: TextStyle(color: theme.colorScheme.onSurface),
               decoration: InputDecoration(
                 labelText: 'Otázka / Pojem',
-                labelStyle: TextStyle(color: currentTheme.id == 2 ? Colors.black54 : theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+                labelStyle: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
                 focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: currentTheme.id == 2 ? Colors.black : sectionColor),
+                  borderSide: BorderSide(color: sectionColor, width: 2),
                 ),
               ),
             ),
             const SizedBox(height: 10),
             TextField(
               controller: answerController,
-              style: TextStyle(color: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onSurface),
+              style: TextStyle(color: theme.colorScheme.onSurface),
               decoration: InputDecoration(
                 labelText: 'Správna odpoveď',
-                labelStyle: TextStyle(color: currentTheme.id == 2 ? Colors.black54 : theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+                labelStyle: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
                 focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: currentTheme.id == 2 ? Colors.black : sectionColor),
+                  borderSide: BorderSide(color: sectionColor, width: 2),
                 ),
               ),
             ),
@@ -139,7 +143,10 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext), 
-            child: Text('Zrušiť', style: TextStyle(color: currentTheme.id == 2 ? Colors.black54 : theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+            child: Text(
+              'Zrušiť', 
+              style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+            ),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -167,11 +174,11 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: currentTheme.id == 2 ? Colors.black : sectionColor,
-              foregroundColor: currentTheme.id == 2 ? Colors.white : (sectionColor.computeLuminance() > 0.5 ? Colors.black : Colors.white),
+              backgroundColor: sectionColor,
+              foregroundColor: textColor,
               shape: RoundedRectangleBorder(
                 borderRadius: currentTheme.buttonBorderRadius,
-                side: currentTheme.id == 2 ? const BorderSide(color: Colors.black, width: 2) : BorderSide.none,
+                side: currentTheme.buttonBorder,
               ),
             ),
             child: const Text('Pridať'),
@@ -187,7 +194,6 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
 
-    // Sekcová farba pre Decks zdedená z témy
     final Color sectionColor = currentTheme.decksColor;
 
     return Scaffold(
@@ -209,7 +215,6 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                 )
               : Column(
                   children: [
-                    // Počítadlo kariet
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 20),
                       child: Text(
@@ -222,7 +227,6 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                       ),
                     ),
 
-                    // Kartička
                     Expanded(
                       child: PageView.builder(
                         controller: _pageController,
@@ -237,31 +241,20 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                         itemBuilder: (context, index) {
                           final card = cards[index];
 
-                          // Pozadie a štýl pre prednú a zadnú stranu využívajúci sekcovú farbu
-                          final Color cardBg = showAnswer
-                              ? (currentTheme.id == 2 ? sectionColor : sectionColor.withValues(alpha: 0.15))
-                              : (currentTheme.id == 2 ? sectionColor : theme.cardColor);
+                          final cardDecoration = showAnswer
+                              ? currentTheme.getCardDecoration(sectionColor, isSelected: true)
+                              : currentTheme.getCardDecoration(sectionColor);
 
-                          final Border cardBorder = currentTheme.id == 2
-                              ? Border.all(color: Colors.black, width: 3.5)
-                              : (showAnswer 
-                                  ? Border.all(color: sectionColor, width: 2.0)
-                                  : (currentTheme.cardBorder ?? Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.12))));
+                          final Color cardTextColor = showAnswer
+                              ? currentTheme.getContrastTextColor(sectionColor)
+                              : theme.colorScheme.onSurface;
 
                           return GestureDetector(
                             key: ValueKey(card['id']),
                             onTap: _flipCard,
                             child: Container(
                               margin: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
-                              decoration: BoxDecoration(
-                                color: cardBg,
-                                borderRadius: currentTheme.cardBorderRadius,
-                                border: cardBorder,
-                                boxShadow: currentTheme.id == 2
-                                    ? const [BoxShadow(color: Colors.black, offset: Offset(5, 5), blurRadius: 0)]
-                                    : (showAnswer ? [BoxShadow(color: sectionColor.withValues(alpha: 0.35), blurRadius: 10)] : currentTheme.cardShadows),
-                                gradient: currentTheme.id == 2 || showAnswer ? null : currentTheme.cardGradient,
-                              ),
+                              decoration: cardDecoration,
                               child: Center(
                                 child: Padding(
                                   padding: const EdgeInsets.all(24.0),
@@ -273,9 +266,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                                         style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,
-                                          color: currentTheme.id == 2 
-                                              ? Colors.black87 
-                                              : (showAnswer ? sectionColor : theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                                          color: cardTextColor.withValues(alpha: 0.7),
                                           letterSpacing: 2,
                                         ),
                                       ),
@@ -298,7 +289,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                                           style: TextStyle(
                                             fontSize: 22, 
                                             fontWeight: FontWeight.w600,
-                                            color: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onSurface,
+                                            color: cardTextColor,
                                           ),
                                         ),
                                       ] else ...[
@@ -308,9 +299,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                                           style: TextStyle(
                                             fontSize: 24, 
                                             fontWeight: FontWeight.w600,
-                                            color: currentTheme.id == 2 
-                                                ? Colors.black 
-                                                : (showAnswer ? sectionColor : theme.colorScheme.onSurface),
+                                            color: cardTextColor,
                                           ),
                                         ),
                                       ],
@@ -319,9 +308,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
 
                                       Icon(
                                         Icons.touch_app,
-                                        color: currentTheme.id == 2 
-                                            ? Colors.black54 
-                                            : theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                                        color: cardTextColor.withValues(alpha: 0.4),
                                         size: 30,
                                       ),
                                     ],
@@ -334,7 +321,6 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                       ),
                     ),
 
-                    // Tlačidlá navigácie (šípky)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 40, top: 10),
                       child: Row(
@@ -371,9 +357,12 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                   FloatingActionButton(
                     heroTag: 'delete_btn',
                     onPressed: _deleteCard,
-                    backgroundColor: Colors.redAccent,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: currentTheme.cardBorderRadius),
+                    backgroundColor: currentTheme.errorColor,
+                    foregroundColor: currentTheme.getContrastTextColor(currentTheme.errorColor),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: currentTheme.cardBorderRadius,
+                      
+                    ),
                     child: const Icon(Icons.delete),
                   ),
 
@@ -384,11 +373,11 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                   onPressed: _showAddCardDialog,
                   icon: const Icon(Icons.add),
                   label: const Text("Pridať"),
-                  backgroundColor: currentTheme.id == 2 ? Colors.black : sectionColor,
-                  foregroundColor: currentTheme.id == 2 ? Colors.white : (sectionColor.computeLuminance() > 0.5 ? Colors.black : Colors.white),
+                  backgroundColor: sectionColor,
+                  foregroundColor: currentTheme.getContrastTextColor(sectionColor),
                   shape: RoundedRectangleBorder(
                     borderRadius: currentTheme.cardBorderRadius,
-                    side: currentTheme.id == 2 ? const BorderSide(color: Colors.black, width: 2.5) : BorderSide.none,
+                    
                   ),
                 ),
               ],

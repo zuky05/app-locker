@@ -9,8 +9,6 @@ import '../themes/theme_provider.dart';
 import '../themes/app_themes.dart';
 import 'settings_screen.dart';
 import 'test_setup_screen.dart';
-
-// 1. IMPORTUJEME NÁŠ REVENUECAT SERVIS
 import '../services/revenuecat_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -22,7 +20,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int customDeckCount = 0;
-  bool isPremium = false; // Pridali sme stavovú premennú pre Premium
+  bool isPremium = false;
   bool isLoading = true;
 
   @override
@@ -31,7 +29,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _checkDeckCount();
   }
 
-  // 2. KONTROLUJEME AJ STAV PREMIUM PRI NAČÍTANÍ DOMOVSKEJ OBRAZOVKY
   Future<void> _checkDeckCount() async {
     final count = await DatabaseHelper.instance.getCustomDeckCount();
     final premiumStatus = await RevenueCatService.isPremium();
@@ -58,17 +55,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog( // Zmenené z "context" na "dialogContext" pre bezpečnosť
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: theme.cardColor,
-        shape: RoundedRectangleBorder(borderRadius: currentTheme.cardBorderRadius),
-        title: const Column(
+        shape: RoundedRectangleBorder(
+          borderRadius: currentTheme.cardBorderRadius,
+          side: currentTheme.buttonBorder,
+        ),
+        title: Column(
           children: [
-            Icon(Icons.star_rounded, size: 50, color: Color(0xFFFFB800)),
-            SizedBox(height: 10),
+            Icon(Icons.star_rounded, size: 50, color: currentTheme.warningColor),
+            const SizedBox(height: 10),
             Text(
               "Odomkni Brainlock Premium!",
               textAlign: TextAlign.center,
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
             ),
           ],
         ),
@@ -82,34 +82,39 @@ class _HomeScreenState extends State<HomeScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(dialogContext),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red.shade400,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: currentTheme.buttonBorderRadius),
+              backgroundColor: currentTheme.errorColor,
+              foregroundColor: currentTheme.getContrastTextColor(currentTheme.errorColor),
+              shape: RoundedRectangleBorder(
+                borderRadius: currentTheme.buttonBorderRadius,
+                side: currentTheme.buttonBorder,
+              ),
             ),
             child: const Text("Zrušiť"),
           ),
           ElevatedButton(
-            // 3. TOTO TLAČIDLO TERAZ OTVÁRA PAYWALL
             onPressed: () async {
-              Navigator.pop(dialogContext); // Zatvoríme dialóg
-              
-              // Zavoláme RevenueCat Paywall
+              Navigator.pop(dialogContext);
               final success = await RevenueCatService.presentPaywall();
               
-              // Ak používateľ nakúpil (alebo obnovil nákup)
               if (success) {
-                _checkDeckCount(); // Obnovíme stav (Zruší sa limit!)
+                _checkDeckCount();
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Vitaj v Premium klube! 🎉"), backgroundColor: Colors.green),
+                    SnackBar(
+                      content: const Text("Vitaj v Premium klube! 🎉"), 
+                      backgroundColor: currentTheme.successColor,
+                    ),
                   );
                 }
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFB800),
-              foregroundColor: Colors.black,
-              shape: RoundedRectangleBorder(borderRadius: currentTheme.buttonBorderRadius),
+              backgroundColor: currentTheme.warningColor,
+              foregroundColor: currentTheme.getContrastTextColor(currentTheme.warningColor),
+              shape: RoundedRectangleBorder(
+                borderRadius: currentTheme.buttonBorderRadius,
+                side: currentTheme.buttonBorder,
+              ),
             ),
             child: const Text("Odomknúť Premium", style: TextStyle(fontWeight: FontWeight.bold)),
           ),
@@ -117,57 +122,22 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
-  BoxDecoration _getCustomCardDecoration(AppThemeData currentTheme, Color accentColor) {
-    final theme = currentTheme.theme;
-
-    Border border;
-    if (currentTheme.id == 0) {
-      border = Border.all(color: accentColor, width: 1.5);
-    } else if (currentTheme.id == 2) {
-      border = Border.all(color: Colors.black, width: 3.5);
-    } else {
-      border = currentTheme.cardBorder ?? Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.12));
-    }
-
-    List<BoxShadow>? shadows;
-    if (currentTheme.id == 0) {
-      shadows = [
-        BoxShadow(
-          color: accentColor.withValues(alpha: 0.35),
-          blurRadius: 10,
-          spreadRadius: 1,
-        )
-      ];
-    } else {
-      shadows = currentTheme.cardShadows;
-    }
-
-    Color cardBgColor = currentTheme.id == 2 ? accentColor : theme.cardColor;
-
-    return BoxDecoration(
-      color: cardBgColor,
-      borderRadius: currentTheme.cardBorderRadius,
-      border: border,
-      boxShadow: shadows,
-      gradient: currentTheme.id == 2 ? null : currentTheme.cardGradient,
-    );
-  }
-
+  
   @override
+  
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
     
-    // 4. KĽÚČOVÁ ZMENA LIMITU: Ak má Premium, limit už neplatí (isLimitReached bude false)
+
     final bool isLimitReached = customDeckCount >= 3 && !isPremium; 
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: theme.appBarTheme.backgroundColor ?? Colors.transparent,
-        elevation: 0,
+        elevation: theme.appBarTheme.elevation ?? 0,
         title: Text(
           'Brainlock Decks',
           style: theme.appBarTheme.titleTextStyle ?? TextStyle(
@@ -176,12 +146,12 @@ class _HomeScreenState extends State<HomeScreen> {
             fontSize: 24,
           ),
         ),
+        
         actions: [
           IconButton(
-            icon: const Icon(Icons.star_rounded, color: Color(0xFFFFB800), size: 30),
+            icon: Icon(Icons.star_rounded, color: Colors.amber, size: 30),
             tooltip: 'Premium',
             onPressed: () async {
-              // Horná ikonka hviezdičky - funguje rovnako, otvorí buď správu alebo paywall
               if (isPremium) {
                 RevenueCatService.showCustomerCenter();
               } else {
@@ -275,24 +245,24 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       
       body: isLoading
-          ? Center(child: CircularProgressIndicator(color: theme.colorScheme.primary))
+          ? Center(child: CircularProgressIndicator(color: currentTheme.decksColor))
           : ListView(
               padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
               physics: const BouncingScrollPhysics(),
               children: [
                 
-                // 1. DAILY GOAL (Zmenené na zelenú / decksColor)
+                // 1. DAILY GOAL
                 Container(
                   height: 200,
                   padding: const EdgeInsets.all(20),
-                  decoration: _getCustomCardDecoration(currentTheme, currentTheme.decksColor),
+                  decoration: currentTheme.getCardDecoration(currentTheme.dailyGoalColor),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
                         'DAILY GOAL',
                         style: TextStyle(
-                          color: currentTheme.id == 2 ? Colors.black : currentTheme.decksColor,
+                          color: currentTheme.id == 2 ? Colors.black : currentTheme.dailyGoalColor,
                           fontSize: 13,
                           letterSpacing: 1.2,
                           fontWeight: FontWeight.w800,
@@ -308,7 +278,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             '15 / 20\nCards',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onSurface,
+                              color: theme.colorScheme.onSurface,
                               fontWeight: FontWeight.bold,
                               fontSize: 22,
                               height: 1.1,
@@ -323,7 +293,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           value: 15 / 20,
                           minHeight: 10,
                           backgroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.12),
-                          valueColor: AlwaysStoppedAnimation<Color>(currentTheme.decksColor),
+                          valueColor: AlwaysStoppedAnimation<Color>(currentTheme.dailyGoalColor),
                         ),
                       ),
                     ],
@@ -332,14 +302,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 const SizedBox(height: 16),
 
-                // 5. PREMIUM ACCESS BANNER
+                // 2. PREMIUM ACCESS BANNER
                 InkWell(
                   onTap: () async {
                     if (isPremium) {
-                      // Ak už má Premium, otvoríme Customer Center
                       RevenueCatService.showCustomerCenter();
                     } else {
-                      // Ak nemá, zobrazíme Paywall
                       final success = await RevenueCatService.presentPaywall();
                       if (success) _checkDeckCount();
                     }
@@ -347,31 +315,21 @@ class _HomeScreenState extends State<HomeScreen> {
                   borderRadius: currentTheme.cardBorderRadius,
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFB800),
-                      borderRadius: currentTheme.cardBorderRadius,
-                      border: currentTheme.id == 2 
-                          ? Border.all(color: Colors.black, width: 3.5) 
-                          : null,
-                      boxShadow: currentTheme.id == 2 
-                          ? const [BoxShadow(color: Colors.black, offset: Offset(4, 4))] 
-                          : [
-                              BoxShadow(
-                                color: const Color(0xFFFFB800).withValues(alpha: 0.4),
-                                blurRadius: 10,
-                              )
-                            ],
-                    ),
+                    decoration: currentTheme.getCardDecoration(currentTheme.warningColor),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.star_rounded, color: Colors.black, size: 26),
+                        Icon(
+                          Icons.star_rounded, 
+                          color: Colors.amber, 
+                          size: 26,
+                        ),
                         const SizedBox(width: 10),
                         Text(
-                          // Ak má Premium, text na banneri sa jemne zmení
                           isPremium ? 'MANAGE PREMIUM' : 'PREMIUM ACCESS',
-                          style: const TextStyle(
-                            color: Colors.black,
+                          style: TextStyle(
+                            color: currentTheme.id == 2 
+                      ? Colors.black : currentTheme.warningColor ,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 1.2,
                             fontSize: 16,
@@ -396,20 +354,20 @@ class _HomeScreenState extends State<HomeScreen> {
                   borderRadius: currentTheme.cardBorderRadius,
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
-                    decoration: _getCustomCardDecoration(currentTheme, currentTheme.dailyGoalColor),
+                    decoration: currentTheme.getCardDecoration(currentTheme.decksColor),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
                           Icons.style_rounded, 
                           size: 52, 
-                          color: currentTheme.id == 2 ? Colors.black : currentTheme.dailyGoalColor,
+                          color: currentTheme.getIconColor(currentTheme.decksColor),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           'Decks',
                           style: TextStyle(
-                            color: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onSurface,
+                            color: theme.colorScheme.onSurface,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
@@ -473,20 +431,20 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Container(
         height: 120,
         padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: _getCustomCardDecoration(currentTheme, accentColor),
+        decoration: currentTheme.getCardDecoration(accentColor),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               icon, 
               size: 38, 
-              color: currentTheme.id == 2 ? Colors.black : accentColor,
+              color: currentTheme.getIconColor(accentColor),
             ),
             const SizedBox(height: 8),
             Text(
               title,
               style: TextStyle(
-                color: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onSurface,
+                color: theme.colorScheme.onSurface,
                 fontWeight: FontWeight.bold,
                 fontSize: 15,
               ),
@@ -514,20 +472,22 @@ class _HomeScreenState extends State<HomeScreen> {
         opacity: isLocked ? 0.65 : 1.0,
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: _getCustomCardDecoration(currentTheme, accentColor),
+          decoration: currentTheme.getCardDecoration(accentColor),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 isLocked ? Icons.lock : icon,
-                color: currentTheme.id == 2 ? Colors.black : (isLocked ? const Color(0xFFFFB800) : accentColor),
+                color: isLocked 
+                    ? currentTheme.warningColor 
+                    : currentTheme.getIconColor(accentColor),
                 size: 20,
               ),
               const SizedBox(width: 8),
               Text(
                 title,
                 style: TextStyle(
-                  color: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onSurface,
+                  color: theme.colorScheme.onSurface,
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
                 ),

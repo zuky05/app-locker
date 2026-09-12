@@ -21,7 +21,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _loadSettings();
   }
 
-  // Načítanie uloženého stavu pri otvorení nastavení
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -30,7 +29,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     });
   }
 
-  // Uloženie zmeny pri kliknutí na prepínač
   Future<void> _saveVibrationSetting(bool value) async {
     setState(() {
       isVibrationEnabled = value;
@@ -60,27 +58,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
         elevation: theme.appBarTheme.elevation ?? 0,
       ),
       body: isLoading
-          ? Center(child: CircularProgressIndicator(color: theme.colorScheme.primary))
+          ? Center(child: CircularProgressIndicator(color: currentTheme.decksColor))
           : ListView(
               padding: const EdgeInsets.all(16.0),
               physics: const BouncingScrollPhysics(),
               children: [
                 // --- SEKCIA: VIBRÁCIE ---
                 Container(
-                  decoration: BoxDecoration(
-                    color: theme.cardColor,
-                    borderRadius: currentTheme.cardBorderRadius,
-                    border: currentTheme.id == 2
-                        ? Border.all(color: Colors.black, width: 3.5)
-                        : (currentTheme.cardBorder ??
-                            Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.12))),
-                    boxShadow: currentTheme.id == 2
-                        ? const [BoxShadow(color: Colors.black, offset: Offset(4, 4))]
-                        : currentTheme.cardShadows,
-                    gradient: currentTheme.cardGradient,
-                  ),
+                  decoration: currentTheme.getCardDecoration(currentTheme.decksColor),
                   child: SwitchListTile(
-                    secondary: Icon(Icons.vibration, color: theme.colorScheme.primary),
+                    secondary: Icon(
+                      Icons.vibration, 
+                      color: currentTheme.getIconColor(currentTheme.decksColor),
+                    ),
                     title: Text(
                       "Vibrovanie pri chybe",
                       style: TextStyle(
@@ -95,7 +85,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ),
                     value: isVibrationEnabled,
-                    activeColor: currentTheme.id == 2 ? Colors.black : theme.colorScheme.primary,
+                    activeColor: currentTheme.decksColor,
                     onChanged: _saveVibrationSetting,
                   ),
                 ),
@@ -113,33 +103,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // Vygenerujeme zoznam všetkých tém z AppThemes
                 ...AppThemes.availableThemes.map((appTheme) {
                   final bool isSelected = currentTheme.id == appTheme.id;
                   final itemTheme = appTheme.theme;
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      color: theme.cardColor,
-                      borderRadius: currentTheme.cardBorderRadius,
-                      border: currentTheme.id == 2
-                          ?  Border.all(color: Colors.black, width: 3.5)
-                          : (isSelected
-                              ? Border.all(color: theme.colorScheme.primary, width: 2.5)
-                              : (currentTheme.cardBorder ??
-                                  Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.12)))),
-                      boxShadow: currentTheme.id == 2
-                          ? const [BoxShadow(color: Colors.black, offset: Offset(4, 4))]
-                          : (isSelected ? currentTheme.cardShadows : null),
-                      gradient: currentTheme.cardGradient,
+                    decoration: currentTheme.getCardDecoration(
+                      appTheme.decksColor,
+                      isSelected: isSelected,
                     ),
                     child: ListTile(
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                       leading: Icon(
                         isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
                         color: isSelected
-                            ? theme.colorScheme.primary
+                            ? currentTheme.decksColor
                             : theme.colorScheme.onSurface.withValues(alpha: 0.4),
                       ),
                       title: Row(
@@ -152,7 +131,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                           ),
                           const SizedBox(width: 10),
-                          // Farebné kolieska na ukážku primárnej a akcentovej farby
                           Row(
                             children: [
                               Container(
@@ -161,7 +139,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 decoration: BoxDecoration(
                                   color: itemTheme.colorScheme.primary,
                                   shape: BoxShape.circle,
-                                  border: currentTheme.id == 2 ? Border.all(color: Colors.black, width: 1) : null,
+                                  border: Border.fromBorderSide(currentTheme.buttonBorder.copyWith(width: 1)),
                                 ),
                               ),
                               const SizedBox(width: 4),
@@ -171,7 +149,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 decoration: BoxDecoration(
                                   color: appTheme.decksColor,
                                   shape: BoxShape.circle,
-                                  border: currentTheme.id == 2 ? Border.all(color: Colors.black, width: 1) : null,
+                                  border: Border.fromBorderSide(currentTheme.buttonBorder.copyWith(width: 1)),
                                 ),
                               ),
                             ],
@@ -186,10 +164,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                       ),
                       trailing: appTheme.isPremium
-                          ? Icon(Icons.star_rounded, color: theme.colorScheme.tertiary, size: 22)
+                          ? Icon(Icons.star_rounded, color: currentTheme.warningColor, size: 22)
                           : null,
                       onTap: () {
-                        // Okamžitá zmena témy cez provider podľa int ID
                         themeProvider.setTheme(appTheme.id);
                       },
                     ),

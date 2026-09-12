@@ -55,16 +55,13 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
           isLoading = false;
         });
 
-        // Ak máme VŠETKY TRI povolenia, ideme do hlavnej aplikácie
         if (overlay && accessibility && notification) {
           _navigateToMain();
         }
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
+        setState(() => isLoading = false);
       }
     }
   }
@@ -76,12 +73,11 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
       } else if (!isAccessibilityGranted) {
         await platform.invokeMethod('openAccessibilitySettings');
       } else if (!isNotificationGranted) {
-        // Vyvolá štandardný systémový pop-up pre notifikácie
         final status = await Permission.notification.request();
         if (status.isGranted) {
           _checkPermission();
         } else if (status.isPermanentlyDenied) {
-          openAppSettings(); // Ak používateľ natvrdo zakázal pop-up
+          openAppSettings();
         }
       }
     } catch (e) {
@@ -103,12 +99,15 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
 
     if (isLoading) {
       return Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        body: Center(child: CircularProgressIndicator(color: theme.colorScheme.primary)),
+        backgroundColor: currentTheme.theme.scaffoldBackgroundColor,
+        body: Center(child: CircularProgressIndicator(color: currentTheme.buttonBorder.color)),
       );
     }
 
     final bool allGranted = isOverlayGranted && isAccessibilityGranted && isNotificationGranted;
+    final Color primaryAccent = currentTheme.decksColor;
+    final Color buttonBgColor = allGranted ? currentTheme.successColor : primaryAccent;
+    final Color buttonFgColor = currentTheme.getContrastTextColor(buttonBgColor);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -119,24 +118,25 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Kruhový kontajner pre ikonu bezpečnosti
+              const Spacer(),
+              
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(22),
                 decoration: BoxDecoration(
-                  color: currentTheme.id == 2 ? Colors.white : theme.colorScheme.primary.withValues(alpha: 0.12),
+                  color: currentTheme.id == 2 
+                      ? theme.cardColor:currentTheme.getTileBg(isGranted: false, accentColor: currentTheme.buttonBorder.color),
                   shape: BoxShape.circle,
-                  border: currentTheme.id == 2 
-                      ? Border.all(color: Colors.black, width: 3.5) 
-                      : (currentTheme.cardBorder ?? Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.3))),
-                  boxShadow: currentTheme.id == 2 ? const [BoxShadow(color: Colors.black, offset: Offset(4, 4))] : null,
+                  border: Border.all(color: currentTheme.buttonBorder.color, width: 2.0),
+                  boxShadow: currentTheme.cardShadows,
                 ),
                 child: Icon(
                   Icons.security_rounded,
-                  size: 70,
-                  color: currentTheme.id == 2 ? Colors.black : theme.colorScheme.primary,
+                  size: 64,
+                  color:  currentTheme.getIconColor(currentTheme.buttonBorder.color),
                 ),
               ),
               const SizedBox(height: 32),
+              
               Text(
                 "Vyžaduje sa aktivácia",
                 textAlign: TextAlign.center,
@@ -151,44 +151,39 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
                 "Pre správne fungovanie blokovania a odpočítavania času je potrebné povoliť nasledujúce tri funkcie.",
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 15,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                  fontSize: 14,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
                   height: 1.4,
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 28),
 
-              // 1. Overlay
               _buildPermissionTile(
                 title: "Prekrytie aplikácií (Overlay)",
                 isGranted: isOverlayGranted,
                 currentTheme: currentTheme,
               ),
-
-              const SizedBox(height: 10),
-
-              // 2. Accessibility
+              const SizedBox(height: 12),
               _buildPermissionTile(
                 title: "Zjednodušenie prístupu (Accessibility)",
                 isGranted: isAccessibilityGranted,
                 currentTheme: currentTheme,
               ),
-
-              const SizedBox(height: 10),
-
-              // 3. Notifications (Upozornenia)
+              const SizedBox(height: 12),
               _buildPermissionTile(
                 title: "Upozornenia a odpočet času (Notifications)",
                 isGranted: isNotificationGranted,
                 currentTheme: currentTheme,
               ),
 
-              const SizedBox(height: 32),
+              const Spacer(),
 
-              // Dynamické tlačidlo
               ElevatedButton.icon(
                 onPressed: allGranted ? _navigateToMain : _openSettingsOrRequest,
-                icon: Icon(allGranted ? Icons.arrow_forward : Icons.settings),
+                icon: Icon(
+                  allGranted ? Icons.arrow_forward : Icons.settings,
+                  color: buttonFgColor,
+                ),
                 label: Text(
                   allGranted
                       ? "Pokračovať"
@@ -197,16 +192,21 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
                           : (!isAccessibilityGranted
                               ? "Povoliť Zjednodušenie prístupu"
                               : "Povoliť Upozornenia")),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 16,
+                    color: buttonFgColor,
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 54),
-                  backgroundColor: currentTheme.id == 2 ? const Color(0xFF00E676) : theme.colorScheme.primary,
-                  foregroundColor: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onPrimary,
+                  backgroundColor: currentTheme.theme.cardColor,
+                  foregroundColor: buttonFgColor,
+                  elevation: theme.appBarTheme.elevation ?? 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: currentTheme.buttonBorderRadius,
-                    side: currentTheme.id == 2 ? const BorderSide(color: Colors.black, width: 3.5) : BorderSide.none,
+                    side: BorderSide(color: currentTheme.buttonBorder.color, width: 2.0),
                   ),
-                  elevation: currentTheme.id == 2 ? 0 : 2,
                 ),
               ),
             ],
@@ -222,53 +222,27 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
     required AppThemeData currentTheme,
   }) {
     final theme = currentTheme.theme;
-    final bool isLight = theme.brightness == Brightness.light;
-    
-    final Color successAccent = const Color(0xFF00E676);
-    final Color successBgLight = Colors.green.shade100;
-    final Color successBgDark = successAccent.withValues(alpha: 0.15);
-
-    // Ak je splnené -> zelené pozadie, ak nie -> pevná biela (resp. cardColor ak je tmavý režim), aby nebola priehľadná
-    final Color bgColor = isGranted
-        ? (currentTheme.id == 2 ? successAccent : (isLight ? successBgLight : successBgDark))
-        : (isLight ? Colors.white : theme.cardColor);
-
-    final Color borderColor = isGranted
-        ? (currentTheme.id == 2 ? Colors.black : successAccent)
-        : (currentTheme.id == 2 ? Colors.black : const Color(0xFFFF9100)); // Výrazná oranžová pre neaktívne
-
-    final Color contentColor = isGranted
-        ? (currentTheme.id == 2 ? Colors.black : (isLight ? Colors.green.shade800 : successAccent))
-        : theme.colorScheme.onSurface;
+    final Color accentColor = isGranted ? currentTheme.successColor : currentTheme.warningColor;
 
     return Container(
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: currentTheme.cardBorderRadius,
-        border: Border.all(
-          color: borderColor, 
-          width: currentTheme.id == 2 ? 3.5 : 2.0,
-        ),
-        boxShadow: currentTheme.id == 2 ? const [BoxShadow(color: Colors.black, offset: Offset(3, 3))] : currentTheme.cardShadows,
-      ),
+      decoration: currentTheme.getCardDecoration(accentColor, isSelected: isGranted),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
         child: Row(
           children: [
             Icon(
-              isGranted ? Icons.check_circle : Icons.warning_amber_rounded,
-              color: isGranted 
-                  ? (currentTheme.id == 2 ? Colors.black : successAccent) 
-                  : const Color(0xFFFF9100),
+              isGranted ? Icons.check_circle_rounded : Icons.warning_amber_rounded,
+              color: currentTheme.getIconColor(accentColor),
+              size: 24,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 14),
             Expanded(
               child: Text(
                 title,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: contentColor,
-                  fontSize: 15,
+                  color: theme.colorScheme.onSurface,
+                  fontSize: 14,
                 ),
               ),
             ),

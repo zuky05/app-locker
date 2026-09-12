@@ -133,41 +133,6 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     return "${s}s";
   }
 
-  BoxDecoration _getCardDecoration(AppThemeData currentTheme, Color accentColor) {
-    final theme = currentTheme.theme;
-    Border border;
-    if (currentTheme.id == 0) {
-      border = Border.all(color: accentColor, width: 1.5);
-    } else if (currentTheme.id == 2) {
-      border = Border.all(color: Colors.black, width: 3.5);
-    } else {
-      border = Border.all(color: accentColor, width: 1.5);
-    }
-
-    List<BoxShadow>? shadows;
-    if (currentTheme.id == 0) {
-      shadows = [
-        BoxShadow(
-          color: accentColor.withValues(alpha: 0.35),
-          blurRadius: 10,
-          spreadRadius: 1,
-        )
-      ];
-    } else {
-      shadows = currentTheme.cardShadows;
-    }
-
-    Color cardBgColor = currentTheme.id == 2 ? accentColor : theme.cardColor;
-
-    return BoxDecoration(
-      color: cardBgColor,
-      borderRadius: currentTheme.cardBorderRadius,
-      border: border,
-      boxShadow: shadows,
-      gradient: currentTheme.id == 2 ? null : currentTheme.cardGradient,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -177,7 +142,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     if (_isLoading) {
       return Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor, 
-        body: Center(child: CircularProgressIndicator(color: theme.colorScheme.primary)),
+        body: Center(child: CircularProgressIndicator(color: currentTheme.decksColor)),
       );
     }
 
@@ -228,23 +193,18 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                 borderRadius: currentTheme.cardBorderRadius,
                 child: Container(
                   padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withValues(alpha: 0.12),
-                    borderRadius: currentTheme.cardBorderRadius,
-                    border: Border.all(color: Colors.red, width: currentTheme.id == 2 ? 3.5 : 1.5),
-                    boxShadow: currentTheme.id == 2 ? const [BoxShadow(color: Colors.black, offset: Offset(3, 3))] : null,
-                  ),
+                  decoration: currentTheme.getCardDecoration(currentTheme.errorColor),
                   child: Row(
                     children: [
-                      const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
+                      Icon(Icons.warning_amber_rounded, color: currentTheme.errorColor, size: 28),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               "Nemáš vybraný žiadny balíček!",
-                              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 14),
+                              style: TextStyle(color: currentTheme.errorColor, fontWeight: FontWeight.bold, fontSize: 14),
                             ),
                             const SizedBox(height: 2),
                             Text(
@@ -254,7 +214,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                           ],
                         ),
                       ),
-                      const Icon(Icons.arrow_forward_ios_rounded, color: Colors.red, size: 16),
+                      Icon(Icons.arrow_forward_ios_rounded, color: currentTheme.errorColor, size: 16),
                     ],
                   ),
                 ),
@@ -268,7 +228,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
               subtitle: _isLearningMode ? 'Zamerané na opakovanie a učenie sa.' : 'Zamerané na výkon a získavanie času.',
               multiplier: 1.0, 
               value: _isLearningMode,
-              isGold: true,
+              isGold: false,
               showMultiplier: false,
               currentTheme: currentTheme,
               accentColor: currentTheme.testSetupColor,
@@ -284,13 +244,13 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Container(
                   padding: const EdgeInsets.all(24),
-                  decoration: _getCardDecoration(currentTheme, currentTheme.testSetupColor),
+                  decoration: currentTheme.getCardDecoration(currentTheme.testSetupColor),
                   child: Column(
                     children: [
                       Text(
                         'ODMENA ZA 1 SPRÁVNU ODPOVEĎ', 
                         style: TextStyle(
-                          color: currentTheme.id == 2 ? Colors.black.withValues(alpha: 0.7) : theme.colorScheme.onSurface.withValues(alpha: 0.6), 
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6), 
                           fontSize: 12, 
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1.1,
@@ -300,7 +260,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                       Text(
                         _formatTime(_timePerQuestion), 
                         style: TextStyle(
-                          color: currentTheme.id == 0 ? const Color(0xFF00F5FF) : (currentTheme.id == 2 ? Colors.black : theme.colorScheme.primary), 
+                          color: currentTheme.id == 2 ? Colors.black : currentTheme.testSetupColor, 
                           fontSize: 44, 
                           fontWeight: FontWeight.w900,
                         ),
@@ -308,14 +268,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                       const SizedBox(height: 16),
                       Container(
                         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onSurface.withValues(alpha: 0.05), 
-                          borderRadius: BorderRadius.circular(currentTheme.id == 2 ? 10 : 12),
-                          border: Border.all(
-                            color: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onSurface.withValues(alpha: 0.1), 
-                            width: currentTheme.id == 2 ? 2.5 : 1,
-                          ),
-                        ),
+                        decoration: currentTheme.getCardDecoration(currentTheme.testSetupColor, isSelected: true),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -325,9 +278,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                                 Text(
                                   'Celkový násobič', 
                                   style: TextStyle(
-                                    color: currentTheme.id == 2 ? Colors.white70 : theme.colorScheme.onSurface.withValues(alpha: 0.6), 
+                                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6), 
                                     fontSize: 12,
-                                    fontWeight: currentTheme.id == 2 ? FontWeight.bold : FontWeight.normal,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
@@ -335,8 +287,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                                   'x${_currentMultiplier.toStringAsFixed(2)}', 
                                   style: TextStyle(
                                     color: currentTheme.id == 2 
-                                        ? (_currentMultiplier >= 1.0 ? const Color(0xFF00E676) : const Color(0xFFFF5252))
-                                        : (_currentMultiplier >= 1.0 ? Colors.green.shade400 : Colors.red.shade400),
+                                        ? Colors.black 
+                                        : (_currentMultiplier >= 1.0 ? currentTheme.successColor : currentTheme.errorColor),
                                     fontWeight: FontWeight.bold, 
                                     fontSize: 18,
                                   ),
@@ -349,16 +301,15 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                                 Text(
                                   'Max potenciál testu', 
                                   style: TextStyle(
-                                    color: currentTheme.id == 2 ? Colors.white70 : theme.colorScheme.onSurface.withValues(alpha: 0.6), 
+                                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6), 
                                     fontSize: 12,
-                                    fontWeight: currentTheme.id == 2 ? FontWeight.bold : FontWeight.normal,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
                                   _formatTime(_totalTimePotential), 
                                   style: TextStyle(
-                                    color: currentTheme.id == 2 ? Colors.white : theme.colorScheme.tertiary,
+                                    color: currentTheme.id == 2 ? Colors.black : currentTheme.warningColor,
                                     fontWeight: FontWeight.bold, 
                                     fontSize: 18,
                                   ),
@@ -381,7 +332,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                   Text(
                     'ZÁKLADNÉ NASTAVENIA KVÍZU', 
                     style: TextStyle(
-                      color: currentTheme.id == 2 ? Colors.black.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.6), 
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6), 
                       fontSize: 13, 
                       fontWeight: FontWeight.bold,
                     ),
@@ -437,7 +388,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                   Text(
                     'MODIFIKÁTORY', 
                     style: TextStyle(
-                      color: currentTheme.id == 2 ? Colors.black.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.6), 
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6), 
                       fontSize: 13, 
                       fontWeight: FontWeight.bold,
                     ),
@@ -459,7 +410,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                   const SizedBox(height: 12),
                   _buildSwitchCard(
                     title: 'Druhá šanca', 
-                    subtitle: 'Prvá nesprávna odpoveď sa ti odpustí.', 
+                    subtitle: 'Jedna nesprávna odpoveď za celý test sa ti odpustí.', 
                     multiplier: 0.8, 
                     value: _isSecondChance, 
                     currentTheme: currentTheme,
@@ -489,7 +440,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     subtitle: 'Musíš zvládnuť 2 testy po sebe. Odmenu dostaneš až po druhom.', 
                     multiplier: 1.75, 
                     value: _isDoubleTest, 
-                    isGold: true,
+                    isGold: false,
                     currentTheme: currentTheme,
                     accentColor: currentTheme.testSetupColor,
                     onChanged: (val) { 
@@ -505,7 +456,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     subtitle: 'Bez možností. Odpoveď musíš ručne napísať.', 
                     multiplier: 1.5, 
                     value: _isHardcore, 
-                    isGold: true, 
+                    isGold: false, 
                     currentTheme: currentTheme,
                     accentColor: currentTheme.testSetupColor,
                     onChanged: (val) {
@@ -534,7 +485,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                   Text(
                     'NASTAVENIA UČENIA', 
                     style: TextStyle(
-                      color: currentTheme.id == 2 ? Colors.black.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.6), 
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6), 
                       fontSize: 13, 
                       fontWeight: FontWeight.bold,
                     ),
@@ -594,31 +545,19 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
   Widget _buildMultiplierBadge(double mult, AppThemeData currentTheme) {
     if (mult == 1.0) return const SizedBox.shrink();
     bool isPositive = mult > 1.0;
+    Color badgeColor = isPositive ? currentTheme.successColor : currentTheme.errorColor;
 
-    if (currentTheme.id == 2) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: Colors.black,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: Colors.black, width: 1.5),
-        ),
-        child: Text(
-          'x$mult',
-          style: TextStyle(
-            color: isPositive ? const Color(0xFF00E676) : const Color(0xFFFF5252),
-            fontWeight: FontWeight.w900,
-            fontSize: 12,
-          ),
-        ),
-      );
-    }
-
-    Color badgeColor = isPositive ? Colors.green.shade400 : Colors.red.shade400;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(color: badgeColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8)),
-      child: Text('x$mult', style: TextStyle(color: badgeColor, fontWeight: FontWeight.bold, fontSize: 12)),
+      decoration: currentTheme.getCardDecoration(badgeColor),
+      child: Text(
+        'x$mult', 
+        style: TextStyle(
+          color: currentTheme.getContrastTextColor(badgeColor), 
+          fontWeight: FontWeight.bold, 
+          fontSize: 12,
+        ),
+      ),
     );
   }
 
@@ -635,22 +574,20 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     double? multiplier,
   }) {
     final theme = currentTheme.theme;
-    final Color titleColor = currentTheme.id == 2 ? Colors.black : theme.colorScheme.onSurface;
-    
-    final Color activeAccentColor = currentTheme.id == 2 
-        ? Colors.black 
-        : (currentTheme.id == 0 ? const Color(0xFFFFE600) : theme.colorScheme.primary);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-      decoration: _getCardDecoration(currentTheme, accentColor),
+      decoration: currentTheme.getCardDecoration(accentColor),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(title, style: TextStyle(color: titleColor, fontWeight: FontWeight.bold, fontSize: 16)),
+              Text(
+                title, 
+                style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 16),
+              ),
               if (multiplier != null) _buildMultiplierBadge(multiplier, currentTheme),
             ],
           ),
@@ -658,20 +595,18 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
           Text(
             valueLabel, 
             style: TextStyle(
-              color: activeAccentColor, 
+              color: currentTheme.id == 2 ? Colors.black : accentColor, 
               fontWeight: FontWeight.w900, 
               fontSize: 18,
             ),
           ),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: activeAccentColor, 
+              activeTrackColor: currentTheme.id == 2 ? Colors.black : accentColor, 
               inactiveTrackColor: currentTheme.id == 2 
-                  ? Colors.black26 
-                  : (currentTheme.id == 0 
-                      ? activeAccentColor.withValues(alpha: 0.2) 
-                      : theme.colorScheme.onSurface.withValues(alpha: 0.12)), 
-              thumbColor: activeAccentColor, 
+                  ? Colors.black.withValues(alpha: 0.2) 
+                  : theme.colorScheme.onSurface.withValues(alpha: 0.12), 
+              thumbColor: currentTheme.id == 2 ? Colors.black : accentColor, 
               trackHeight: 6.0,
             ),
             child: Slider(value: value, min: min, max: max, divisions: divisions, onChanged: onChanged),
@@ -694,22 +629,15 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     bool showMultiplier = true,
   }) {
     final theme = currentTheme.theme;
-    final Color highlightColor = isGold ? theme.colorScheme.tertiary : theme.colorScheme.primary;
-    
-    // Názov položky bude vždy biely v tmavých témach a čierny v Neo-Brutalizme
-    final Color titleColor = currentTheme.id == 2 ? Colors.black : theme.colorScheme.onSurface;
-    final Color subtitleColor = currentTheme.id == 2 ? Colors.black87 : theme.colorScheme.onSurface.withValues(alpha: 0.6);
-
-    // V Cyberpunku (id == 0) nastavíme neónovo tyrkysovo-modrú (0xFF00F5FF) pre štandardné prepínače
     final Color switchActiveColor = currentTheme.id == 2 
         ? Colors.black 
-        : (currentTheme.id == 0 && !isGold ? const Color(0xFF00F5FF) : highlightColor);
+        : (isGold ? currentTheme.warningColor : accentColor);
 
     return Opacity(
       opacity: isDisabled ? 0.4 : 1.0,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        decoration: _getCardDecoration(currentTheme, accentColor),
+        decoration: currentTheme.getCardDecoration(accentColor),
         child: Row(
           children: [
             Expanded(
@@ -721,7 +649,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                       Text(
                         title, 
                         style: TextStyle(
-                          color: titleColor, 
+                          color: theme.colorScheme.onSurface, 
                           fontWeight: FontWeight.bold, 
                           fontSize: 16,
                         ),
@@ -731,7 +659,13 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  Text(subtitle, style: TextStyle(color: subtitleColor, fontSize: 13)),
+                  Text(
+                    subtitle, 
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6), 
+                      fontSize: 13,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -739,9 +673,6 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
               value: value, 
               onChanged: isDisabled ? null : onChanged, 
               activeColor: switchActiveColor,
-              activeTrackColor: currentTheme.id == 2 
-                  ? const Color(0xFF00E676) 
-                  : (currentTheme.id == 0 && !isGold ? const Color(0xFF00F5FF).withValues(alpha: 0.4) : null),
             ),
           ],
         ),

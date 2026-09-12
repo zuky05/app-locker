@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:provider/provider.dart';
 import '../services/revenuecat_service.dart';
+import '../themes/theme_provider.dart';
+import '../themes/app_themes.dart';
 
 class PremiumScreen extends StatefulWidget {
   const PremiumScreen({super.key});
@@ -18,7 +21,6 @@ class _PremiumScreenState extends State<PremiumScreen> {
     super.initState();
     _checkPremiumStatus();
 
-    // Počúvame, či sa stav predplatného náhodou nezmenil na pozadí
     RevenueCatService.addCustomerInfoListener((CustomerInfo info) {
       final isPro = info.entitlements.all[RevenueCatService.entitlementId]?.isActive == true;
       if (mounted) {
@@ -38,11 +40,18 @@ class _PremiumScreenState extends State<PremiumScreen> {
   }
 
   void _openPaywall() async {
+    final currentTheme = Provider.of<ThemeProvider>(context, listen: false).currentThemeData;
     final success = await RevenueCatService.presentPaywall();
     if (success) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Vitaj v Premium klube! 🎉"), backgroundColor: Colors.green),
+          SnackBar(
+            content: Text(
+              "Vitaj v Premium klube! 🎉",
+              style: TextStyle(color: currentTheme.getContrastTextColor(currentTheme.successColor)),
+            ), 
+            backgroundColor: currentTheme.successColor,
+          ),
         );
       }
       _checkPremiumStatus();
@@ -51,15 +60,27 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final currentTheme = themeProvider.currentThemeData;
+    final theme = currentTheme.theme;
+
     if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator(color: Colors.deepPurple)));
+      return Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: Center(child: CircularProgressIndicator(color: currentTheme.decksColor)),
+      );
     }
 
+    final Color unlockBg = currentTheme.warningColor;
+    final Color unlockFg = currentTheme.getContrastTextColor(unlockBg);
+
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text("Brainlock Premium"),
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
+        backgroundColor: theme.appBarTheme.backgroundColor ?? Colors.transparent,
+        foregroundColor: theme.colorScheme.onSurface,
+        elevation: theme.appBarTheme.elevation ?? 0,
       ),
       body: Center(
         child: Padding(
@@ -70,12 +91,18 @@ class _PremiumScreenState extends State<PremiumScreen> {
               Icon(
                 _isPremium ? Icons.workspace_premium : Icons.lock_outline,
                 size: 100,
-                color: _isPremium ? Colors.amber : Colors.grey,
+                color: _isPremium 
+                    ? currentTheme.warningColor 
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.4),
               ),
               const SizedBox(height: 24),
               Text(
                 _isPremium ? "Máš aktívne Premium! 👑" : "Používaš Free verziu",
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 22, 
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
+                ),
               ),
               const SizedBox(height: 12),
               Text(
@@ -83,53 +110,83 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     ? "Užívaj si neobmedzené balíčky, importy z Quizletu a všetky funkcie naplno." 
                     : "Odomkni si neobmedzené vlastné balíčky, hromadný import a pokročilé funkcie testovania.",
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 16, color: Colors.black54),
+                style: TextStyle(
+                  fontSize: 16, 
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
               ),
               const SizedBox(height: 40),
               
               if (!_isPremium) ...[
-                // Tlačidlo na kúpu
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 55),
-                    backgroundColor: Colors.amber.shade700,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    backgroundColor: unlockBg,
+                    foregroundColor: unlockFg,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: currentTheme.buttonBorderRadius,
+                      side: currentTheme.buttonBorder,
+                    ),
                   ),
                   onPressed: _openPaywall,
-                  child: const Text("Odomknúť Premium", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    "Odomknúť Premium", 
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                 ),
                 const SizedBox(height: 16),
-                // Povinné tlačidlo pre Apple na obnovenie nákupov
                 TextButton(
                   onPressed: () async {
                     final success = await RevenueCatService.restorePurchases();
                     if (!mounted) return;
                     if (success) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                         const SnackBar(content: Text("Nákupy boli úspešne obnovené!", style: TextStyle(color: Colors.white)), backgroundColor: Colors.green)
+                        SnackBar(
+                          content: Text(
+                            "Nákupy boli úspešne obnovené!", 
+                            style: TextStyle(color: currentTheme.getContrastTextColor(currentTheme.successColor)),
+                          ), 
+                          backgroundColor: currentTheme.successColor,
+                        ),
                       );
                       _checkPremiumStatus();
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                         const SnackBar(content: Text("Nenašlo sa žiadne predchádzajúce predplatné."), backgroundColor: Colors.red)
+                        SnackBar(
+                          content: Text(
+                            "Nenašlo sa žiadne predchádzajúce predplatné.", 
+                            style: TextStyle(color: currentTheme.getContrastTextColor(currentTheme.errorColor)),
+                          ), 
+                          backgroundColor: currentTheme.errorColor,
+                        ),
                       );
                     }
                   },
-                  child: const Text("Obnoviť nákupy (Restore Purchases)", style: TextStyle(color: Colors.deepPurple, decoration: TextDecoration.underline)),
+                  child: Text(
+                    "Obnoviť nákupy (Restore Purchases)", 
+                    style: TextStyle(
+                      color: currentTheme.decksColor, 
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
                 ),
               ] else ...[
-                // Ak je Premium, môže si spravovať predplatné
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 55),
-                    backgroundColor: Colors.deepPurple.shade50,
-                    foregroundColor: Colors.deepPurple,
+                    backgroundColor: currentTheme.getTileBg(isGranted: false, accentColor: currentTheme.decksColor),
+                    foregroundColor: currentTheme.getIconColor(currentTheme.decksColor),
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: currentTheme.buttonBorderRadius,
+                      side: currentTheme.buttonBorder,
+                    ),
                   ),
                   icon: const Icon(Icons.manage_accounts),
-                  label: const Text("Spravovať predplatné", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  label: const Text(
+                    "Spravovať predplatné", 
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                   onPressed: () => RevenueCatService.showCustomerCenter(),
                 ),
               ]

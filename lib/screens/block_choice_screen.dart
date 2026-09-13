@@ -84,8 +84,45 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
 
+    final bool isNeo = currentTheme.id == 2;
+    final bool isVibrant = currentTheme.id == 5;
+
+    // Dekorácia karty podľa témy
+    BoxDecoration cardDecoration;
+    if (isNeo) {
+      cardDecoration = BoxDecoration(
+        color: currentTheme.testSetupColor,
+        borderRadius: currentTheme.cardBorderRadius,
+        border: Border.all(color: Colors.black, width: 3.5),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black,
+            offset: Offset(5, 5),
+            blurRadius: 0,
+          ),
+        ],
+      );
+    } else if (isVibrant) {
+      cardDecoration = currentTheme.getCardDecoration(currentTheme.testSetupColor);
+    } else {
+      cardDecoration = BoxDecoration(
+        color: theme.cardColor, 
+        borderRadius: currentTheme.cardBorderRadius,
+        border: currentTheme.cardBorder ?? 
+            Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.2)),
+        boxShadow: currentTheme.cardShadows ?? [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.25), 
+            blurRadius: 20, 
+            spreadRadius: 5,
+          ),
+        ],
+        gradient: currentTheme.cardGradient,
+      );
+    }
+
     return Scaffold(
-      backgroundColor: Colors.black.withValues(alpha: 0.3),
+      backgroundColor: Colors.black.withValues(alpha: 0.5),
       body: Center(
         child: SingleChildScrollView(
           child: Column(
@@ -94,24 +131,14 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
               Container(
                 width: MediaQuery.of(context).size.width * 0.85,
                 padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: theme.cardColor, 
-                  borderRadius: currentTheme.cardBorderRadius,
-                  border: currentTheme.cardBorder ?? 
-                      Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.2)),
-                  boxShadow: currentTheme.cardShadows ?? [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.25), 
-                      blurRadius: 20, 
-                      spreadRadius: 5,
-                    ),
-                  ],
-                  gradient: currentTheme.cardGradient,
-                ),
+                decoration: cardDecoration,
                 child: isLoading
-                    ? Center(
-                        child: CircularProgressIndicator(
-                          color: theme.colorScheme.primary,
+                    ? SizedBox(
+                        height: 150,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: isVibrant ? Colors.white : (isNeo ? Colors.black : theme.colorScheme.primary),
+                          ),
                         ),
                       )
                     : Column(
@@ -120,7 +147,7 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
                           Icon(
                             Icons.warning_amber_rounded, 
                             size: 50, 
-                            color: currentTheme.warningColor,
+                            color: isVibrant ? Colors.white : (isNeo ? Colors.black : currentTheme.warningColor),
                           ),
                           const SizedBox(height: 16),
                           Text(
@@ -128,20 +155,23 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
                             style: TextStyle(
                               fontSize: 22, 
                               fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.onSurface,
+                              color: isVibrant ? Colors.white : (isNeo ? Colors.black : theme.colorScheme.onSurface),
                             ),
                           ),
                           const SizedBox(height: 20),
                           
+                          // Hlavné tlačidlo pre spustenie testu
                           ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               minimumSize: const Size(double.infinity, 50),
-                              backgroundColor: currentTheme.primaryButtonBg,
-                              foregroundColor: currentTheme.primaryButtonFg,
-                              elevation: currentTheme.cardShadows != null ? 2 : 0,
+                              backgroundColor: isVibrant ? Colors.white : currentTheme.primaryButtonBg,
+                              foregroundColor: isVibrant ? Colors.black : currentTheme.primaryButtonFg,
+                              elevation: isVibrant ? 0 : (currentTheme.cardShadows != null ? 2 : 0),
                               shape: RoundedRectangleBorder(
                                 borderRadius: currentTheme.buttonBorderRadius,
-                                side: currentTheme.buttonBorder,
+                                side: isVibrant 
+                                    ? const BorderSide(color: Colors.white, width: 2.0)
+                                    : (currentTheme.buttonBorder ?? BorderSide.none),
                               ),
                             ),
                             onPressed: _startTest,
@@ -160,21 +190,28 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
                                 child: Text(
                                   "Čas vypršal! Teraz ťa zachráni už len test.",
                                   style: TextStyle(
-                                    color: currentTheme.errorColor, 
+                                    color: isVibrant ? Colors.white.withValues(alpha: 0.9) : (isNeo ? Colors.black : currentTheme.errorColor), 
                                     fontWeight: FontWeight.bold,
                                   ),
+                                  textAlign: TextAlign.center,
                                 ),
                               )
                             else if (isPremium || remainingGrace > 0)
                               ElevatedButton(
                                 style: ElevatedButton.styleFrom(
                                   minimumSize: const Size(double.infinity, 50),
-                                  backgroundColor: currentTheme.circleAvatarBg,
-                                  foregroundColor: theme.colorScheme.onSurface,
-                                  elevation: currentTheme.cardShadows != null ? 1 : 0,
+                                  backgroundColor: isVibrant 
+                                      ? Colors.white.withValues(alpha: 0.2) 
+                                      : currentTheme.circleAvatarBg,
+                                  foregroundColor: isVibrant 
+                                      ? Colors.white 
+                                      : (isNeo ? Colors.black : theme.colorScheme.onSurface),
+                                  elevation: isVibrant ? 0 : (currentTheme.cardShadows != null ? 1 : 0),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: currentTheme.buttonBorderRadius,
-                                    side: currentTheme.buttonBorder,
+                                    side: isVibrant 
+                                        ? BorderSide(color: Colors.white.withValues(alpha: 0.6), width: 1.5)
+                                        : (currentTheme.buttonBorder ?? BorderSide.none),
                                   ),
                                 ),
                                 onPressed: _useGracePeriod,
@@ -191,9 +228,10 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
                                 child: Text(
                                   "Dnešné odpustky si už vyčerpal!",
                                   style: TextStyle(
-                                    color: currentTheme.errorColor, 
+                                    color: isVibrant ? Colors.white.withValues(alpha: 0.9) : (isNeo ? Colors.black : currentTheme.errorColor), 
                                     fontWeight: FontWeight.bold,
                                   ),
+                                  textAlign: TextAlign.center,
                                 ),
                               ),
                           ],

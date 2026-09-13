@@ -3,11 +3,21 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'app_themes.dart';
 
 class ThemeProvider extends ChangeNotifier {
-  int _currentThemeId = 0;
+  // Statické zistenie ID bezplatnej témy (Clean Minimal)
+  static int get _defaultThemeId => AppThemes.availableThemes.firstWhere(
+        (t) => !t.isPremium,
+        orElse: () => AppThemes.availableThemes[0],
+      ).id;
+
+  // Hneď pri vytvorení nastavené na Clean Minimal namiesto 0
+  int _currentThemeId = _defaultThemeId;
 
   AppThemeData get currentThemeData => AppThemes.availableThemes.firstWhere(
         (t) => t.id == _currentThemeId,
-        orElse: () => AppThemes.availableThemes[0],
+        orElse: () => AppThemes.availableThemes.firstWhere(
+          (t) => !t.isPremium,
+          orElse: () => AppThemes.availableThemes[0],
+        ),
       );
 
   ThemeData get theme => currentThemeData.theme;
@@ -18,7 +28,7 @@ class ThemeProvider extends ChangeNotifier {
 
   Future<void> _loadTheme() async {
     final prefs = await SharedPreferences.getInstance();
-    _currentThemeId = prefs.getInt('selected_theme_id') ?? 0;
+    _currentThemeId = prefs.getInt('selected_theme_id') ?? _defaultThemeId;
     notifyListeners();
   }
 

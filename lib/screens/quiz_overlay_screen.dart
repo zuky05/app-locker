@@ -654,40 +654,48 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
 
-    // V Neobrutalizme dostane CELÉ POZADIE karty výraznú farbu (testSetupColor)
-    final BoxDecoration cardDecoration = currentTheme.id == 2 
-        ? BoxDecoration(
-            color: currentTheme.testSetupColor,
-            borderRadius: currentTheme.cardBorderRadius,
-            border: Border.all(color: Colors.black, width: 3.5),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black,
-                offset: Offset(5, 5),
-                blurRadius: 0,
-              ),
-            ],
-          )
-        : BoxDecoration(
-            color: theme.cardColor,
-            borderRadius: currentTheme.cardBorderRadius,
-            boxShadow: currentTheme.id == 1 
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.25),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    )
-                  ]
-                : [
-                    BoxShadow(
-                      color: currentTheme.testSetupColor.withValues(alpha: 0.3),
-                      blurRadius: 15,
-                      spreadRadius: 2,
-                    ),
-                  ],
-            border: Border.all(color: currentTheme.testSetupColor, width: 2.0),
-          );
+    final bool isNeo = currentTheme.id == 2;
+    final bool isVibrant = currentTheme.id == 5;
+
+    // Dekorácia hlavnej karty pre jednotlivé témy
+    BoxDecoration cardDecoration;
+    if (isNeo) {
+      cardDecoration = BoxDecoration(
+        color: currentTheme.testSetupColor,
+        borderRadius: currentTheme.cardBorderRadius,
+        border: Border.all(color: Colors.black, width: 3.5),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black,
+            offset: Offset(5, 5),
+            blurRadius: 0,
+          ),
+        ],
+      );
+    } else if (isVibrant) {
+      cardDecoration = currentTheme.getCardDecoration(currentTheme.testSetupColor);
+    } else {
+      cardDecoration = BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: currentTheme.cardBorderRadius,
+        boxShadow: currentTheme.id == 1 
+            ? [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.25),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                )
+              ]
+            : [
+                BoxShadow(
+                  color: currentTheme.testSetupColor.withValues(alpha: 0.3),
+                  blurRadius: 15,
+                  spreadRadius: 2,
+                ),
+              ],
+        border: Border.all(color: currentTheme.testSetupColor, width: 2.0),
+      );
+    }
 
     return Scaffold(
       backgroundColor: isPractice 
@@ -708,7 +716,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                           height: 200, 
                           child: Center(
                             child: CircularProgressIndicator(
-                              color: currentTheme.id == 2 ? Colors.black : currentTheme.testSetupColor,
+                              color: isVibrant ? Colors.white : (isNeo ? Colors.black : currentTheme.testSetupColor),
                             ),
                           ),
                         ) 
@@ -722,13 +730,13 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                   onPressed: _closeOrExitScreen,
                   icon: Icon(
                     Icons.close_rounded, 
-                    color: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onSurface.withValues(alpha: 0.7), 
+                    color: isVibrant ? Colors.white : (isNeo ? Colors.black : theme.colorScheme.onSurface.withValues(alpha: 0.7)), 
                     size: 20,
                   ),
                   label: Text(
                     "Zrušiť test", 
                     style: TextStyle(
-                      color: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onSurface.withValues(alpha: 0.7), 
+                      color: isVibrant ? Colors.black : (isNeo ? Colors.black : theme.colorScheme.onSurface.withValues(alpha: 0.7)), 
                       fontWeight: FontWeight.bold, 
                       fontSize: 15,
                     ),
@@ -750,7 +758,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       if (_learningCardsQueue.isEmpty) {
         return Text(
           "Žiadne kartičky v databáze!", 
-          style: TextStyle(color: currentTheme.id == 2 ? Colors.black : currentTheme.theme.colorScheme.onSurface),
+          style: TextStyle(color: currentTheme.id == 5 ? Colors.white : (currentTheme.id == 2 ? Colors.black : currentTheme.theme.colorScheme.onSurface)),
         );
       }
       return _buildLearningUI(currentTheme);
@@ -758,7 +766,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       if (_currentQuestion == null) {
         return Text(
           "Žiadne kartičky v databáze!",
-          style: TextStyle(color: currentTheme.id == 2 ? Colors.black : currentTheme.theme.colorScheme.onSurface),
+          style: TextStyle(color: currentTheme.id == 5 ? Colors.white : (currentTheme.id == 2 ? Colors.black : currentTheme.theme.colorScheme.onSurface)),
         );
       }
       return _buildQuizUI(currentTheme);
@@ -768,22 +776,26 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
   Widget _buildFinishedScreen(AppThemeData currentTheme) {
     final theme = currentTheme.theme;
     final bool isNeo = currentTheme.id == 2;
+    final bool isVibrant = currentTheme.id == 5;
+
+    final Color textColor = isVibrant ? Colors.white : (isNeo ? Colors.black : theme.colorScheme.onSurface);
+    final Color subtextColor = isVibrant ? Colors.white.withValues(alpha: 0.8) : (isNeo ? Colors.black.withValues(alpha: 0.7) : theme.colorScheme.onSurface.withValues(alpha: 0.6));
 
     if (_isLearningMode) {
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.school_rounded, size: 60, color: isNeo ? Colors.black : currentTheme.successColor),
+          Icon(Icons.school_rounded, size: 60, color: isVibrant ? Colors.white : (isNeo ? Colors.black : currentTheme.successColor)),
           const SizedBox(height: 16),
           Text(
             "Učenie dokončené!", 
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: isNeo ? Colors.black : theme.colorScheme.onSurface),
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: textColor),
           ),
           const SizedBox(height: 16),
           Text(
             "Prešiel si všetky kartičky z balíčka.", 
             textAlign: TextAlign.center, 
-            style: TextStyle(fontSize: 16, color: isNeo ? Colors.black : theme.colorScheme.onSurface),
+            style: TextStyle(fontSize: 16, color: textColor),
           ),
           const SizedBox(height: 24),
           ElevatedButton(
@@ -793,7 +805,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
               foregroundColor: Colors.black, 
               shape: RoundedRectangleBorder(
                 borderRadius: currentTheme.buttonBorderRadius,
-                side: const BorderSide(color: Colors.black, width: 2.5),
+                side: BorderSide(color: isVibrant ? Colors.white : Colors.black, width: 2.5),
               ),
               elevation: 0,
             ),
@@ -822,37 +834,37 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
         Icon(
           isSuccess ? Icons.emoji_events_rounded : Icons.sentiment_dissatisfied_rounded, 
           size: 60, 
-          color: isNeo ? Colors.black : (isSuccess ? currentTheme.warningColor : theme.colorScheme.onSurface.withValues(alpha: 0.4)),
+          color: isVibrant ? Colors.white : (isNeo ? Colors.black : (isSuccess ? currentTheme.warningColor : theme.colorScheme.onSurface.withValues(alpha: 0.4))),
         ),
         const SizedBox(height: 16),
         Text(
           titleText, 
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: isNeo ? Colors.black : theme.colorScheme.onSurface), 
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: textColor), 
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 16),
         Text(
           "Úspešnosť: $_correctAnswersCount / ${_questionCount.toInt()}", 
-          style: TextStyle(fontSize: 16, color: isNeo ? Colors.black : theme.colorScheme.onSurface),
+          style: TextStyle(fontSize: 16, color: textColor),
         ),
         Text(
           "Požadovaný prah: $_requiredCorrectQuestions / ${_questionCount.toInt()}", 
-          style: TextStyle(fontSize: 16, color: isNeo ? Colors.black.withValues(alpha: 0.7) : theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+          style: TextStyle(fontSize: 16, color: subtextColor),
         ),
         const SizedBox(height: 20),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: isVibrant ? Colors.white.withValues(alpha: 0.2) : Colors.white,
             borderRadius: currentTheme.cardBorderRadius,
-            border: Border.all(color: Colors.black, width: 2.5),
+            border: Border.all(color: isVibrant ? Colors.white : Colors.black, width: 2.0),
           ),
           child: Text(
             isSuccess ? "Získaný čas: ${m}m ${s}s" : "Nesplnil si podmienku pre zisk času.", 
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18, 
               fontWeight: FontWeight.bold, 
-              color: Colors.black,
+              color: isVibrant ? Colors.white : Colors.black,
             ), 
             textAlign: TextAlign.center,
           ),
@@ -862,7 +874,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             padding: const EdgeInsets.only(top: 8.0), 
             child: Text(
               "(Tréningový mód - čas nebol pripísaný)", 
-              style: TextStyle(fontSize: 12, color: isNeo ? Colors.black.withValues(alpha: 0.6) : theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+              style: TextStyle(fontSize: 12, color: subtextColor),
             ),
           ),
         const SizedBox(height: 24),
@@ -873,7 +885,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             foregroundColor: Colors.black, 
             shape: RoundedRectangleBorder(
               borderRadius: currentTheme.buttonBorderRadius,
-              side: const BorderSide(color: Colors.black, width: 2.5),
+              side: BorderSide(color: isVibrant ? Colors.white : Colors.black, width: 2.5),
             ),
             elevation: 0,
           ),
@@ -890,8 +902,11 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
   Widget _buildLearningUI(AppThemeData currentTheme) {
     final theme = currentTheme.theme;
     final bool isNeo = currentTheme.id == 2;
+    final bool isVibrant = currentTheme.id == 5;
     final card = _learningCardsQueue.first;
     int currentIndex = _totalLearnedCards - _learningCardsQueue.length + 1;
+
+    final Color topBarTextColor = isVibrant ? Colors.white : (isNeo ? Colors.black : theme.colorScheme.onSurface.withValues(alpha: 0.6));
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -901,13 +916,13 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
             decoration: BoxDecoration(
-              color: isNeo ? Colors.white : theme.cardColor,
+              color: isVibrant ? Colors.white.withValues(alpha: 0.2) : (isNeo ? Colors.white : theme.cardColor),
               borderRadius: currentTheme.cardBorderRadius,
-              border: Border.all(color: isNeo ? Colors.black : currentTheme.errorColor, width: 2.0),
+              border: Border.all(color: isVibrant ? Colors.white : (isNeo ? Colors.black : currentTheme.errorColor), width: 2.0),
             ),
             child: Text(
               "POVINNÉ OPAKOVANIE ZA TREST", 
-              style: TextStyle(color: isNeo ? Colors.black : currentTheme.errorColor, fontWeight: FontWeight.bold, fontSize: 12),
+              style: TextStyle(color: isVibrant ? Colors.white : (isNeo ? Colors.black : currentTheme.errorColor), fontWeight: FontWeight.bold, fontSize: 12),
             ),
           ),
         Row(
@@ -916,17 +931,17 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
-                color: isNeo ? Colors.white : Colors.transparent, 
+                color: isVibrant ? Colors.white.withValues(alpha: 0.2) : (isNeo ? Colors.white : Colors.transparent), 
                 border: Border.all(
-                  color: Colors.black, 
+                  color: isVibrant ? Colors.white : Colors.black, 
                   width: 2.0,
                 ), 
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
                 "${_failedCards.length}", 
-                style: const TextStyle(
-                  color: Colors.black, 
+                style: TextStyle(
+                  color: isVibrant ? Colors.white : Colors.black, 
                   fontWeight: FontWeight.bold, 
                   fontSize: 16,
                 ),
@@ -937,7 +952,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                 Text(
                   "$currentIndex / $_totalLearnedCards", 
                   style: TextStyle(
-                    color: isNeo ? Colors.black : theme.colorScheme.onSurface.withValues(alpha: 0.6), 
+                    color: topBarTextColor, 
                     fontWeight: FontWeight.bold, 
                     fontSize: 16,
                   ),
@@ -946,7 +961,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                   Text(
                     "Kolo $_learningRound", 
                     style: TextStyle(
-                      color: isNeo ? Colors.black : currentTheme.warningColor, 
+                      color: isVibrant ? Colors.white : (isNeo ? Colors.black : currentTheme.warningColor), 
                       fontSize: 12, 
                       fontWeight: FontWeight.bold,
                     ),
@@ -956,17 +971,17 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
-                color: isNeo ? Colors.white : Colors.transparent, 
+                color: isVibrant ? Colors.white.withValues(alpha: 0.2) : (isNeo ? Colors.white : Colors.transparent), 
                 border: Border.all(
-                  color: Colors.black, 
+                  color: isVibrant ? Colors.white : Colors.black, 
                   width: 2.0,
                 ), 
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
                 "$_masteredCount", 
-                style: const TextStyle(
-                  color: Colors.black, 
+                style: TextStyle(
+                  color: isVibrant ? Colors.white : Colors.black, 
                   fontWeight: FontWeight.bold, 
                   fontSize: 16,
                 ),
@@ -977,8 +992,8 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
         const SizedBox(height: 16),
         LinearProgressIndicator(
           value: currentIndex / _totalLearnedCards, 
-          backgroundColor: isNeo ? Colors.black.withValues(alpha: 0.2) : theme.colorScheme.onSurface.withValues(alpha: 0.12), 
-          color: Colors.black,
+          backgroundColor: isVibrant ? Colors.white.withValues(alpha: 0.25) : (isNeo ? Colors.black.withValues(alpha: 0.2) : theme.colorScheme.onSurface.withValues(alpha: 0.12)), 
+          color: isVibrant ? Colors.white : Colors.black,
         ),
         const SizedBox(height: 24),
 
@@ -1065,19 +1080,19 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16), 
-                    backgroundColor: currentTheme.id == 2 ? Colors.redAccent : Colors.red, 
-                    foregroundColor: Colors.black, 
+                    backgroundColor: isNeo || isVibrant ? Colors.redAccent : Colors.red, 
+                    foregroundColor: Colors.white, 
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: currentTheme.buttonBorderRadius, 
-                      side: const BorderSide(
-                        color: Colors.black, 
-                        width: 2.5,
+                      side: BorderSide(
+                        color: isVibrant ? Colors.white : Colors.black, 
+                        width: 2.0,
                       ),
                     ),
                   ),
                   onPressed: _isCardFlipped ? () => _handleLearningAnswer(false) : null,
-                  icon: const Icon(Icons.close, color: Colors.black),
+                  icon: const Icon(Icons.close, color: Colors.white),
                   label: const Text("Znova", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 ),
               ),
@@ -1086,14 +1101,14 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16), 
-                    backgroundColor: currentTheme.id == 2 ? Colors.greenAccent : Colors.green, 
+                    backgroundColor: isNeo || isVibrant ? Colors.greenAccent : Colors.green, 
                     foregroundColor: Colors.black, 
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: currentTheme.buttonBorderRadius, 
-                      side: const BorderSide(
-                        color: Colors.black, 
-                        width: 2.5,
+                      side: BorderSide(
+                        color: isVibrant ? Colors.white : Colors.black, 
+                        width: 2.0,
                       ),
                     ),
                   ),
@@ -1112,17 +1127,19 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
   Widget _buildCardFront(Map<String, dynamic> card, AppThemeData currentTheme) {
     final theme = currentTheme.theme;
     final bool isNeo = currentTheme.id == 2;
+    final bool isVibrant = currentTheme.id == 5;
+
     return Container(
       key: const ValueKey('front'),
       width: double.infinity,
       height: MediaQuery.of(context).size.height * 0.40,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isNeo ? Colors.white : theme.cardColor,
+        color: isVibrant ? Colors.white.withValues(alpha: 0.18) : (isNeo ? Colors.white : theme.cardColor),
         borderRadius: currentTheme.cardBorderRadius,
         border: Border.all(
-          color: Colors.black, 
-          width: 2.5,
+          color: isVibrant ? Colors.white.withValues(alpha: 0.5) : Colors.black, 
+          width: isVibrant ? 1.5 : 2.5,
         ),
       ),
       child: Column(
@@ -1134,12 +1151,20 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             Text(
               card['prompt'], 
               textAlign: TextAlign.center, 
-              style: TextStyle(fontSize: 24, color: isNeo ? Colors.black : theme.colorScheme.onSurface, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 24, 
+                color: isVibrant ? Colors.white : (isNeo ? Colors.black : theme.colorScheme.onSurface), 
+                fontWeight: FontWeight.bold,
+              ),
             ),
           const SizedBox(height: 40),
           Text(
             "Ťukni pre otočenie", 
-            style: TextStyle(color: isNeo ? Colors.black.withValues(alpha: 0.6) : theme.colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 13, fontStyle: FontStyle.italic),
+            style: TextStyle(
+              color: isVibrant ? Colors.white.withValues(alpha: 0.7) : (isNeo ? Colors.black.withValues(alpha: 0.6) : theme.colorScheme.onSurface.withValues(alpha: 0.5)), 
+              fontSize: 13, 
+              fontStyle: FontStyle.italic,
+            ),
           ),
         ],
       ),
@@ -1149,17 +1174,19 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
   Widget _buildCardBack(Map<String, dynamic> card, AppThemeData currentTheme) {
     final theme = currentTheme.theme;
     final bool isNeo = currentTheme.id == 2;
+    final bool isVibrant = currentTheme.id == 5;
+
     return Container(
       key: const ValueKey('back'),
       width: double.infinity,
       height: MediaQuery.of(context).size.height * 0.40,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isNeo ? Colors.white : theme.cardColor,
+        color: isVibrant ? Colors.white.withValues(alpha: 0.18) : (isNeo ? Colors.white : theme.cardColor),
         borderRadius: currentTheme.cardBorderRadius,
         border: Border.all(
-          color: Colors.black, 
-          width: 2.5,
+          color: isVibrant ? Colors.white.withValues(alpha: 0.5) : Colors.black, 
+          width: isVibrant ? 1.5 : 2.5,
         ),
       ),
       child: Column(
@@ -1171,23 +1198,27 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             Text(
               card['prompt'], 
               textAlign: TextAlign.center, 
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16, 
-                color: Colors.black, 
+                color: isVibrant ? Colors.white.withValues(alpha: 0.9) : Colors.black, 
                 fontWeight: FontWeight.w600,
               ),
             ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 24), 
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24), 
             child: Divider(
-              color: Colors.black, 
+              color: isVibrant ? Colors.white.withValues(alpha: 0.5) : Colors.black, 
               thickness: 1.5,
             ),
           ),
           Text(
             card['correct_answer'], 
             textAlign: TextAlign.center, 
-            style: TextStyle(fontSize: 28, color: isNeo ? Colors.black : theme.colorScheme.onSurface, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 28, 
+              color: isVibrant ? Colors.white : (isNeo ? Colors.black : theme.colorScheme.onSurface), 
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
@@ -1197,8 +1228,9 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
   Widget _buildQuizUI(AppThemeData currentTheme) {
     final theme = currentTheme.theme;
     final bool isNeo = currentTheme.id == 2;
+    final bool isVibrant = currentTheme.id == 5;
 
-    Color hardcoreFillCol = Colors.white;
+    Color hardcoreFillCol = isVibrant ? Colors.white.withValues(alpha: 0.2) : Colors.white;
     Widget? hardcoreFeedbackWidget;
 
     if (_isHardcore && _isAnswerChecked) {
@@ -1218,8 +1250,8 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
         if (!_hideCorrectAnswer) {
           hardcoreFeedbackWidget = Text(
             "Odpoveď bola: $_actualCorrectAnswer", 
-            style: const TextStyle(
-              color: Colors.black, 
+            style: TextStyle(
+              color: isVibrant ? Colors.white : Colors.black, 
               fontWeight: FontWeight.bold,
             ),
           );
@@ -1240,7 +1272,9 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             Text(
               topTitleText, 
               style: TextStyle(
-                color: isNeo ? Colors.black : (_isRemedialQuiz ? currentTheme.errorColor : theme.colorScheme.onSurface.withValues(alpha: 0.8)), 
+                color: isVibrant 
+                    ? Colors.white 
+                    : (isNeo ? Colors.black : (_isRemedialQuiz ? currentTheme.errorColor : theme.colorScheme.onSurface.withValues(alpha: 0.8))), 
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -1250,14 +1284,14 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                   Icon(
                     Icons.timer_outlined, 
                     size: 18, 
-                    color: Colors.black,
+                    color: isVibrant ? Colors.white : Colors.black,
                   ),
                   const SizedBox(width: 4),
                   Text(
                     "$_timeLeft s", 
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold, 
-                      color: Colors.black,
+                      color: isVibrant ? Colors.white : Colors.black,
                     ),
                   ),
                 ],
@@ -1267,8 +1301,8 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
         const SizedBox(height: 16),
         LinearProgressIndicator(
           value: (_currentQuestionIndex + 1) / _questionCount, 
-          backgroundColor: isNeo ? Colors.black.withValues(alpha: 0.2) : theme.colorScheme.onSurface.withValues(alpha: 0.12), 
-          color: Colors.black,
+          backgroundColor: isVibrant ? Colors.white.withValues(alpha: 0.25) : (isNeo ? Colors.black.withValues(alpha: 0.2) : theme.colorScheme.onSurface.withValues(alpha: 0.12)), 
+          color: isVibrant ? Colors.white : Colors.black,
         ),
         const SizedBox(height: 24),
         
@@ -1278,7 +1312,11 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
           Text(
             _currentQuestion!['prompt'], 
             textAlign: TextAlign.center, 
-            style: TextStyle(fontSize: 22, color: isNeo ? Colors.black : theme.colorScheme.onSurface, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 22, 
+              color: isVibrant ? Colors.white : (isNeo ? Colors.black : theme.colorScheme.onSurface), 
+              fontWeight: FontWeight.bold,
+            ),
           ),
         
         const SizedBox(height: 32),
@@ -1286,47 +1324,47 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
         if (_isHardcore) ...[
           Theme(
             data: Theme.of(context).copyWith(
-              textSelectionTheme: const TextSelectionThemeData(
-                cursorColor: Colors.black,
-                selectionColor: Colors.black26,
-                selectionHandleColor: Colors.black,
+              textSelectionTheme: TextSelectionThemeData(
+                cursorColor: isVibrant ? Colors.white : Colors.black,
+                selectionColor: isVibrant ? Colors.white24 : Colors.black26,
+                selectionHandleColor: isVibrant ? Colors.white : Colors.black,
               ),
             ),
             child: TextField(
               controller: _hardcoreController,
               textAlign: TextAlign.center,
               enabled: !_isAnswerChecked, 
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isVibrant ? Colors.white : Colors.black),
               decoration: InputDecoration(
                 hintText: "Napíš odpoveď sem...",
-                hintStyle: TextStyle(color: Colors.black.withValues(alpha: 0.5)),
+                hintStyle: TextStyle(color: isVibrant ? Colors.white.withValues(alpha: 0.6) : Colors.black.withValues(alpha: 0.5)),
                 filled: true, 
                 fillColor: hardcoreFillCol,
                 border: OutlineInputBorder(
                   borderRadius: currentTheme.cardBorderRadius, 
-                  borderSide: const BorderSide(
-                    color: Colors.black, 
+                  borderSide: BorderSide(
+                    color: isVibrant ? Colors.white : Colors.black, 
                     width: 2.5,
                   ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: currentTheme.cardBorderRadius, 
-                  borderSide: const BorderSide(
-                    color: Colors.black, 
+                  borderSide: BorderSide(
+                    color: isVibrant ? Colors.white.withValues(alpha: 0.6) : Colors.black, 
                     width: 2.5,
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: currentTheme.cardBorderRadius, 
-                  borderSide: const BorderSide(
-                    color: Colors.black, 
+                  borderSide: BorderSide(
+                    color: isVibrant ? Colors.white : Colors.black, 
                     width: 3.5,
                   ),
                 ),
                 disabledBorder: OutlineInputBorder(
                   borderRadius: currentTheme.cardBorderRadius, 
-                  borderSide: const BorderSide(
-                    color: Colors.black, 
+                  borderSide: BorderSide(
+                    color: isVibrant ? Colors.white.withValues(alpha: 0.4) : Colors.black, 
                     width: 2.5,
                   ),
                 ),
@@ -1347,8 +1385,8 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
               foregroundColor: Colors.black, 
               shape: RoundedRectangleBorder(
                 borderRadius: currentTheme.buttonBorderRadius,
-                side: const BorderSide(
-                  color: Colors.black, 
+                side: BorderSide(
+                  color: isVibrant ? Colors.white : Colors.black, 
                   width: 2.5,
                 ),
               ),
@@ -1367,29 +1405,46 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
               if (option == _actualCorrectAnswer && !_hideCorrectAnswer) {
                 btnColor = currentTheme.successColor; 
                 textColor = Colors.black; 
-                borderSide = const BorderSide(
-                  color: Colors.black, 
+                borderSide = BorderSide(
+                  color: isVibrant ? Colors.white : Colors.black, 
                   width: 2.5,
                 );
               } else if (option == _selectedAnswer) {
                 btnColor = currentTheme.errorColor; 
-                textColor = Colors.black; 
-                borderSide = const BorderSide(
-                  color: Colors.black, 
+                textColor = Colors.white; 
+                borderSide = BorderSide(
+                  color: isVibrant ? Colors.white : Colors.black, 
                   width: 2.5,
                 );
               } else {
-                btnColor = Colors.white.withValues(alpha: 0.5);
-                textColor = Colors.black.withValues(alpha: 0.4);
-                borderSide = BorderSide(color: Colors.black.withValues(alpha: 0.2), width: 1.5);
+                btnColor = isVibrant 
+                    ? Colors.white.withValues(alpha: 0.08) 
+                    : Colors.white.withValues(alpha: 0.5);
+                textColor = isVibrant 
+                    ? Colors.white.withValues(alpha: 0.4) 
+                    : Colors.black.withValues(alpha: 0.4);
+                borderSide = BorderSide(
+                  color: isVibrant ? Colors.white.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.2), 
+                  width: 1.5,
+                );
               }
             } else {
-              btnColor = isNeo ? Colors.white : theme.cardColor;
-              textColor = isNeo ? Colors.black : theme.colorScheme.onSurface;
-              borderSide = BorderSide(
-                color: isNeo ? Colors.black : currentTheme.testSetupColor, 
-                width: 2.5,
-              );
+              if (isVibrant) {
+                btnColor = Colors.white.withValues(alpha: 0.18);
+                textColor = Colors.white;
+                borderSide = BorderSide(color: Colors.white.withValues(alpha: 0.5), width: 1.5);
+              } else if (isNeo) {
+                btnColor = Colors.white;
+                textColor = Colors.black;
+                borderSide = const BorderSide(color: Colors.black, width: 2.5);
+              } else {
+                btnColor = theme.cardColor;
+                textColor = theme.colorScheme.onSurface;
+                borderSide = BorderSide(
+                  color: currentTheme.testSetupColor, 
+                  width: 2.5,
+                );
+              }
             }
 
             return Padding(

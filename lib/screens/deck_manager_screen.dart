@@ -477,7 +477,11 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     required Color color,
     required VoidCallback onTap,
   }) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final currentTheme = themeProvider.currentThemeData;
     final theme = Theme.of(context);
+    final bool isVibrant = currentTheme.id == 5;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
@@ -486,14 +490,14 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: color, size: 24),
+            Icon(icon, color: isVibrant && color == theme.colorScheme.onSurface ? Colors.white : color, size: 24),
             const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
                 fontSize: 11, 
                 fontWeight: FontWeight.bold, 
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
+                color: isVibrant ? Colors.white : theme.colorScheme.onSurface.withValues(alpha: 0.9),
               ),
             ),
           ],
@@ -509,6 +513,8 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
     final Color sectionColor = currentTheme.decksColor;
+    final bool isVibrant = currentTheme.id == 5;
+    final bool isNeo = currentTheme.id == 2;
 
     return FutureBuilder<int>(
       future: DatabaseHelper.instance.getCardCountForDeck(deck.id!),
@@ -518,6 +524,15 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
         final bool isActive = (activeBlockerDeckId == deck.id) && hasEnoughCards;
 
         final cardDecoration = currentTheme.getCardDecoration(sectionColor, isSelected: isActive);
+
+        final Color tileBgColor = currentTheme.getTileBg(isGranted: false, accentColor: sectionColor);
+        final Color avatarBg = isVibrant 
+            ? Colors.white.withValues(alpha: 0.2) 
+            : tileBgColor;
+        
+        final Color avatarIconColor = isVibrant 
+            ? Colors.white 
+            : (isNeo ? Colors.black : currentTheme.getContrastTextColor(tileBgColor));
 
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
@@ -529,8 +544,8 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                 ListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   leading: CircleAvatar(
-                    backgroundColor: currentTheme.getTileBg(isGranted: false, accentColor: sectionColor),
-                    child: Icon(Icons.style, color: currentTheme.getIconColor(sectionColor)),
+                    backgroundColor: avatarBg,
+                    child: Icon(_getCategoryIcon(deck.category), color: avatarIconColor),
                   ),
                   title: Row(
                     children: [
@@ -539,7 +554,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                           deck.name, 
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.onSurface,
+                            color: isVibrant ? Colors.white : theme.colorScheme.onSurface,
                           ), 
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -567,7 +582,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                   ),
                   subtitle: Text(
                     "${deck.category} • Karty: $cardCount",
-                    style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.7)),
+                    style: TextStyle(color: isVibrant ? Colors.white.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.7)),
                   ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -578,7 +593,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                       ],
                       Icon(
                         isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                        color: currentTheme.getIconColor(sectionColor),
+                        color: isVibrant ? Colors.white : currentTheme.getIconColor(sectionColor),
                       ),
                     ],
                   ),
@@ -593,17 +608,17 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                   secondChild: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      // V Neobrutalizme dostane spodná časť čistý podklad karty (biela/tmavá) s jemným ohraničením
-                      color: currentTheme.id == 2 ? Colors.white.withValues(alpha: 0.2) : Colors.transparent,
+                      color: isNeo || isVibrant ? Colors.white.withValues(alpha: 0.15) : Colors.transparent,
                       borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
-                      border: currentTheme.id == 2 ? Border(top: BorderSide(color: currentTheme.buttonBorder.color, width: 2.0)) : null,
+                      border: isNeo || isVibrant ? Border(top: BorderSide(color: isVibrant ? Colors.white.withValues(alpha: 0.3) : currentTheme.buttonBorder.color, width: 2.0)) : null,
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                     child: Column(
                       children: [
-                        if (currentTheme.id != 2) ...[
-                        Divider(height: 1, color: theme.colorScheme.onSurface.withValues(alpha: 0.2)),
-                        const SizedBox(height: 10),],
+                        if (!isNeo && !isVibrant) ...[
+                          Divider(height: 1, color: theme.colorScheme.onSurface.withValues(alpha: 0.2)),
+                          const SizedBox(height: 10),
+                        ],
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
@@ -740,6 +755,8 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
     final Color sectionColor = currentTheme.decksColor;
+    final bool isVibrant = currentTheme.id == 5;
+    final bool isNeo = currentTheme.id == 2;
 
     if (deckList.isEmpty) {
       return Center(
@@ -771,21 +788,32 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                 width: 32,
                 height: 32,
                 child: Center(
-                  child: Icon(_getCategoryIcon(categoryName), color: currentTheme.getIconColor(sectionColor), size: 28),
+                  child: Icon(
+                    _getCategoryIcon(categoryName), 
+                    color: isVibrant ? Colors.white : currentTheme.getIconColor(sectionColor), 
+                    size: 28,
+                  ),
                 ),
               ),
-              iconColor: sectionColor,
-              collapsedIconColor: sectionColor,
+              iconColor: isVibrant ? Colors.white : sectionColor,
+              collapsedIconColor: isVibrant ? Colors.white : sectionColor,
               tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               title: Text(
                 categoryName,
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: currentTheme.id == 2 ? Colors.black:sectionColor),
+                style: TextStyle(
+                  fontSize: 20, 
+                  fontWeight: FontWeight.bold, 
+                  color: isVibrant ? Colors.white : (isNeo ? Colors.black : sectionColor),
+                ),
               ),
               subtitle: Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
                   _getCategoryDescription(categoryName),
-                  style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurface.withValues(alpha: 0.7)),
+                  style: TextStyle(
+                    fontSize: 13, 
+                    color: isVibrant ? Colors.white.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
                 ),
               ),
               children: [

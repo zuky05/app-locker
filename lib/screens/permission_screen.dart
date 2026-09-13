@@ -97,17 +97,33 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
 
+    final bool isVibrant = currentTheme.id == 5;
+    final bool isNeo = currentTheme.id == 2;
+
     if (isLoading) {
       return Scaffold(
-        backgroundColor: currentTheme.theme.scaffoldBackgroundColor,
-        body: Center(child: CircularProgressIndicator(color: currentTheme.buttonBorder.color)),
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: Center(
+          child: CircularProgressIndicator(
+            color: isVibrant ? currentTheme.decksColor : currentTheme.buttonBorder.color,
+          ),
+        ),
       );
     }
 
     final bool allGranted = isOverlayGranted && isAccessibilityGranted && isNotificationGranted;
     final Color primaryAccent = currentTheme.decksColor;
     final Color buttonBgColor = allGranted ? currentTheme.successColor : primaryAccent;
-    final Color buttonFgColor = currentTheme.getContrastTextColor(buttonBgColor);
+    final Color buttonFgColor = isVibrant ? Colors.white : currentTheme.getContrastTextColor(buttonBgColor);
+
+    // Farby pre hornú kruhovú ikonu
+    final Color circleBgColor = isVibrant 
+        ? currentTheme.decksColor 
+        : (isNeo ? theme.cardColor : currentTheme.getTileBg(isGranted: false, accentColor: currentTheme.buttonBorder.color));
+    
+    final Color circleIconColor = isVibrant 
+        ? Colors.white 
+        : currentTheme.getIconColor(currentTheme.buttonBorder.color);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -120,19 +136,24 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
             children: [
               const Spacer(),
               
+              // Ikona zabezpečenia HORE
               Container(
                 padding: const EdgeInsets.all(22),
                 decoration: BoxDecoration(
-                  color: currentTheme.id == 2 
-                      ? theme.cardColor:currentTheme.getTileBg(isGranted: false, accentColor: currentTheme.buttonBorder.color),
+                  color: circleBgColor,
                   shape: BoxShape.circle,
-                  border: Border.all(color: currentTheme.buttonBorder.color, width: 2.0),
-                  boxShadow: currentTheme.cardShadows,
+                  border: Border.all(
+                    color: isVibrant ? Colors.black : currentTheme.buttonBorder.color, 
+                    width: isVibrant ? 2.5 : 2.0,
+                  ),
+                  boxShadow: isVibrant 
+                      ? const [BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4))] 
+                      : currentTheme.cardShadows,
                 ),
                 child: Icon(
                   Icons.security_rounded,
                   size: 64,
-                  color:  currentTheme.getIconColor(currentTheme.buttonBorder.color),
+                  color: circleIconColor,
                 ),
               ),
               const SizedBox(height: 32),
@@ -178,6 +199,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
 
               const Spacer(),
 
+              // Hlavné akčné tlačidlo DOLE
               ElevatedButton.icon(
                 onPressed: allGranted ? _navigateToMain : _openSettingsOrRequest,
                 icon: Icon(
@@ -200,12 +222,15 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
                 ),
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 54),
-                  backgroundColor: currentTheme.theme.cardColor,
+                  backgroundColor: buttonBgColor,
                   foregroundColor: buttonFgColor,
-                  elevation: theme.appBarTheme.elevation ?? 0,
+                  elevation: isVibrant ? 0 : (theme.appBarTheme.elevation ?? 0),
                   shape: RoundedRectangleBorder(
                     borderRadius: currentTheme.buttonBorderRadius,
-                    side: BorderSide(color: currentTheme.buttonBorder.color, width: 2.0),
+                    side: BorderSide(
+                      color: isVibrant ? Colors.black : currentTheme.buttonBorder.color, 
+                      width: 2.0,
+                    ),
                   ),
                 ),
               ),
@@ -222,17 +247,36 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
     required AppThemeData currentTheme,
   }) {
     final theme = currentTheme.theme;
+    final bool isVibrant = currentTheme.id == 5;
     final Color accentColor = isGranted ? currentTheme.successColor : currentTheme.warningColor;
 
+    BoxDecoration decoration;
+    Color textColor;
+    Color iconColor;
+
+    if (isVibrant) {
+      decoration = BoxDecoration(
+        color: accentColor,
+        borderRadius: currentTheme.cardBorderRadius,
+        border: Border.all(color: Colors.black, width: 2.0),
+      );
+      textColor = Colors.black;
+      iconColor = Colors.black;
+    } else {
+      decoration = currentTheme.getCardDecoration(accentColor, isSelected: isGranted);
+      textColor = theme.colorScheme.onSurface;
+      iconColor = currentTheme.getIconColor(accentColor);
+    }
+
     return Container(
-      decoration: currentTheme.getCardDecoration(accentColor, isSelected: isGranted),
+      decoration: decoration,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
         child: Row(
           children: [
             Icon(
               isGranted ? Icons.check_circle_rounded : Icons.warning_amber_rounded,
-              color: currentTheme.getIconColor(accentColor),
+              color: iconColor,
               size: 24,
             ),
             const SizedBox(width: 14),
@@ -241,7 +285,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
                 title,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface,
+                  color: textColor,
                   fontSize: 14,
                 ),
               ),

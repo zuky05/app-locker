@@ -142,7 +142,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     if (_isLoading) {
       return Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor, 
-        body: Center(child: CircularProgressIndicator(color: currentTheme.decksColor)),
+        body: Center(child: CircularProgressIndicator(color: currentTheme.testSetupColor)),
       );
     }
 
@@ -166,6 +166,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
 
     int targetPctInt = (_lockoutPercentages[_lockoutIndex.toInt()] * 100).round();
     String lockoutLabel = "$targetPctInt% (min. $_requiredCorrectQuestions / ${_questionCount.toInt()})";
+
+    final Color headerContrastColor = currentTheme.getContrastTextColor(currentTheme.testSetupColor);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -240,89 +242,91 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
           ),
 
           if (!_isLearningMode) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: currentTheme.getCardDecoration(currentTheme.testSetupColor),
-                  child: Column(
-                    children: [
-                      Text(
-                        'ODMENA ZA 1 SPRÁVNU ODPOVEĎ', 
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6), 
-                          fontSize: 12, 
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.1,
-                        ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: currentTheme.getCardDecoration(currentTheme.testSetupColor),
+                child: Column(
+                  children: [
+                    Text(
+                      'ODMENA ZA 1 SPRÁVNU ODPOVEĎ', 
+                      style: TextStyle(
+                        color: headerContrastColor.withValues(alpha: 0.8), 
+                        fontSize: 12, 
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.1,
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _formatTime(_timePerQuestion), 
-                        style: TextStyle(
-                          color: currentTheme.id == 2 ? Colors.black : currentTheme.testSetupColor, 
-                          fontSize: 44, 
-                          fontWeight: FontWeight.w900,
-                        ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _formatTime(_timePerQuestion), 
+                      style: TextStyle(
+                        color: headerContrastColor, 
+                        fontSize: 44, 
+                        fontWeight: FontWeight.w900,
                       ),
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                        decoration: currentTheme.getCardDecoration(currentTheme.testSetupColor, isSelected: true),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Celkový násobič', 
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6), 
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  'x${_currentMultiplier.toStringAsFixed(2)}', 
-                                  style: TextStyle(
-                                    color: currentTheme.id == 2 
-                                        ? Colors.black 
-                                        : (_currentMultiplier >= 1.0 ? currentTheme.successColor : currentTheme.errorColor),
-                                    fontWeight: FontWeight.bold, 
-                                    fontSize: 18,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  'Max potenciál testu', 
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6), 
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  _formatTime(_totalTimePotential), 
-                                  style: TextStyle(
-                                    color: currentTheme.id == 2 ? Colors.black : currentTheme.warningColor,
-                                    fontWeight: FontWeight.bold, 
-                                    fontSize: 18,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.15),
+                        borderRadius: currentTheme.cardBorderRadius,
+                        border: Border.all(color: headerContrastColor.withValues(alpha: 0.3), width: 1.0),
                       ),
-                    ],
-                  ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Celkový násobič', 
+                                style: TextStyle(
+                                  color: headerContrastColor.withValues(alpha: 0.8), 
+                                  fontSize: 12,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'x${_currentMultiplier.toStringAsFixed(2)}', 
+                                style: TextStyle(
+                                  color: headerContrastColor, 
+                                  fontWeight: FontWeight.bold, 
+                                  fontSize: 18,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                'Max potenciál testu', 
+                                style: TextStyle(
+                                  color: headerContrastColor.withValues(alpha: 0.8), 
+                                  fontSize: 12,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _formatTime(_totalTimePotential), 
+                                style: TextStyle(
+                                  color: headerContrastColor, 
+                                  fontWeight: FontWeight.bold, 
+                                  fontSize: 18,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
+            ),
             
             Expanded(
               child: ListView(
@@ -573,7 +577,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     required Color accentColor,
     double? multiplier,
   }) {
-    final theme = currentTheme.theme;
+    final textColor = currentTheme.getContrastTextColor(accentColor);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
@@ -586,7 +590,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
             children: [
               Text(
                 title, 
-                style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 16),
+                style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 16),
               ),
               if (multiplier != null) _buildMultiplierBadge(multiplier, currentTheme),
             ],
@@ -595,18 +599,16 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
           Text(
             valueLabel, 
             style: TextStyle(
-              color: currentTheme.id == 2 ? Colors.black : accentColor, 
+              color: textColor, 
               fontWeight: FontWeight.w900, 
               fontSize: 18,
             ),
           ),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: currentTheme.id == 2 ? Colors.black : accentColor, 
-              inactiveTrackColor: currentTheme.id == 2 
-                  ? Colors.black.withValues(alpha: 0.2) 
-                  : theme.colorScheme.onSurface.withValues(alpha: 0.12), 
-              thumbColor: currentTheme.id == 2 ? Colors.black : accentColor, 
+              activeTrackColor: textColor, 
+              inactiveTrackColor: textColor.withValues(alpha: 0.3), 
+              thumbColor: textColor, 
               trackHeight: 6.0,
             ),
             child: Slider(value: value, min: min, max: max, divisions: divisions, onChanged: onChanged),
@@ -628,10 +630,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     bool isGold = false, 
     bool showMultiplier = true,
   }) {
-    final theme = currentTheme.theme;
-    final Color switchActiveColor = currentTheme.id == 2 
-        ? Colors.black 
-        : (isGold ? currentTheme.warningColor : accentColor);
+    final textColor = currentTheme.getContrastTextColor(accentColor);
 
     return Opacity(
       opacity: isDisabled ? 0.4 : 1.0,
@@ -649,7 +648,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                       Text(
                         title, 
                         style: TextStyle(
-                          color: theme.colorScheme.onSurface, 
+                          color: textColor, 
                           fontWeight: FontWeight.bold, 
                           fontSize: 16,
                         ),
@@ -662,7 +661,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                   Text(
                     subtitle, 
                     style: TextStyle(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6), 
+                      color: textColor.withValues(alpha: 0.8), 
                       fontSize: 13,
                     ),
                   ),
@@ -672,7 +671,10 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
             Switch(
               value: value, 
               onChanged: isDisabled ? null : onChanged, 
-              activeColor: switchActiveColor,
+              activeColor: textColor,
+              activeTrackColor: textColor.withValues(alpha: 0.4),
+              inactiveThumbColor: textColor.withValues(alpha: 0.6),
+              inactiveTrackColor: textColor.withValues(alpha: 0.2),
             ),
           ],
         ),

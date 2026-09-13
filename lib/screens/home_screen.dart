@@ -262,7 +262,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Text(
                         'DAILY GOAL',
                         style: TextStyle(
-                          color: currentTheme.id == 2 ? Colors.black : currentTheme.dailyGoalColor,
+                          color: currentTheme.id == 2 || currentTheme.id == 5 ? Colors.black : currentTheme.dailyGoalColor,
                           fontSize: 13,
                           letterSpacing: 1.2,
                           fontWeight: FontWeight.w800,
@@ -315,20 +315,20 @@ class _HomeScreenState extends State<HomeScreen> {
                   borderRadius: currentTheme.cardBorderRadius,
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                    decoration: currentTheme.getCardDecoration(currentTheme.warningColor),
+                    decoration: currentTheme.id == 5 ? currentTheme.getCardDecoration(currentTheme.quickImportColor) : currentTheme.getCardDecoration(currentTheme.warningColor),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
                           Icons.star_rounded, 
-                          color: Colors.amber, 
+                          color: currentTheme.id == 5 ? Colors.black : Colors.amber, 
                           size: 26,
                         ),
                         const SizedBox(width: 10),
                         Text(
                           isPremium ? 'MANAGE PREMIUM' : 'PREMIUM ACCESS',
                           style: TextStyle(
-                            color: currentTheme.id == 2 
+                            color: currentTheme.id == 2 || currentTheme.id == 5 
                       ? Colors.black : currentTheme.warningColor ,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 1.2,

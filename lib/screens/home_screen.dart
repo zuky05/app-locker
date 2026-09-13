@@ -7,8 +7,10 @@ import '../services/database_helper.dart';
 import '../services/anki_importer.dart';
 import '../themes/theme_provider.dart';
 import '../themes/app_themes.dart';
+import '../services/stats_provider.dart'; // <-- Pridaný import pre StatsProvider
 import 'settings_screen.dart';
 import 'test_setup_screen.dart';
+import 'stats_detail_screen.dart'; // <-- Import pre detailnú obrazovku štatistík
 import '../services/revenuecat_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -33,6 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final count = await DatabaseHelper.instance.getCustomDeckCount();
     final premiumStatus = await RevenueCatService.isPremium();
     
+    if (!mounted) return;
     setState(() {
       customDeckCount = count;
       isPremium = premiumStatus;
@@ -124,13 +127,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
   
   @override
-  
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
     
-
     final bool isLimitReached = customDeckCount >= 3 && !isPremium; 
 
     return Scaffold(
@@ -146,10 +147,9 @@ class _HomeScreenState extends State<HomeScreen> {
             fontSize: 24,
           ),
         ),
-        
         actions: [
           IconButton(
-            icon: Icon(Icons.star_rounded, color: Colors.amber, size: 30),
+            icon: const Icon(Icons.star_rounded, color: Colors.amber, size: 30),
             tooltip: 'Premium',
             onPressed: () async {
               if (isPremium) {
@@ -246,173 +246,196 @@ class _HomeScreenState extends State<HomeScreen> {
       
       body: isLoading
           ? Center(child: CircularProgressIndicator(color: currentTheme.decksColor))
-          : ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
-              physics: const BouncingScrollPhysics(),
-              children: [
+          : Consumer<StatsProvider>(
+              builder: (context, statsProvider, child) {
+                // Získame reálne dáta z providera za dnešný deň
+                final todayStats = statsProvider.todayStats;
+                final int streak = statsProvider.currentStreak;
+                final int cardsDone = todayStats['cards'] ?? 0;
                 
-                // 1. DAILY GOAL
-                Container(
-                  height: 200,
-                  padding: const EdgeInsets.all(20),
-                  decoration: currentTheme.getCardDecoration(currentTheme.dailyGoalColor),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'DAILY GOAL',
-                        style: TextStyle(
-                          color: currentTheme.id == 2 || currentTheme.id == 5 ? Colors.black : currentTheme.dailyGoalColor,
-                          fontSize: 13,
-                          letterSpacing: 1.2,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text('🔥', style: TextStyle(fontSize: 42)),
-                          const SizedBox(width: 14),
-                          Text(
-                            '15 / 20\nCards',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: theme.colorScheme.onSurface,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 22,
-                              height: 1.1,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: LinearProgressIndicator(
-                          value: 15 / 20,
-                          minHeight: 10,
-                          backgroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.12),
-                          valueColor: AlwaysStoppedAnimation<Color>(currentTheme.dailyGoalColor),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                // Cieľ môžeme nastaviť napr. na 20 kariet denne
+                const int dailyTarget = 20;
+                double progressValue = (cardsDone / dailyTarget).clamp(0.0, 1.0);
 
-                const SizedBox(height: 16),
-
-                // 2. PREMIUM ACCESS BANNER
-                InkWell(
-                  onTap: () async {
-                    if (isPremium) {
-                      RevenueCatService.showCustomerCenter();
-                    } else {
-                      final success = await RevenueCatService.presentPaywall();
-                      if (success) _checkDeckCount();
-                    }
-                  },
-                  borderRadius: currentTheme.cardBorderRadius,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                    decoration: currentTheme.id == 5 ? currentTheme.getCardDecoration(currentTheme.quickImportColor) : currentTheme.getCardDecoration(currentTheme.warningColor),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.star_rounded, 
-                          color: currentTheme.id == 5 ? Colors.black : Colors.amber, 
-                          size: 26,
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          isPremium ? 'MANAGE PREMIUM' : 'PREMIUM ACCESS',
-                          style: TextStyle(
-                            color: currentTheme.id == 2 || currentTheme.id == 5 
-                      ? Colors.black : currentTheme.warningColor ,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 1.2,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // 3. DECKS 
-                InkWell(
-                  onTap: () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const DeckManagerScreen()),
-                    );
-                    _checkDeckCount();
-                  },
-                  borderRadius: currentTheme.cardBorderRadius,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
-                    decoration: currentTheme.getCardDecoration(currentTheme.decksColor),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.style_rounded, 
-                          size: 52, 
-                          color: currentTheme.getIconColor(currentTheme.decksColor),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Decks',
-                          style: TextStyle(
-                            color: theme.colorScheme.onSurface,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // 4. TEST SETUP & BLOCKED APPS
-                Row(
+                return ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+                  physics: const BouncingScrollPhysics(),
                   children: [
-                    Expanded(
-                      child: _buildActionTile(
-                        icon: Icons.settings_suggest_rounded,
-                        title: 'Test Setup',
-                        accentColor: currentTheme.testSetupColor,
-                        currentTheme: currentTheme,
-                        onTap: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const TestSetupScreen()));
-                        },
+                    
+                    // 1. DAILY GOAL / STATS CAROUSEL NAPOJENÝ NA STATS PROVIDER
+                    InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const StatsDetailScreen()),
+                        );
+                      },
+                      borderRadius: currentTheme.cardBorderRadius,
+                      child: Container(
+                        height: 200,
+                        padding: const EdgeInsets.all(20),
+                        decoration: currentTheme.getCardDecoration(currentTheme.dailyGoalColor),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'DAILY GOAL',
+                              style: TextStyle(
+                                color: currentTheme.id == 2 || currentTheme.id == 5 ? Colors.black : currentTheme.dailyGoalColor,
+                                fontSize: 13,
+                                letterSpacing: 1.2,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Text('🔥', style: TextStyle(fontSize: 42)),
+                                const SizedBox(width: 14),
+                                Text(
+                                  '$streak dni streak\n$cardsDone / $dailyTarget Kartíc',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: theme.colorScheme.onSurface,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 20,
+                                    height: 1.1,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: LinearProgressIndicator(
+                                value: progressValue,
+                                minHeight: 10,
+                                backgroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.12),
+                                valueColor: AlwaysStoppedAnimation<Color>(currentTheme.dailyGoalColor),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildActionTile(
-                        icon: Icons.smartphone_rounded,
-                        title: 'Blocked Apps',
-                        accentColor: currentTheme.blockedAppsColor,
-                        currentTheme: currentTheme,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const AppSelectorScreen()),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
 
-                const SizedBox(height: 24),
-              ],
+                    const SizedBox(height: 16),
+
+                    // 2. PREMIUM ACCESS BANNER
+                    InkWell(
+                      onTap: () async {
+                        if (isPremium) {
+                          RevenueCatService.showCustomerCenter();
+                        } else {
+                          final success = await RevenueCatService.presentPaywall();
+                          if (success) _checkDeckCount();
+                        }
+                      },
+                      borderRadius: currentTheme.cardBorderRadius,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                        decoration: currentTheme.id == 5 ? currentTheme.getCardDecoration(currentTheme.quickImportColor) : currentTheme.getCardDecoration(currentTheme.warningColor),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.star_rounded, 
+                              color: currentTheme.id == 5 ? Colors.black : Colors.amber, 
+                              size: 26,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              isPremium ? 'MANAGE PREMIUM' : 'PREMIUM ACCESS',
+                              style: TextStyle(
+                                color: currentTheme.id == 2 || currentTheme.id == 5 
+                                    ? Colors.black 
+                                    : currentTheme.warningColor,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.2,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // 3. DECKS 
+                    InkWell(
+                      onTap: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const DeckManagerScreen()),
+                        );
+                        _checkDeckCount();
+                      },
+                      borderRadius: currentTheme.cardBorderRadius,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+                        decoration: currentTheme.getCardDecoration(currentTheme.decksColor),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.style_rounded, 
+                              size: 52, 
+                              color: currentTheme.getIconColor(currentTheme.decksColor),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Decks',
+                              style: TextStyle(
+                                color: theme.colorScheme.onSurface,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // 4. TEST SETUP & BLOCKED APPS
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildActionTile(
+                            icon: Icons.settings_suggest_rounded,
+                            title: 'Test Setup',
+                            accentColor: currentTheme.testSetupColor,
+                            currentTheme: currentTheme,
+                            onTap: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => const TestSetupScreen()));
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildActionTile(
+                            icon: Icons.smartphone_rounded,
+                            title: 'Blocked Apps',
+                            accentColor: currentTheme.blockedAppsColor,
+                            currentTheme: currentTheme,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const AppSelectorScreen()),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+                  ],
+                );
+              },
             ),
     );
   }

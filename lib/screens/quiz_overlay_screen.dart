@@ -9,6 +9,7 @@ import '../services/database_helper.dart';
 import '../themes/theme_provider.dart';
 import '../themes/app_themes.dart';
 import '../services/revenuecat_service.dart';
+import '../services/stats_provider.dart';
 
 class QuizOverlayScreen extends StatefulWidget {
   final int? practiceDeckId; 
@@ -517,6 +518,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
   }
 
   void _finishAndUnlock() async {
+    // AK IDE O TRÉNINGOVÝ TEST Z APLIKÁCIE: ČAS ANI ŠTATISTIKY SA NEUAPISUJÚ
     if (widget.practiceDeckId != null) {
       _closeOrExitScreen();
       return;
@@ -611,6 +613,18 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     if (_isLearningMode) {
       int earnedSeconds = isPremium ? 7200 : (_learnInterval * 60).round();
       
+      // ZÁPIS DO DATABÁZY PRE LEARNING MODE
+      await DatabaseHelper.instance.insertStudySession(
+        deckId: _activeDeckId ?? 0,
+        durationSeconds: earnedSeconds,
+        correctCount: _masteredCount,
+        totalQuestions: _totalLearnedCards > 0 ? _totalLearnedCards : 1,
+      );
+
+      if (mounted) {
+        Provider.of<StatsProvider>(context, listen: false).refreshStats();
+      }
+
       const platform = MethodChannel('brainlock.channel');
       try { 
         await platform.invokeMethod('unlockApp', {'seconds': earnedSeconds, 'maxCap': earnedSeconds}); 
@@ -636,6 +650,18 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     int maxCapSeconds = isPremium ? 86400 : (_questionCount * 30 * mult).round(); 
 
     if (earnedSeconds > 0) {
+      // ZÁPIS DO DATABÁZY PRE KVÍZOVÝ MÓD
+      await DatabaseHelper.instance.insertStudySession(
+        deckId: _activeDeckId ?? 0,
+        durationSeconds: earnedSeconds,
+        correctCount: _correctAnswersCount,
+        totalQuestions: _questionCount.toInt(),
+      );
+
+      if (mounted) {
+        Provider.of<StatsProvider>(context, listen: false).refreshStats();
+      }
+
       const platform = MethodChannel('brainlock.channel');
       try { 
         await platform.invokeMethod('unlockApp', {'seconds': earnedSeconds, 'maxCap': maxCapSeconds}); 
@@ -657,7 +683,6 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     final bool isNeo = currentTheme.id == 2;
     final bool isVibrant = currentTheme.id == 5;
 
-    // Dekorácia hlavnej karty pre jednotlivé témy
     BoxDecoration cardDecoration;
     if (isNeo) {
       cardDecoration = BoxDecoration(

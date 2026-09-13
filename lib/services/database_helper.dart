@@ -228,4 +228,98 @@ class DatabaseHelper {
     final result = await db.rawQuery('SELECT COUNT(*) FROM cards WHERE deck_id = ?', [deckId]);
     return Sqflite.firstIntValue(result) ?? 0;
   }
+
+
+Future<int> insertStudySession({
+  required int deckId,
+  required int durationSeconds,
+  required int correctCount,
+  required int totalQuestions,
+}) async {
+  final db = await instance.database;
+  return await db.insert('study_sessions', {
+    'timestamp': DateTime.now().toIso8601String(),
+    'deck_id': deckId,
+    'duration_seconds': durationSeconds,
+    'correct_count': correctCount,
+    'total_questions': totalQuestions,
+  });
+}
+
+  // 2. Načítanie agregovaných štatistík (Dnes / Tento týždeň / Lifetime)
+  Future<Map<String, dynamic>> getAggregatedStats(int filterIndex) async {
+    // 0 = Dnes, 1 = Tento týždeň (posledných 7 dní), 2 = Lifetime
+    final db = await instance.database;
+    String dateFilter = "";
+
+    if (filterIndex == 0) {
+      dateFilter = "WHERE date(timestamp) = date('now', 'localtime')";
+    } else if (filterIndex == 1) {
+      dateFilter = "WHERE date(timestamp) >= date('now', 'localtime', '-7 days')";
+    }
+
+    final result = await db.rawQuery('''
+      SELECT 
+        COALESCE(SUM(total_questions), 0) AS total_cards,
+        COALESCE(SUM(duration_seconds), 0) AS total_duration,
+        COALESCE(SUM(correct_count), 0) AS total_correct
+      FROM study_sessions
+      $dateFilter
+    ''');
+
+    final row = result.first;
+    final int totalCards = row['total_cards'] as int;
+    final int totalDuration = row['total_duration'] as int;
+    final int totalCorrect = row['total_correct'] as int;
+
+    final int accuracy = totalCards > 0 ? ((totalCorrect / totalCards) * 100).round() : 0;
+    final int minutesSaved = (totalDuration / 60).round();
+
+    return {
+      'cards': totalCards,
+      'timeMinutes': minutesSaved,
+      'accuracy': accuracy,
+    };
+  }
+
+  // 3. Výpočet série nepretržitého učenia (Streak)
+  Future<int> getCurrentStreak() async {
+    final db = await instance.database;
+    final result = await db.rawQuery('''
+      SELECT DISTINCT date(timestamp, 'localtime') as session_date 
+      FROM study_sessions 
+      ORDER BY session_date DESC
+    ''');
+
+    if (result.isEmpty) return 0;
+
+    int streak = 0;
+    DateTime checkDate = DateTime.now();
+
+    // Naformátovanie dátumu na YYYY-MM-DD
+    String formatDate(DateTime d) =>
+        "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
+
+    List<String> activeDates = result.map((r) => r['session_date'] as String).toList();
+
+    // Ak dnešný ani včerajší deň nemá záznam, streak je 0
+    String todayStr = formatDate(checkDate);
+    String yesterdayStr = formatDate(checkDate.subtract(const Duration(days: 1)));
+
+    if (!activeDates.contains(todayStr) && !activeDates.contains(yesterdayStr)) {
+      return 0;
+    }
+
+    // Počítanie po sebe nasledujúcich dní
+    if (!activeDates.contains(todayStr)) {
+      checkDate = checkDate.subtract(const Duration(days: 1));
+    }
+
+    while (activeDates.contains(formatDate(checkDate))) {
+      streak++;
+      checkDate = checkDate.subtract(const Duration(days: 1));
+    }
+
+    return streak;
+  }
 }

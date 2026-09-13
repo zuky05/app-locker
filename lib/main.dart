@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'themes/theme_provider.dart';
+import 'services/stats_provider.dart'; // PRIDANÝ IMPORT
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:app_links/app_links.dart';
@@ -62,8 +63,11 @@ void main() async {
   permissionGuard.startListening();
 
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => ThemeProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => ThemeProvider()),
+        ChangeNotifierProvider(create: (context) => StatsProvider()),
+      ],
       child: MyApp(
         initialOverlay: isOverlay,
         initialTimeout: isTimeout,

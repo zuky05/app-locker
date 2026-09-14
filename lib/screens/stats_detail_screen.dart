@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../services/stats_provider.dart';
 import '../themes/theme_provider.dart';
 import '../themes/app_themes.dart';
+import '../themes/themed_background.dart';
 
 class StatsDetailScreen extends StatefulWidget {
   const StatsDetailScreen({super.key});
@@ -36,254 +37,269 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
+    final bool isVibrant = currentTheme.id == 5;
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: theme.appBarTheme.backgroundColor ?? Colors.transparent,
-        elevation: theme.appBarTheme.elevation ?? 0,
-        title: Text(
-          'Štatistiky učenia',
-          style: theme.appBarTheme.titleTextStyle ?? TextStyle(
-            color: theme.colorScheme.onSurface,
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
+    return ThemedBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: theme.scaffoldBackgroundColor, // Nepriehľadný AppBar
+          elevation: theme.appBarTheme.elevation ?? 0,
+          title: Text(
+            'Štatistiky učenia',
+            style: theme.appBarTheme.titleTextStyle ?? TextStyle(
+              color: theme.colorScheme.onSurface,
+              fontWeight: FontWeight.bold,
+              fontSize: 22,
+            ),
           ),
+          iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
         ),
-        iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
-      ),
-      body: Consumer<StatsProvider>(
-        builder: (context, statsProvider, child) {
-          if (statsProvider.isLoading) {
-            return Center(
-              child: CircularProgressIndicator(color: currentTheme.decksColor),
-            );
-          }
+        body: Consumer<StatsProvider>(
+          builder: (context, statsProvider, child) {
+            if (statsProvider.isLoading) {
+              return Center(
+                child: CircularProgressIndicator(color: currentTheme.decksColor),
+              );
+            }
 
-          final stats = statsProvider.getStatsForPeriod(_selectedFilterIndex);
-          final int cardsCount = stats['cards'] ?? 0;
-          
-          // Čas v sekundách načítaný z DB
-          final int studySeconds = stats['durationSeconds'] ?? 0; // 👈 Reálny čas učenia
-          final int earnedSeconds = stats['earnedSeconds'] ?? 0;  // 👈 Zarobený čas
-          final int accuracy = stats['accuracy'] ?? 0;
-          final int streak = statsProvider.currentStreak;
+            final stats = statsProvider.getStatsForPeriod(_selectedFilterIndex);
+            final int cardsCount = stats['cards'] ?? 0;
+            
+            final int studySeconds = stats['durationSeconds'] ?? 0; 
+            final int earnedSeconds = stats['earnedSeconds'] ?? 0;  
+            final int accuracy = stats['accuracy'] ?? 0;
+            final int streak = statsProvider.currentStreak;
 
-          final String favoriteDeck = stats['favoriteDeck'] ?? 'Žiadny';
-          final String nemesisPrompt = stats['nemesisPrompt'] ?? stats['nemesisCard'] ?? 'Žiadna';
-          final String nemesisAnswer = stats['nemesisAnswer'] ?? '';
+            final String favoriteDeck = stats['favoriteDeck'] ?? 'Žiadny';
+            final String nemesisPrompt = stats['nemesisPrompt'] ?? stats['nemesisCard'] ?? 'Žiadna';
+            final String nemesisAnswer = stats['nemesisAnswer'] ?? '';
 
-          // Odhad ušetreného času na sociálnych sieťach / prokrastinácii
-          final int savedProcrastinationSeconds = (studySeconds * 2.5).round();
+            final int savedProcrastinationSeconds = (studySeconds * 2.5).round();
 
-          return ListView(
-            padding: const EdgeInsets.all(20.0),
-            physics: const BouncingScrollPhysics(),
-            children: [
-              // 1. PREPÍNAČ OBDOBIA
-              Row(
-                children: [
-                  Expanded(child: _buildFilterButton('Dnes', 0, currentTheme)),
-                  const SizedBox(width: 8),
-                  Expanded(child: _buildFilterButton('Týždeň', 1, currentTheme)),
-                  const SizedBox(width: 8),
-                  Expanded(child: _buildFilterButton('Všetko', 2, currentTheme)),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // 2. STREAK KARTA (HLAVNÝ BANNER)
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: currentTheme.getCardDecoration(currentTheme.dailyGoalColor),
-                child: Row(
+            return ListView(
+              padding: const EdgeInsets.all(20.0),
+              physics: const BouncingScrollPhysics(),
+              children: [
+                // 1. PREPÍNAČ OBDOBIA
+                Row(
                   children: [
-                    const Text('🔥', style: TextStyle(fontSize: 48)),
+                    Expanded(child: _buildFilterButton('Dnes', 0, currentTheme)),
+                    const SizedBox(width: 8),
+                    Expanded(child: _buildFilterButton('Týždeň', 1, currentTheme)),
+                    const SizedBox(width: 8),
+                    Expanded(child: _buildFilterButton('Všetko', 2, currentTheme)),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // 2. STREAK KARTA (HLAVNÝ BANNER)
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: currentTheme.getCardDecoration(currentTheme.dailyGoalColor),
+                  child: Row(
+                    children: [
+                      const Text('🔥', style: TextStyle(fontSize: 48)),
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'AKTÍVNY STREAK',
+                            style: TextStyle(
+                              color: currentTheme.id == 2 || currentTheme.id == 5 
+                                  ? Colors.black 
+                                  : currentTheme.dailyGoalColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.1,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '$streak ${streak == 1 ? 'deň' : (streak >= 2 && streak <= 4 ? 'dni' : 'dní')}',
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurface,
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // 3. GRID 1: ČAS UČENIA & ZAROBENÝ ČAS
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildStatTile(
+                        title: 'Čas učenia',
+                        value: _formatDuration(studySeconds),
+                        icon: Icons.timer_rounded,
+                        color: currentTheme.blockedAppsColor,
+                        currentTheme: currentTheme,
+                      ),
+                    ),
                     const SizedBox(width: 16),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'AKTÍVNY STREAK',
-                          style: TextStyle(
-                            color: currentTheme.id == 2 || currentTheme.id == 5 
-                                ? Colors.black 
-                                : currentTheme.dailyGoalColor,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.1,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '$streak ${streak == 1 ? 'deň' : (streak >= 2 && streak <= 4 ? 'dni' : 'dní')}',
-                          style: TextStyle(
-                            color: theme.colorScheme.onSurface,
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
+                    Expanded(
+                      child: _buildStatTile(
+                        title: 'Zarobený čas',
+                        value: _formatDuration(earnedSeconds),
+                        icon: Icons.lock_open_rounded,
+                        color: Colors.amber.shade700,
+                        currentTheme: currentTheme,
+                      ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-              // 3. GRID 1: ČAS UČENIA & ZAROBENÝ ČAS
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildStatTile(
-                      title: 'Čas učenia',
-                      value:  _formatDuration(studySeconds),
-                      icon: Icons.timer_rounded,
-                      color: currentTheme.blockedAppsColor,
-                      currentTheme: currentTheme,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildStatTile(
-                      title: 'Zarobený čas',
-                      value: _formatDuration(earnedSeconds),
-                      icon: Icons.lock_open_rounded,
-                      color: Colors.amber.shade700,
-                      currentTheme: currentTheme,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // 4. GRID 2: PREBRATÉ KARTIČKY & UŠETRENÝ ČAS
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildStatTile(
-                      title: 'Prebratých kartičiek',
-                      value: '$cardsCount',
-                      icon: Icons.style_rounded,
-                      color: currentTheme.testSetupColor,
-                      currentTheme: currentTheme,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildStatTile(
-                      title: 'Ušetrený čas',
-                      value: _formatDuration(savedProcrastinationSeconds),
-                      icon: Icons.hourglass_top_rounded,
-                      color: Colors.teal,
-                      currentTheme: currentTheme,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // 5. PRIEMERNÁ ÚSPEŠNOSŤ
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: currentTheme.getCardDecoration(currentTheme.decksColor),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                // 4. GRID 2: PREBRATÉ KARTIČKY & UŠETRENÝ ČAS
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.insights_rounded, 
-                          color: currentTheme.getIconColor(currentTheme.decksColor), 
-                          size: 32,
+                    Expanded(
+                      child: _buildStatTile(
+                        title: 'Prebratých kartičiek',
+                        value: '$cardsCount',
+                        icon: Icons.style_rounded,
+                        color: currentTheme.testSetupColor,
+                        currentTheme: currentTheme,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildStatTile(
+                        title: 'Ušetrený čas',
+                        value: _formatDuration(savedProcrastinationSeconds),
+                        icon: Icons.hourglass_top_rounded,
+                        color: Colors.teal,
+                        currentTheme: currentTheme,
+                        customGradient: isVibrant ? const LinearGradient(
+                          colors: [Color(0xFF00B4DB), Color(0xFF0083B0)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ) : null,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // 5. PRIEMERNÁ ÚSPEŠNOSŤ
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: currentTheme.getCardDecoration(currentTheme.decksColor),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.insights_rounded, 
+                            color: currentTheme.getIconColor(currentTheme.decksColor), 
+                            size: 32,
+                          ),
+                          const SizedBox(width: 16),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Priemerná úspešnosť',
+                                style: TextStyle(
+                                  color: theme.colorScheme.onSurface,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                accuracy >= 80 ? 'Skvelá pamäť!' : 'Pokračuj v tréningu',
+                                style: TextStyle(
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      Text(
+                        '$accuracy %',
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface,
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
                         ),
-                        const SizedBox(width: 16),
-                        Column(
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // 6. NAJOBĽÚBENEJŠÍ BALÍČEK
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: isVibrant
+                      ? BoxDecoration(
+                          borderRadius: currentTheme.cardBorderRadius,
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF7F00FF), Color(0xFFE100FF)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                        )
+                      : currentTheme.getCardDecoration(Colors.indigo),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.star_rounded, 
+                        color: isVibrant ? Colors.white : currentTheme.getIconColor(Colors.indigo), 
+                        size: 32,
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Priemerná úspešnosť',
+                              'Najobľúbenejší balíček',
                               style: TextStyle(
-                                color: theme.colorScheme.onSurface,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                                color: isVibrant ? Colors.white.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              accuracy >= 80 ? 'Skvelá pamäť!' : 'Pokračuj v tréningu',
+                              favoriteDeck,
                               style: TextStyle(
-                                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                                fontSize: 12,
+                                color: isVibrant ? Colors.white : theme.colorScheme.onSurface,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
                               ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                    Text(
-                      '$accuracy %',
-                      style: TextStyle(
-                        color: theme.colorScheme.onSurface,
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-              // 6. NAJOBĽÚBENEJŠÍ BALÍČEK
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: currentTheme.getCardDecoration(Colors.indigo),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.star_rounded, 
-                      color: currentTheme.getIconColor(Colors.indigo), 
-                      size: 32,
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Najobľúbenejší balíček',
-                            style: TextStyle(
-                              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            favoriteDeck,
-                            style: TextStyle(
-                              color: theme.colorScheme.onSurface,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                // 7. NEMESIS KARTA (INTERAKTÍVNA FLASHCARD)
+                _NemesisInteractiveCard(
+                  prompt: nemesisPrompt,
+                  correctAnswer: nemesisAnswer,
+                  currentTheme: currentTheme,
                 ),
-              ),
-              const SizedBox(height: 16),
-
-              // 7. NEMESIS KARTA (INTERAKTÍVNA FLASHCARD)
-              _NemesisInteractiveCard(
-                prompt: nemesisPrompt,
-                correctAnswer: nemesisAnswer,
-                currentTheme: currentTheme,
-              ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -294,25 +310,31 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
     required IconData icon,
     required Color color,
     required AppThemeData currentTheme,
+    Gradient? customGradient,
   }) {
     final theme = currentTheme.theme;
 
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: currentTheme.getCardDecoration(color),
+      decoration: customGradient != null 
+          ? BoxDecoration(
+              borderRadius: currentTheme.cardBorderRadius,
+              gradient: customGradient,
+            )
+          : currentTheme.getCardDecoration(color),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
             icon, 
-            color: currentTheme.getIconColor(color), 
+            color: customGradient != null ? Colors.white : currentTheme.getIconColor(color), 
             size: 30,
           ),
           const SizedBox(height: 12),
           Text(
             title,
             style: TextStyle(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+              color: customGradient != null ? Colors.white.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.7),
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
@@ -323,7 +345,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
             child: Text(
               value,
               style: TextStyle(
-                color: theme.colorScheme.onSurface,
+                color: customGradient != null ? Colors.white : theme.colorScheme.onSurface,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
               ),
@@ -407,16 +429,26 @@ class _NemesisInteractiveCardState extends State<_NemesisInteractiveCard> {
   Widget build(BuildContext context) {
     final theme = widget.currentTheme.theme;
     final bool hasNemesis = widget.prompt != 'Žiadna' && widget.prompt.isNotEmpty;
+    final bool isVibrant = widget.currentTheme.id == 5;
 
     if (!hasNemesis) {
       return Container(
         padding: const EdgeInsets.all(18),
-        decoration: widget.currentTheme.getCardDecoration(Colors.deepOrange),
+        decoration: isVibrant
+            ? BoxDecoration(
+                borderRadius: widget.currentTheme.cardBorderRadius,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF8E0E00), Color(0xFF1F1C18)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              )
+            : widget.currentTheme.getCardDecoration(Colors.deepOrange),
         child: Row(
           children: [
             Icon(
               Icons.sentiment_satisfied_alt_rounded, 
-              color: widget.currentTheme.getIconColor(Colors.deepOrange), 
+              color: isVibrant ? Colors.white : widget.currentTheme.getIconColor(Colors.deepOrange), 
               size: 32,
             ),
             const SizedBox(width: 16),
@@ -427,16 +459,16 @@ class _NemesisInteractiveCardState extends State<_NemesisInteractiveCard> {
                   Text(
                     'Nemesis karta',
                     style: TextStyle(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                      color: isVibrant ? Colors.white.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.7),
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Zatiaľ nemáš žiadnu úhlavnú nepriateĽskú kartu 🎉',
+                    'Zatiaľ nemáš žiadnu úhlavnú nepriateľskú kartu 🎉',
                     style: TextStyle(
-                      color: theme.colorScheme.onSurface,
+                      color: isVibrant ? Colors.white : theme.colorScheme.onSurface,
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
                     ),
@@ -449,17 +481,15 @@ class _NemesisInteractiveCardState extends State<_NemesisInteractiveCard> {
       );
     }
 
-    // Určenie textu, ktorý sa má zobraziť (ak chýba odpoveď, zobrazí prompt)
     final String textToDisplay = _isFlipped 
         ? (widget.correctAnswer.trim().isNotEmpty ? widget.correctAnswer : widget.prompt)
         : widget.prompt;
 
-    // Bezpečná farba textu s vysokým kontrastom
     Color textColor;
     if (_isFlipped) {
-      textColor = widget.currentTheme.id == 2 ? Colors.green.shade800 : Colors.green.shade600;
+      textColor = widget.currentTheme.id == 2 ? Colors.green.shade800 : (isVibrant ? Colors.lightGreenAccent : Colors.green.shade600);
     } else {
-      textColor = theme.colorScheme.onSurface;
+      textColor = isVibrant ? Colors.white : theme.colorScheme.onSurface;
     }
 
     return GestureDetector(
@@ -472,9 +502,20 @@ class _NemesisInteractiveCardState extends State<_NemesisInteractiveCard> {
         child: Container(
           key: ValueKey(_isFlipped),
           padding: const EdgeInsets.all(18),
-          decoration: widget.currentTheme.getCardDecoration(
-            _isFlipped ? Colors.green.shade700 : Colors.deepOrange,
-          ),
+          decoration: isVibrant
+              ? BoxDecoration(
+                  borderRadius: widget.currentTheme.cardBorderRadius,
+                  gradient: LinearGradient(
+                    colors: _isFlipped 
+                        ? [const Color(0xFF11998E), const Color(0xFF38EF7D)]
+                        : [const Color(0xFF8E0E00), const Color(0xFF1F1C18)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                )
+              : widget.currentTheme.getCardDecoration(
+                  _isFlipped ? Colors.green.shade700 : Colors.deepOrange,
+                ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -485,16 +526,18 @@ class _NemesisInteractiveCardState extends State<_NemesisInteractiveCard> {
                     children: [
                       Icon(
                         _isFlipped ? Icons.check_circle_outline_rounded : Icons.warning_amber_rounded, 
-                        color: widget.currentTheme.getIconColor(
-                          _isFlipped ? Colors.green.shade700 : Colors.deepOrange,
-                        ), 
+                        color: isVibrant 
+                            ? Colors.white 
+                            : widget.currentTheme.getIconColor(
+                                _isFlipped ? Colors.green.shade700 : Colors.deepOrange,
+                              ), 
                         size: 26,
                       ),
                       const SizedBox(width: 10),
                       Text(
                         _isFlipped ? 'ODPOVEĎ' : 'NEMESIS KARTA (NAJVIAC CHÝB)',
                         style: TextStyle(
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                          color: isVibrant ? Colors.white.withValues(alpha: 0.9) : theme.colorScheme.onSurface.withValues(alpha: 0.8),
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.8,
@@ -505,7 +548,7 @@ class _NemesisInteractiveCardState extends State<_NemesisInteractiveCard> {
                   Icon(
                     Icons.flip_rounded,
                     size: 18,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    color: isVibrant ? Colors.white.withValues(alpha: 0.7) : theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
                 ],
               ),
@@ -524,7 +567,7 @@ class _NemesisInteractiveCardState extends State<_NemesisInteractiveCard> {
               Text(
                 _isFlipped ? 'Ťukni pre návrat na otázku' : 'Ťukni pre otočenie a zobrazenie odpovede',
                 style: TextStyle(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                  color: isVibrant ? Colors.white.withValues(alpha: 0.7) : theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   fontSize: 11,
                   fontStyle: FontStyle.italic,
                 ),

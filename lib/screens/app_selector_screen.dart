@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../themes/theme_provider.dart';
 import '../services/revenuecat_service.dart';
+import '../themes/themed_background.dart';
 
 class AppSelectorScreen extends StatefulWidget {
   const AppSelectorScreen({super.key});
@@ -16,20 +17,29 @@ class AppSelectorScreen extends StatefulWidget {
 
 class _AppSelectorScreenState extends State<AppSelectorScreen> {
   List<AppInfo> installedApps = [];
+  List<AppInfo> filteredApps = [];
   Set<String> blockedPackages = {};
   bool isLoading = true;
   bool isPremium = false;
+  final TextEditingController _searchController = TextEditingController();
   static const platform = MethodChannel('brainlock.channel');
 
   @override
   void initState() {
     super.initState();
     _loadAppsAndSettings();
+    _searchController.addListener(_filterApps);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadAppsAndSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    final savedList = prefs.getStringList('blocked_apps') ?? ['com.android.chrome'];
+    final savedList = prefs.getStringList('blocked_apps') ?? [];
     blockedPackages = savedList.toSet();
 
     List<AppInfo> apps = await InstalledApps.getInstalledApps(
@@ -45,8 +55,18 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
 
     setState(() {
       installedApps = apps;
+      filteredApps = apps;
       isPremium = premiumStatus;
       isLoading = false;
+    });
+  }
+
+  void _filterApps() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      filteredApps = installedApps.where((app) {
+        return app.name.toLowerCase().contains(query);
+      }).toList();
     });
   }
 
@@ -145,89 +165,201 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
     final theme = currentTheme.theme;
     final Color accentColor = currentTheme.blockedAppsColor;
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text('Blokované aplikácie'),
-        backgroundColor: theme.appBarTheme.backgroundColor ?? Colors.transparent,
-        foregroundColor: theme.colorScheme.onSurface,
-        elevation: theme.appBarTheme.elevation ?? 0,
-      ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator(color: currentTheme.blockedAppsColor))
-          : Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 8,
-                  childAspectRatio: 0.85,
-                ),
-                itemCount: installedApps.length,
-                itemBuilder: (context, index) {
-                  final app = installedApps[index];
-                  final isBlocked = blockedPackages.contains(app.packageName);
+    final headerDecoration = BoxDecoration(
+      color: theme.cardColor,
+      borderRadius: currentTheme.cardBorderRadius,
+      border: currentTheme.id == 2
+          ? Border.all(color: Colors.black, width: 3.5)
+          : (currentTheme.cardBorder ?? Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.1))),
+      boxShadow: currentTheme.id == 2
+          ? const [BoxShadow(color: Colors.black, offset: Offset(4, 4))]
+          : currentTheme.cardShadows,
+      gradient: currentTheme.cardGradient,
+    );
 
-                  final cardDecoration = isBlocked
-                      ? currentTheme.getCardDecoration(accentColor, isSelected: true)
-                      : BoxDecoration(
-                          color: theme.cardColor,
-                          borderRadius: currentTheme.cardBorderRadius,
-                          border: null,
-                          boxShadow: currentTheme.cardShadows,
-                          gradient: currentTheme.cardGradient,
-                        );
+    final searchDecoration = BoxDecoration(
+      color: theme.cardColor,
+      borderRadius: currentTheme.cardBorderRadius,
+      border: currentTheme.id == 2
+          ? Border.all(color: Colors.black, width: 3.5)
+          : Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.12)),
+      boxShadow: currentTheme.id == 2
+          ? const [BoxShadow(color: Colors.black, offset: Offset(3, 3))]
+          : currentTheme.cardShadows,
+    );
 
-                  final textColor = isBlocked
-                      ? currentTheme.getContrastTextColor(accentColor)
-                      : theme.colorScheme.onSurface;
-
-                  return GestureDetector(
-                    onTap: () => _toggleApp(app.packageName),
+    return ThemedBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          title: const Text('Blokované aplikácie'),
+          backgroundColor: theme.scaffoldBackgroundColor, // Nepriehľadný AppBar
+          foregroundColor: theme.colorScheme.onSurface,
+          elevation: theme.appBarTheme.elevation ?? 0,
+        ),
+        body: isLoading
+            ? Center(child: CircularProgressIndicator(color: accentColor))
+            : Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
                     child: Container(
-                      decoration: cardDecoration,
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(16),
+                      decoration: headerDecoration,
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Stack(
-                            alignment: Alignment.topRight,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              app.icon != null
-                                  ? Image.memory(app.icon!, width: 48, height: 48)
-                                  : Icon(Icons.android, size: 48, color: theme.colorScheme.onSecondaryContainer),
-                              if (isBlocked)
-                                CircleAvatar(
-                                  radius: 10,
-                                  backgroundColor: currentTheme.getContrastTextColor(accentColor),
-                                  child: Icon(
-                                    Icons.check, 
-                                    size: 12, 
-                                    color: accentColor,
+                              Text(
+                                "Ktoré aplikácie zamknúť?",
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: accentColor.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: currentTheme.id == 2 ? Colors.black : accentColor, 
+                                    width: currentTheme.id == 2 ? 2.5 : 1,
                                   ),
                                 ),
+                                child: Text(
+                                  isPremium 
+                                      ? "${blockedPackages.length} / ∞" 
+                                      : "${blockedPackages.length} / 3",
+                                  style: TextStyle(
+                                    color: accentColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           Text(
-                            app.name,
-                            textAlign: TextAlign.center,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                            "Zvolené aplikácie budú prístupné až po úspešnom vyriešení vedomostného testu.",
                             style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: isBlocked ? FontWeight.bold : FontWeight.normal,
-                              color: textColor,
+                              fontSize: 13,
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                              height: 1.3,
                             ),
                           ),
                         ],
                       ),
                     ),
-                  );
-                },
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    child: Container(
+                      decoration: searchDecoration,
+                      child: TextField(
+                        controller: _searchController,
+                        style: TextStyle(color: theme.colorScheme.onSurface),
+                        decoration: InputDecoration(
+                          hintText: "Hľadať aplikáciu...",
+                          hintStyle: TextStyle(
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                          ),
+                          prefixIcon: Icon(
+                            Icons.search_rounded,
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: filteredApps.isEmpty
+                        ? Center(
+                            child: Text(
+                              "Žiadna aplikácia sa nenašla",
+                              style: TextStyle(
+                                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            itemCount: filteredApps.length,
+                            itemBuilder: (context, index) {
+                              final app = filteredApps[index];
+                              final isBlocked = blockedPackages.contains(app.packageName);
+
+                              final itemDecoration = isBlocked
+                                  ? currentTheme.getCardDecoration(accentColor, isSelected: true)
+                                  : BoxDecoration(
+                                      color: theme.cardColor,
+                                      borderRadius: currentTheme.cardBorderRadius,
+                                      border: currentTheme.id == 2
+                                          ? Border.all(color: Colors.black, width: 3.5)
+                                          : (currentTheme.cardBorder ?? Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.1))),
+                                      boxShadow: currentTheme.cardShadows,
+                                      gradient: currentTheme.cardGradient,
+                                    );
+
+                              final textColor = isBlocked
+                                  ? currentTheme.getContrastTextColor(accentColor)
+                                  : theme.colorScheme.onSurface;
+
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 10),
+                                decoration: itemDecoration,
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                                  leading: ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: app.icon != null
+                                        ? Image.memory(app.icon!, width: 42, height: 42)
+                                        : Icon(Icons.android, size: 42, color: textColor),
+                                  ),
+                                  title: Text(
+                                    app.name,
+                                    style: TextStyle(
+                                      fontWeight: isBlocked ? FontWeight.bold : FontWeight.w500,
+                                      fontSize: 15,
+                                      color: textColor,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    isBlocked ? "Zablokovaná" : "Povolená",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: isBlocked ? FontWeight.bold : FontWeight.normal,
+                                      color: isBlocked 
+                                          ? textColor.withValues(alpha: 0.85)
+                                          : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                                    ),
+                                  ),
+                                  trailing: Switch(
+                                    value: isBlocked,
+                                    activeColor: currentTheme.id == 2 ? Colors.black : accentColor,
+                                    activeTrackColor: isBlocked 
+                                        ? textColor.withValues(alpha: 0.3) 
+                                        : accentColor.withValues(alpha: 0.3),
+                                    inactiveThumbColor: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                                    inactiveTrackColor: theme.colorScheme.onSurface.withValues(alpha: 0.1),
+                                    onChanged: (_) => _toggleApp(app.packageName),
+                                  ),
+                                  onTap: () => _toggleApp(app.packageName),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                ],
               ),
-            ),
+      ),
     );
   }
 }

@@ -1,6 +1,6 @@
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'database_helper.dart';
 
 enum ChallengeType {
   completeQuizzes,       // Dokonči X testov
@@ -53,9 +53,7 @@ class DailyChallengeService {
   static const String _prefKeyTotalCompleted = 'dc_total_completed';
   static const String _prefKeyChallengeIndex = 'dc_challenge_index';
 
-  // Rozšírený pool denných výziev
   static final List<DailyChallenge> _challengePool = [
-    // 1. ZÁKLADNÉ VÝZVY
     DailyChallenge(
       id: 'quizzes_2',
       title: 'Kvízový maratón',
@@ -92,8 +90,6 @@ class DailyChallengeService {
       bonusSeconds: 360,
       iconEmoji: '🌟',
     ),
-
-    // 2. SAMOSTATNÉ MODIFIKÁTORY
     DailyChallenge(
       id: 'mod_3options',
       title: 'Ľahšia voľba',
@@ -157,8 +153,6 @@ class DailyChallengeService {
       bonusSeconds: 480,
       iconEmoji: '💀',
     ),
-
-    // 3. ŠPECIÁLNE KOMBÁ A PODMIENKY
     DailyChallenge(
       id: 'mod_at_least_3',
       title: 'Kombinačný špecialista',
@@ -247,8 +241,7 @@ class DailyChallengeService {
     };
   }
 
-  // Zapísanie pokroku s vyhodnotením všetkých zapnutých modifikátorov
-  static Future<bool> reportProgress({
+  static Future<int> reportProgress({
     required ChallengeType type,
     int amount = 1,
     double accuracy = 0.0,
@@ -264,9 +257,8 @@ class DailyChallengeService {
     final status = await getTodayChallengeStatus();
     final challenge = status['challenge'] as DailyChallenge;
 
-    if (status['isCompleted'] == true) return false;
+    if (status['isCompleted'] == true) return 0;
 
-    // Spočítať počet aktívnych modifikátorov
     int activeModifiersCount = 0;
     if (is3Options) activeModifiersCount++;
     if (isSwapQuestion) activeModifiersCount++;
@@ -289,7 +281,6 @@ class DailyChallengeService {
         matchesChallenge = (type == ChallengeType.completeQuizzes && accuracy >= 1.0);
         break;
 
-      // Samostatné modifikátory
       case ChallengeType.modifier3Options:
         matchesChallenge = (type == ChallengeType.completeQuizzes && is3Options);
         break;
@@ -312,7 +303,6 @@ class DailyChallengeService {
         matchesChallenge = (type == ChallengeType.completeQuizzes && isHardcore);
         break;
 
-      // Špeciálne kombá & podmienky
       case ChallengeType.atLeast3Modifiers:
         matchesChallenge = (type == ChallengeType.completeQuizzes && activeModifiersCount >= 3);
         break;
@@ -327,7 +317,7 @@ class DailyChallengeService {
         break;
     }
 
-    if (!matchesChallenge) return false;
+    if (!matchesChallenge) return 0;
 
     int currentProgress = status['progress'] as int;
     int newProgress = currentProgress + amount;
@@ -351,13 +341,11 @@ class DailyChallengeService {
       await prefs.setInt(_prefKeyMaxStreak, maxStreak);
       await prefs.setInt(_prefKeyTotalCompleted, totalCompleted);
 
-      // ⚡ PRIDANIE BONUSOVÉHO ČASU DO DATABÁZY ZÍSKANÉHO ČASU ⚡
-      await DatabaseHelper.instance.addEarnedTime(challenge.bonusSeconds);
-
-      return true;
+      // Vráti výšku odmeny. Ukladanie do DB robí QuizOverlayScreen v jednom balíku.
+      return challenge.bonusSeconds;
     }
 
-    return false;
+    return 0;
   }
 
   static String _getTodayString() {

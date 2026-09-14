@@ -23,7 +23,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 2, // Zvýšená verzia pre novú stĺpcovú štruktúru wrong_count
+      version: 3, // 🟢 Zvýšená verzia pre opravu schémy a odmien
       onCreate: _createDB,
       onUpgrade: _onUpgradeDB,
     );
@@ -57,6 +57,7 @@ class DatabaseHelper {
         timestamp TEXT NOT NULL,
         deck_id INTEGER NOT NULL,
         duration_seconds INTEGER NOT NULL,
+        earned_seconds INTEGER NOT NULL DEFAULT 0,
         correct_count INTEGER NOT NULL,
         total_questions INTEGER NOT NULL
       )
@@ -68,6 +69,12 @@ class DatabaseHelper {
   Future _onUpgradeDB(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
       await db.execute('ALTER TABLE cards ADD COLUMN wrong_count INTEGER NOT NULL DEFAULT 0');
+    }
+    if (oldVersion < 3) {
+      try {
+        await db.execute('ALTER TABLE study_sessions ADD COLUMN earned_seconds INTEGER NOT NULL DEFAULT 0');
+      } catch (_) {}
+      await db.execute('UPDATE study_sessions SET correct_count = total_questions WHERE correct_count > total_questions AND total_questions > 0');
     }
   }
 
@@ -239,33 +246,28 @@ class DatabaseHelper {
     return Sqflite.firstIntValue(result) ?? 0;
   }
 
-  // Vloženie študijnej relácie (reálny čas učenia VS zarobený čas)
   Future<int> insertStudySession({
     required int deckId,
-    required int durationSeconds, // 👈 Reálny čas učenia (stopky)
-    required int earnedSeconds,   // 👈 Zarobený čas (odmena pre appky)
+    required int durationSeconds,
+    required int earnedSeconds,
     required int correctCount,
     required int totalQuestions,
   }) async {
     final db = await instance.database;
+    final safeCorrect = correctCount > totalQuestions ? totalQuestions : correctCount;
+
     return await db.insert('study_sessions', {
       'deck_id': deckId,
       'duration_seconds': durationSeconds,
       'earned_seconds': earnedSeconds,
-      'correct_count': correctCount,
+      'correct_count': safeCorrect,
       'total_questions': totalQuestions,
       'timestamp': DateTime.now().toIso8601String(),
     });
   }
 
-  // Načítanie agregovaných štatistík
   Future<Map<String, dynamic>> getAggregatedStats(int filterIndex) async {
     final db = await instance.database;
-
-    // Bezpečná migrácia stĺpca earned_seconds pre existujúce databázy
-    try {
-      await db.execute("ALTER TABLE study_sessions ADD COLUMN earned_seconds INTEGER DEFAULT 0;");
-    } catch (_) {}
 
     String dateFilter = "";
     if (filterIndex == 0) {
@@ -287,18 +289,23 @@ class DatabaseHelper {
 
     final row = result.first;
     final int totalCards = row['total_cards'] as int;
-    final int totalDuration = row['total_duration'] as int; // Skutočný čas učenia
-    final int totalEarned = row['total_earned'] as int;     // Zarobený čas
+    final int totalDuration = row['total_duration'] as int;
+    final int totalEarned = row['total_earned'] as int;
     final int totalCorrect = row['total_correct'] as int;
     final int totalSessions = row['total_sessions'] as int;
 
-    final int accuracy = totalCards > 0 ? ((totalCorrect / totalCards) * 100).round() : 0;
+    int accuracy = 0;
+    if (totalCards > 0) {
+      final rawAccuracy = ((totalCorrect / totalCards) * 100).round();
+      accuracy = rawAccuracy > 100 ? 100 : rawAccuracy;
+    }
+
     final int minutesSaved = (totalEarned / 60).round();
 
     return {
       'cards': totalCards,
-      'durationSeconds': totalDuration, // Reálny čas strávený učením
-      'earnedSeconds': totalEarned,     // Zarobený čas na odomknutie
+      'durationSeconds': totalDuration,
+      'earnedSeconds': totalEarned,
       'timeMinutes': minutesSaved,
       'accuracy': accuracy,
       'sessions': totalSessions,
@@ -306,8 +313,6 @@ class DatabaseHelper {
     };
   }
 
-
-// Získanie názvu najobľúbenejšieho balíčka
   Future<String> getFavoriteDeckName(int filterIndex) async {
     final db = await instance.database;
     final result = await db.rawQuery('''
@@ -320,31 +325,30 @@ class DatabaseHelper {
     ''');
 
     if (result.isNotEmpty && result.first['name'] != null) {
-      return result.first['name'].toString(); // 👈 Vytiahnutie Stringu z QueryRow
+      return result.first['name'].toString();
     }
     return 'Žiadny';
   }
 
-  // Získanie Nemesis karty (s najvyšším počtom chýb)
   Future<Map<String, String>?> getNemesisCardDetails() async {
-      final db = await instance.database;
-      final result = await db.rawQuery('''
-        SELECT prompt, correct_answer 
-        FROM cards 
-        WHERE wrong_count > 0 
-        ORDER BY wrong_count DESC 
-        LIMIT 1
-      ''');
+    final db = await instance.database;
+    final result = await db.rawQuery('''
+      SELECT prompt, correct_answer 
+      FROM cards 
+      WHERE wrong_count > 0 
+      ORDER BY wrong_count DESC 
+      LIMIT 1
+    ''');
 
-      if (result.isNotEmpty) {
-        return {
-          'prompt': result.first['prompt'].toString(),
-          'correct_answer': result.first['correct_answer'].toString(),
-        };
-      }
-      return null;
+    if (result.isNotEmpty) {
+      return {
+        'prompt': result.first['prompt'].toString(),
+        'correct_answer': result.first['correct_answer'].toString(),
+      };
     }
-      // Výpočet séria nepretržitého učenia (Streak)
+    return null;
+  }
+
   Future<int> getCurrentStreak() async {
     final db = await instance.database;
     final result = await db.rawQuery('''
@@ -382,19 +386,19 @@ class DatabaseHelper {
     return streak;
   }
 
-
+  // 🟢 OPRAVENÁ METÓDA (zapisuje do earned_seconds namiesto duration_seconds)
   Future<int> addEarnedTime(int bonusSeconds) async {
     final db = await instance.database;
     return await db.insert('study_sessions', {
       'timestamp': DateTime.now().toIso8601String(),
       'deck_id': 0, // 0 = Odmena z dennej výzvy
-      'duration_seconds': bonusSeconds,
+      'duration_seconds': 0,
+      'earned_seconds': bonusSeconds, // 🟢 Správny stĺpec!
       'correct_count': 0,
       'total_questions': 0,
     });
   }
 
-  // Inkrementovanie počtu chýb na konkrétnej kartičke (pre Nemesis kartu)
   Future<void> incrementCardWrongCount(int cardId) async {
     final db = await instance.database;
     await db.rawUpdate('''

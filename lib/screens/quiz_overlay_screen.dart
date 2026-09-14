@@ -165,10 +165,11 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     return mult;
   }
 
-  Future<void> _reportDailyChallengeProgress() async {
+  Future<int> _reportDailyChallengeProgress() async {
+    int totalChallengeBonus = 0;
     if (_isLearningMode) {
       if (_masteredCount > 0) {
-        await DailyChallengeService.reportProgress(
+        totalChallengeBonus += await DailyChallengeService.reportProgress(
           type: ChallengeType.learnCards,
           amount: _masteredCount,
         );
@@ -180,7 +181,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
         double mult = _calculatedTotalMultiplier;
         int earnedSeconds = (_correctAnswersCount * 30 * mult).round();
 
-        await DailyChallengeService.reportProgress(
+        totalChallengeBonus += await DailyChallengeService.reportProgress(
           type: ChallengeType.completeQuizzes,
           accuracy: accuracy,
           is3Options: _is3Options,
@@ -193,13 +194,14 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
         );
 
         if (earnedSeconds > 0) {
-          await DailyChallengeService.reportProgress(
+          totalChallengeBonus += await DailyChallengeService.reportProgress(
             type: ChallengeType.earnMinutes,
             amount: earnedSeconds,
           );
         }
       }
     }
+    return totalChallengeBonus;
   }
 
   Future<void> _startRemedialLearning() async {
@@ -333,7 +335,9 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       final card = _learningCardsQueue.removeAt(0);
       
       if (knewIt) {
-        _masteredCount++;
+        if (_learningRound == 1) {
+          _masteredCount++;
+        }
       } else {
         if (card['id'] != null) {
           DatabaseHelper.instance.incrementCardWrongCount(card['id'] as int);
@@ -347,7 +351,6 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
         if (_failedCards.isNotEmpty) {
           _learningCardsQueue = List.from(_failedCards);
           _learningCardsQueue.shuffle();
-          _totalLearnedCards = _learningCardsQueue.length;
           _failedCards.clear();
           _learningRound++;
         } else {
@@ -615,31 +618,35 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
   }
 
   void _finishAndUnlock() async {
-    // Zapísanie pokroku do Denných Výziev
     _sessionStopwatch.stop();
     int actualStudyTimeSeconds = _sessionStopwatch.elapsed.inSeconds;
     if (actualStudyTimeSeconds < 1) actualStudyTimeSeconds = 1;
 
-    await _reportDailyChallengeProgress();
+    int challengeBonusSeconds = await _reportDailyChallengeProgress();
+
+    // 🟢 Získame farbu z aktuálnej témy pre systémovú notifikáciu
+    final currentTheme = Provider.of<ThemeProvider>(context, listen: false).currentThemeData;
+    int themeColorValue = currentTheme.testSetupColor.toARGB32();
 
     if (widget.practiceDeckId != null) {
-      if (_isLearningMode) {
-        await DatabaseHelper.instance.insertStudySession(
-          deckId: _activeDeckId ?? 0,
-          durationSeconds: actualStudyTimeSeconds, // 👈 Stopky
-          earnedSeconds: 0,
-          correctCount: _masteredCount,
-          totalQuestions: _totalLearnedCards > 0 ? _totalLearnedCards : 1,
-        );
+      int earnedSecondsForPractice = 0;
+      if (!_isLearningMode) {
+        bool isSuccess = _correctAnswersCount >= _requiredCorrectQuestions;
+        if (isSuccess) {
+          double mult = _calculatedTotalMultiplier;
+          earnedSecondsForPractice = (_correctAnswersCount * 30 * mult).round();
+        }
       } else {
-        await DatabaseHelper.instance.insertStudySession(
-          deckId: _activeDeckId ?? 0,
-          durationSeconds: actualStudyTimeSeconds, // 👈 Stopky
-          earnedSeconds: 0,
-          correctCount: _correctAnswersCount,
-          totalQuestions: _questionCount.toInt(),
-        );
+        earnedSecondsForPractice = (_learnInterval * 60).round();
       }
+
+      await DatabaseHelper.instance.insertStudySession(
+        deckId: _activeDeckId ?? 0,
+        durationSeconds: actualStudyTimeSeconds,
+        earnedSeconds: earnedSecondsForPractice + challengeBonusSeconds,
+        correctCount: _isLearningMode ? _masteredCount : _correctAnswersCount,
+        totalQuestions: _isLearningMode ? (_totalLearnedCards > 0 ? _totalLearnedCards : 1) : _questionCount.toInt(),
+      );
 
       if (mounted) {
         Provider.of<StatsProvider>(context, listen: false).refreshStats();
@@ -651,30 +658,32 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
 
     if (_isLearningMode) {
       int earnedSeconds = (_learnInterval * 60).round();
+      int totalEarned = earnedSeconds + challengeBonusSeconds;
       int actualAddedSeconds = 0;
 
       const platform = MethodChannel('brainlock.channel');
       try { 
         final dynamic result = await platform.invokeMethod('unlockApp', {
-          'seconds': earnedSeconds, 
-          'maxCap': earnedSeconds,
+          'seconds': totalEarned, 
+          'maxCap': totalEarned,
           'isFromNotification': widget.isFromNotification,
+          'themeColor': themeColorValue, // 🟢 Posielame farbu do Androidu
         }); 
 
         if (result is int) {
           actualAddedSeconds = result;
         } else {
-          actualAddedSeconds = earnedSeconds;
+          actualAddedSeconds = totalEarned;
         }
       } catch (e) { 
         debugPrint("Chyba pri odomykaní: $e"); 
-        actualAddedSeconds = earnedSeconds;
+        actualAddedSeconds = totalEarned;
       }
 
       await DatabaseHelper.instance.insertStudySession(
         deckId: _activeDeckId ?? 0,
-        durationSeconds: actualAddedSeconds,
-        earnedSeconds: 0,
+        durationSeconds: actualStudyTimeSeconds,
+        earnedSeconds: actualAddedSeconds,
         correctCount: _masteredCount,
         totalQuestions: _totalLearnedCards > 0 ? _totalLearnedCards : 1,
       );
@@ -690,37 +699,39 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     double mult = _calculatedTotalMultiplier;
     bool isSuccess = _correctAnswersCount >= _requiredCorrectQuestions;
 
-    int earnedSeconds = 0;
+    int quizEarnedSeconds = 0;
     if (isSuccess) {
-      earnedSeconds = (_correctAnswersCount * 30 * mult).round();
+      quizEarnedSeconds = (_correctAnswersCount * 30 * mult).round();
     }
     
-    int maxCapSeconds = (_questionCount * 30 * mult).round(); 
+    int totalEarnedWithChallenge = quizEarnedSeconds + challengeBonusSeconds;
+    int maxCapSeconds = (_questionCount * 30 * mult).round() + challengeBonusSeconds; 
     int actualAddedSeconds = 0;
 
-    if (earnedSeconds > 0) {
+    if (totalEarnedWithChallenge > 0) {
       const platform = MethodChannel('brainlock.channel');
       try { 
         final dynamic result = await platform.invokeMethod('unlockApp', {
-          'seconds': earnedSeconds, 
+          'seconds': totalEarnedWithChallenge, 
           'maxCap': maxCapSeconds,
           'isFromNotification': widget.isFromNotification,
+          'themeColor': themeColorValue, // 🟢 Posielame farbu do Androidu
         }); 
 
         if (result is int) {
           actualAddedSeconds = result;
         } else {
-          actualAddedSeconds = earnedSeconds;
+          actualAddedSeconds = totalEarnedWithChallenge;
         }
       } catch (e) { 
         debugPrint("Chyba: $e"); 
-        actualAddedSeconds = earnedSeconds;
+        actualAddedSeconds = totalEarnedWithChallenge;
       }
     }
 
     await DatabaseHelper.instance.insertStudySession(
       deckId: _activeDeckId ?? 0,
-      durationSeconds: actualStudyTimeSeconds, // 👈 Skutočný čas na test
+      durationSeconds: actualStudyTimeSeconds,
       earnedSeconds: actualAddedSeconds,
       correctCount: _correctAnswersCount,
       totalQuestions: _questionCount.toInt(),
@@ -843,19 +854,10 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             style: TextStyle(fontSize: 16, color: theme.colorScheme.onSurface),
           ),
           const SizedBox(height: 24),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 50), 
-              backgroundColor: theme.colorScheme.primary, 
-              foregroundColor: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onPrimary, 
-              shape: RoundedRectangleBorder(
-                borderRadius: currentTheme.buttonBorderRadius,
-                side: currentTheme.id == 2 ? const BorderSide(color: Colors.black, width: 3.5) : BorderSide.none,
-              ),
-              elevation: currentTheme.id == 2 ? 0 : 2,
-            ),
+          _buildCustomButton(
+            text: "Zatvoriť",
             onPressed: _finishAndUnlock,
-            child: const Text("Zatvoriť"),
+            currentTheme: currentTheme,
           ),
         ],
       );
@@ -927,19 +929,10 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             ),
           ),
         const SizedBox(height: 24),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size(double.infinity, 50), 
-            backgroundColor: theme.colorScheme.primary, 
-            foregroundColor: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onPrimary, 
-            shape: RoundedRectangleBorder(
-              borderRadius: currentTheme.buttonBorderRadius,
-              side: currentTheme.id == 2 ? const BorderSide(color: Colors.black, width: 3.5) : BorderSide.none,
-            ),
-            elevation: currentTheme.id == 2 ? 0 : 2,
-          ),
+        _buildCustomButton(
+          text: isSuccess && !isPractice ? "Odomknúť aplikácie" : "Zatvoriť test",
           onPressed: _finishAndUnlock,
-          child: Text(isSuccess && !isPractice ? "Odomknúť aplikácie" : "Zatvoriť test"),
+          currentTheme: currentTheme,
         ),
       ],
     );
@@ -1184,6 +1177,57 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     );
   }
 
+  Widget _buildCustomButton({
+    required String text,
+    required VoidCallback? onPressed,
+    required AppThemeData currentTheme,
+  }) {
+    final theme = currentTheme.theme;
+    final bool isNeo = currentTheme.id == 2;
+    
+    final Color bgColor = isNeo 
+        ? (onPressed == null ? Colors.grey.shade300 : const Color(0xFFFFDE59))
+        : (onPressed == null ? theme.colorScheme.onSurface.withValues(alpha: 0.3) : theme.colorScheme.primary);
+
+    final Color fgColor = isNeo 
+        ? (onPressed == null ? Colors.grey.shade600 : Colors.black)
+        : currentTheme.getContrastTextColor(bgColor);
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: currentTheme.buttonBorderRadius,
+        border: Border.all(
+          color: isNeo ? Colors.black : Colors.transparent,
+          width: isNeo ? 3.5 : 0,
+        ),
+        boxShadow: isNeo && onPressed != null
+            ? const [BoxShadow(color: Colors.black, offset: Offset(3, 3))]
+            : null,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: currentTheme.buttonBorderRadius,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            alignment: Alignment.center,
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: fgColor,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildQuizUI(AppThemeData currentTheme) {
     final theme = currentTheme.theme;
     Color hardcoreFillCol = Colors.white.withValues(alpha: 0.9);
@@ -1283,19 +1327,10 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
           ),
           if (hardcoreFeedbackWidget != null) ...[const SizedBox(height: 8), hardcoreFeedbackWidget],
           const SizedBox(height: 16),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 50), 
-              backgroundColor: _isAnswerChecked ? theme.colorScheme.onSurface.withValues(alpha: 0.3) : theme.colorScheme.primary, 
-              foregroundColor: currentTheme.id == 2 ? Colors.black : theme.colorScheme.onPrimary, 
-              shape: RoundedRectangleBorder(
-                borderRadius: currentTheme.buttonBorderRadius,
-                side: currentTheme.id == 2 ? const BorderSide(color: Colors.black, width: 3.5) : BorderSide.none,
-              ),
-              elevation: currentTheme.id == 2 ? 0 : 2,
-            ),
-            onPressed: _isAnswerChecked ? () {} : () => _checkQuizAnswer(""),
-            child: const Text("Potvrdiť", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          _buildCustomButton(
+            text: "Potvrdiť",
+            onPressed: _isAnswerChecked ? null : () => _checkQuizAnswer(""),
+            currentTheme: currentTheme,
           ),
         ] else ...[
           ..._currentOptions.map((option) {

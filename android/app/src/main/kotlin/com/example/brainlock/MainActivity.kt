@@ -62,6 +62,8 @@ class MainActivity: FlutterFragmentActivity() {
                 "unlockApp" -> {
                     val seconds = call.argument<Int>("seconds") ?: 0
                     val maxCap = call.argument<Int>("maxCap") ?: 600
+                    // 🟢 Zachytíme farbu témy poslanú z Flutteru (s predvolenou modrou ako zálohou)
+                    val themeColor = call.argument<Int>("themeColor") ?: android.graphics.Color.BLUE
                     
                     isUnlocking = true
                     
@@ -70,7 +72,8 @@ class MainActivity: FlutterFragmentActivity() {
                     intent.removeExtra("isFromNotification")
                     intent.action = null
 
-                    AppBlockerService.instance?.startUnlockTimerNotification(seconds, maxCap)
+                    // 🟢 Odšleme farbu do notifikačnej služby
+                    AppBlockerService.instance?.startUnlockTimerNotification(seconds, maxCap, themeColor)
                     
                     finish() 
                     result.success(true)

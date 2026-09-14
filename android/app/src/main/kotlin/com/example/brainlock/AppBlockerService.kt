@@ -49,7 +49,8 @@ class AppBlockerService : AccessibilityService() {
         }
     }
 
-    fun startUnlockTimerNotification(addedSeconds: Int, maxCapSeconds: Int) {
+    // 🟢 Pridaný parameter themeColor s predvolenou modrou farbou
+    fun startUnlockTimerNotification(addedSeconds: Int, maxCapSeconds: Int, themeColor: Int = android.graphics.Color.BLUE) {
         countDownTimer?.cancel()
 
         gracePeriodUntil = System.currentTimeMillis() + 2500
@@ -60,7 +61,6 @@ class AppBlockerService : AccessibilityService() {
             0
         }
 
-        // Jediná a správna deklarácia totalSeconds
         val totalSeconds = Math.min(currentRemaining + addedSeconds, maxCapSeconds)
 
         unlockedUntil = System.currentTimeMillis() + (totalSeconds * 1000L)
@@ -74,7 +74,7 @@ class AppBlockerService : AccessibilityService() {
             action = "com.example.brainlock.ACTION_RETEST"
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra("isOverlay", true)
-            putExtra("isFromNotification", true) // <--- PRIDANÁ POISTKA
+            putExtra("isFromNotification", true)
         }
 
         val pendingIntent = PendingIntent.getActivity(
@@ -96,6 +96,8 @@ class AppBlockerService : AccessibilityService() {
                         .setContentTitle("Brainlock: Aplikácia odomknutá")
                         .setContentText("Zostávajúci čas: $timeFormatted")
                         .setSmallIcon(android.R.drawable.ic_dialog_info)
+                        .setColor(themeColor) // 🟢 Tu sa aplikuje farba témy prebraná z Flutteru
+                        .setColorized(true)   // 🟢 Zvýrazní akcent/pozadie notifikácie podľa témy
                         .setOngoing(true)
                         .setOnlyAlertOnce(true)
                         .setPriority(NotificationCompat.PRIORITY_LOW)

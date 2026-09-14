@@ -5,6 +5,7 @@ import '../services/database_helper.dart';
 import '../themes/theme_provider.dart';
 import '../themes/app_themes.dart';
 import 'deck_manager_screen.dart';
+import '../themes/themed_background.dart';
 
 class TestSetupScreen extends StatefulWidget {
   const TestSetupScreen({super.key});
@@ -17,6 +18,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
   SharedPreferences? _prefs;
   bool _isLoading = true;
   int? _activeDeckId;
+  String _activeDeckName = "Načítavam...";
   int _availableCardCount = 10;
 
   // --- STAV PRE KVÍZ ---
@@ -55,9 +57,17 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     _activeDeckId = activeDeckId;
 
     if (activeDeckId != null) {
+      final decks = await DatabaseHelper.instance.getDecks();
+      final currentDeck = decks.firstWhere(
+        (d) => d.id == activeDeckId, 
+        orElse: () => null as dynamic,
+      );
+
       final cardCount = await DatabaseHelper.instance.getCardCountForDeck(activeDeckId);
-      if (cardCount >= 5) {
+
+      if (cardCount >= 5 && currentDeck != null) {
         _availableCardCount = cardCount;
+        _activeDeckName = currentDeck.name;
       } else {
         _activeDeckId = null;
         await _prefs!.remove('active_test_deck_id');
@@ -146,9 +156,11 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     final theme = currentTheme.theme;
 
     if (_isLoading) {
-      return Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor, 
-        body: Center(child: CircularProgressIndicator(color: currentTheme.testSetupColor)),
+      return ThemedBackground(
+        child: Scaffold(
+          backgroundColor: Colors.transparent, 
+          body: Center(child: CircularProgressIndicator(color: currentTheme.testSetupColor)),
+        ),
       );
     }
 
@@ -175,19 +187,20 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
 
     final Color headerContrastColor = currentTheme.getContrastTextColor(currentTheme.testSetupColor);
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: theme.appBarTheme.backgroundColor ?? Colors.transparent,
-        elevation: theme.appBarTheme.elevation ?? 0,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
-        iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
-        title: Text('Nastavenie Testu', style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold)),
-      ),
-      body: Column(
-        children: [
-          if (_activeDeckId == null)
+    return ThemedBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: theme.scaffoldBackgroundColor, // Nepriehľadný AppBar
+          elevation: theme.appBarTheme.elevation ?? 0,
+          scrolledUnderElevation: 0,
+          surfaceTintColor: Colors.transparent,
+          iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
+          title: Text('Nastavenie Testu', style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold)),
+        ),
+        body: Column(
+          children: [
+            // KARTA AKTÍVNEHO BALÍČKA
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               child: InkWell(
@@ -201,378 +214,426 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                 borderRadius: currentTheme.cardBorderRadius,
                 child: Container(
                   padding: const EdgeInsets.all(14),
-                  decoration: currentTheme.getCardDecoration(currentTheme.errorColor),
+                  decoration: currentTheme.getCardDecoration(
+                    _activeDeckId == null ? currentTheme.errorColor : currentTheme.testSetupColor,
+                  ),
                   child: Row(
                     children: [
-                      Icon(Icons.warning_amber_rounded, color: currentTheme.errorColor, size: 28),
+                      CircleAvatar(
+                        backgroundColor: Colors.black.withValues(alpha: 0.15),
+                        child: Icon(
+                          _activeDeckId == null ? Icons.warning_amber_rounded : Icons.style,
+                          color: headerContrastColor,
+                          size: 24,
+                        ),
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Nemáš vybraný žiadny balíček!",
-                              style: TextStyle(color: currentTheme.errorColor, fontWeight: FontWeight.bold, fontSize: 14),
+                              _activeDeckId == null 
+                                  ? "NEMÁŠ VYBRANÝ ŽIADEN BALÍČEK!" 
+                                  : "AKTÍVNY BALíČEK",
+                              style: TextStyle(
+                                color: headerContrastColor.withValues(alpha: 0.7),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11,
+                                letterSpacing: 0.5,
+                              ),
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              "Klikni sem pre výber aktívneho balíčka (min. 5 kariet).",
-                              style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 12),
+                              _activeDeckId == null 
+                                  ? "Klikni sem pre výber (min. 5 kariet)" 
+                                  : "$_activeDeckName ($_availableCardCount kariet)",
+                              style: TextStyle(
+                                color: headerContrastColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
                       ),
-                      Icon(Icons.arrow_forward_ios_rounded, color: currentTheme.errorColor, size: 16),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            "Zmeniť",
+                            style: TextStyle(
+                              color: headerContrastColor.withValues(alpha: 0.9),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(Icons.arrow_forward_ios_rounded, color: headerContrastColor, size: 14),
+                        ],
+                      ),
                     ],
                   ),
                 ),
               ),
             ),
 
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            child: _buildSwitchCard(
-              title: 'Learning Mode',
-              subtitle: _isLearningMode ? 'Zamerané na opakovanie a učenie sa.' : 'Zamerané na výkon a získavanie času.',
-              multiplier: 1.0, 
-              value: _isLearningMode,
-              isGold: false,
-              showMultiplier: false,
-              currentTheme: currentTheme,
-              accentColor: currentTheme.testSetupColor,
-              onChanged: (val) {
-                setState(() => _isLearningMode = val);
-                _saveBool('test_isLearningMode', val);
-              },
-            ),
-          ),
-
-          if (!_isLearningMode) ...[
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Container(
-                padding: const EdgeInsets.all(24),
-                decoration: currentTheme.getCardDecoration(currentTheme.testSetupColor),
-                child: Column(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: _buildSwitchCard(
+                title: 'Learning Mode',
+                subtitle: _isLearningMode ? 'Zamerané na opakovanie a učenie sa.' : 'Zamerané na výkon a získavanie času.',
+                multiplier: 1.0, 
+                value: _isLearningMode,
+                isGold: false,
+                showMultiplier: false,
+                currentTheme: currentTheme,
+                accentColor: currentTheme.testSetupColor,
+                onChanged: (val) {
+                  setState(() => _isLearningMode = val);
+                  _saveBool('test_isLearningMode', val);
+                },
+              ),
+            ),
+
+            if (!_isLearningMode) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: currentTheme.getCardDecoration(currentTheme.testSetupColor),
+                  child: Column(
+                    children: [
+                      Text(
+                        'ODMENA ZA 1 SPRÁVNU ODPOVEĎ', 
+                        style: TextStyle(
+                          color: headerContrastColor.withValues(alpha: 0.8), 
+                          fontSize: 12, 
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.1,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _formatTime(_timePerQuestion), 
+                        style: TextStyle(
+                          color: headerContrastColor, 
+                          fontSize: 44, 
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.15),
+                          borderRadius: currentTheme.cardBorderRadius,
+                          border: Border.all(color: headerContrastColor.withValues(alpha: 0.3), width: 1.0),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Celkový násobič', 
+                                  style: TextStyle(
+                                    color: headerContrastColor.withValues(alpha: 0.8), 
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'x${_currentMultiplier.toStringAsFixed(2)}', 
+                                  style: TextStyle(
+                                    color: headerContrastColor, 
+                                    fontWeight: FontWeight.bold, 
+                                    fontSize: 18,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  'Max potenciál testu', 
+                                  style: TextStyle(
+                                    color: headerContrastColor.withValues(alpha: 0.8), 
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  _formatTime(_totalTimePotential), 
+                                  style: TextStyle(
+                                    color: headerContrastColor, 
+                                    fontWeight: FontWeight.bold, 
+                                    fontSize: 18,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.all(20),
+                  physics: const BouncingScrollPhysics(),
                   children: [
                     Text(
-                      'ODMENA ZA 1 SPRÁVNU ODPOVEĎ', 
+                      'ZÁKLADNÉ NASTAVENIA KVÍZU', 
                       style: TextStyle(
-                        color: headerContrastColor.withValues(alpha: 0.8), 
-                        fontSize: 12, 
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6), 
+                        fontSize: 13, 
                         fontWeight: FontWeight.bold,
-                        letterSpacing: 1.1,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
+                    _buildSliderCard(
+                      title: 'Počet otázok', 
+                      valueLabel: '${_questionCount.toInt()} otázok', 
+                      value: _questionCount, 
+                      min: minQuestions, 
+                      max: maxQuestions, 
+                      divisions: questionDivisions, 
+                      currentTheme: currentTheme,
+                      accentColor: currentTheme.testSetupColor,
+                      onChanged: (val) { 
+                        setState(() => _questionCount = val); 
+                        _saveDouble('test_questionCount', val); 
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    _buildSliderCard(
+                      title: 'Časový limit na otázku', 
+                      valueLabel: _timeLabels[_timeLimitIndex.toInt()], 
+                      multiplier: _timeMultipliers[_timeLimitIndex.toInt()], 
+                      value: _timeLimitIndex, 
+                      min: 0, 
+                      max: 5, 
+                      divisions: 5, 
+                      currentTheme: currentTheme,
+                      accentColor: currentTheme.testSetupColor,
+                      onChanged: (val) { 
+                        setState(() => _timeLimitIndex = val); 
+                        _saveDouble('test_timeLimitIndex', val); 
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    _buildSliderCard(
+                      title: 'Lockout Prah (Min. úspešnosť)', 
+                      valueLabel: lockoutLabel, 
+                      multiplier: double.parse(_effectiveLockoutMultiplier.toStringAsFixed(2)), 
+                      value: _lockoutIndex, 
+                      min: 0, 
+                      max: 7, 
+                      divisions: 7, 
+                      currentTheme: currentTheme,
+                      accentColor: currentTheme.testSetupColor,
+                      onChanged: (val) { 
+                        setState(() => _lockoutIndex = val); 
+                        _saveDouble('test_lockoutIndex', val); 
+                      },
+                    ),
+                    const SizedBox(height: 24),
                     Text(
-                      _formatTime(_timePerQuestion), 
+                      'MODIFIKÁTORY', 
                       style: TextStyle(
-                        color: headerContrastColor, 
-                        fontSize: 44, 
-                        fontWeight: FontWeight.w900,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6), 
+                        fontSize: 13, 
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.15),
-                        borderRadius: currentTheme.cardBorderRadius,
-                        border: Border.all(color: headerContrastColor.withValues(alpha: 0.3), width: 1.0),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Celkový násobič', 
-                                style: TextStyle(
-                                  color: headerContrastColor.withValues(alpha: 0.8), 
-                                  fontSize: 12,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'x${_currentMultiplier.toStringAsFixed(2)}', 
-                                style: TextStyle(
-                                  color: headerContrastColor, 
-                                  fontWeight: FontWeight.bold, 
-                                  fontSize: 18,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                'Max potenciál testu', 
-                                style: TextStyle(
-                                  color: headerContrastColor.withValues(alpha: 0.8), 
-                                  fontSize: 12,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                _formatTime(_totalTimePotential), 
-                                style: TextStyle(
-                                  color: headerContrastColor, 
-                                  fontWeight: FontWeight.bold, 
-                                  fontSize: 18,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                    const SizedBox(height: 12),
+                    _buildSwitchCard(
+                      title: '3 Možnosti', 
+                      subtitle: 'O jednu nesprávnu odpoveď menej.', 
+                      multiplier: 0.7, 
+                      value: _is3Options, 
+                      isDisabled: _isHardcore, 
+                      currentTheme: currentTheme,
+                      accentColor: currentTheme.testSetupColor,
+                      onChanged: (val) { 
+                        setState(() => _is3Options = val); 
+                        _saveBool('test_is3Options', val); 
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    _buildSwitchCard(
+                      title: 'Vymeň kartu', 
+                      subtitle: '1-krát za test môžeš vymeniť ťažkú otázku za novú.', 
+                      multiplier: 0.85, 
+                      value: _isSwapQuestion, 
+                      currentTheme: currentTheme,
+                      accentColor: currentTheme.testSetupColor,
+                      onChanged: (val) { 
+                        setState(() => _isSwapQuestion = val); 
+                        _saveBool('test_isSwapQuestion', val); 
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    _buildSwitchCard(
+                      title: 'Druhá šanca', 
+                      subtitle: 'Jedna nesprávna odpoveď za celý test sa ti odpustí.', 
+                      multiplier: 0.8, 
+                      value: _isSecondChance, 
+                      currentTheme: currentTheme,
+                      accentColor: currentTheme.testSetupColor,
+                      onChanged: (val) { 
+                        setState(() => _isSecondChance = val); 
+                        _saveBool('test_isSecondChance', val); 
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    _buildSwitchCard(
+                      title: 'Confusion', 
+                      subtitle: 'Pridaná možnosť "Žiadna z odpovedí".', 
+                      multiplier: 1.1, 
+                      value: _isConfusion, 
+                      isDisabled: _isHardcore, 
+                      currentTheme: currentTheme,
+                      accentColor: currentTheme.testSetupColor,
+                      onChanged: (val) { 
+                        setState(() => _isConfusion = val); 
+                        _saveBool('test_isConfusion', val); 
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    _buildSwitchCard(
+                      title: 'Slepý test', 
+                      subtitle: 'Správność odpovedí sa dozvieš až na záver testu.', 
+                      multiplier: 1.25, 
+                      value: _isBlindTest, 
+                      currentTheme: currentTheme,
+                      accentColor: currentTheme.testSetupColor,
+                      onChanged: (val) { 
+                        setState(() => _isBlindTest = val); 
+                        _saveBool('test_isBlindTest', val); 
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    _buildSwitchCard(
+                      title: 'Double Test', 
+                      subtitle: 'Musíš zvládnuť 2 testy po sebe. Odmenu dostaneš až po druhom.', 
+                      multiplier: 1.75, 
+                      value: _isDoubleTest, 
+                      isGold: false,
+                      currentTheme: currentTheme,
+                      accentColor: currentTheme.testSetupColor,
+                      onChanged: (val) { 
+                        setState(() {
+                          _isDoubleTest = val;
+                          _saveBool('test_isDoubleTest', val);
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    _buildSwitchCard(
+                      title: 'Hardcore (Write-in)', 
+                      subtitle: 'Bez možností. Odpoveď musíš ručne napísať.', 
+                      multiplier: 1.5, 
+                      value: _isHardcore, 
+                      isGold: false, 
+                      currentTheme: currentTheme,
+                      accentColor: currentTheme.testSetupColor,
+                      onChanged: (val) {
+                        setState(() {
+                          _isHardcore = val;
+                          _saveBool('test_isHardcore', val);
+                          if (_isHardcore) { 
+                            _is3Options = false; 
+                            _isConfusion = false; 
+                            _saveBool('test_is3Options', false); 
+                            _saveBool('test_isConfusion', false); 
+                          }
+                        });
+                      },
                     ),
                   ],
                 ),
               ),
-            ),
-            
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(20),
-                physics: const BouncingScrollPhysics(),
-                children: [
-                  Text(
-                    'ZÁKLADNÉ NASTAVENIA KVÍZU', 
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6), 
-                      fontSize: 13, 
-                      fontWeight: FontWeight.bold,
+            ] 
+            else ...[
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.all(20),
+                  physics: const BouncingScrollPhysics(),
+                  children: [
+                    Text(
+                      'NASTAVENIA UČENIA', 
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6), 
+                        fontSize: 13, 
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSliderCard(
-                    title: 'Počet otázok', 
-                    valueLabel: '${_questionCount.toInt()} otázok', 
-                    value: _questionCount, 
-                    min: minQuestions, 
-                    max: maxQuestions, 
-                    divisions: questionDivisions, 
-                    currentTheme: currentTheme,
-                    accentColor: currentTheme.testSetupColor,
-                    onChanged: (val) { 
-                      setState(() => _questionCount = val); 
-                      _saveDouble('test_questionCount', val); 
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSliderCard(
-                    title: 'Časový limit na otázku', 
-                    valueLabel: _timeLabels[_timeLimitIndex.toInt()], 
-                    multiplier: _timeMultipliers[_timeLimitIndex.toInt()], 
-                    value: _timeLimitIndex, 
-                    min: 0, 
-                    max: 5, 
-                    divisions: 5, 
-                    currentTheme: currentTheme,
-                    accentColor: currentTheme.testSetupColor,
-                    onChanged: (val) { 
-                      setState(() => _timeLimitIndex = val); 
-                      _saveDouble('test_timeLimitIndex', val); 
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSliderCard(
-                    title: 'Lockout Prah (Min. úspešnosť)', 
-                    valueLabel: lockoutLabel, 
-                    multiplier: double.parse(_effectiveLockoutMultiplier.toStringAsFixed(2)), 
-                    value: _lockoutIndex, 
-                    min: 0, 
-                    max: 7, 
-                    divisions: 7, 
-                    currentTheme: currentTheme,
-                    accentColor: currentTheme.testSetupColor,
-                    onChanged: (val) { 
-                      setState(() => _lockoutIndex = val); 
-                      _saveDouble('test_lockoutIndex', val); 
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'MODIFIKÁTORY', 
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6), 
-                      fontSize: 13, 
-                      fontWeight: FontWeight.bold,
+                    const SizedBox(height: 12),
+                    _buildSliderCard(
+                      title: 'Počet kartičiek v dávke',
+                      valueLabel: '${currentLearnValue.toInt()} kartičiek',
+                      value: currentLearnValue,
+                      min: minLearnCards, 
+                      max: maxLearnCards, 
+                      divisions: learnDivisions,
+                      currentTheme: currentTheme,
+                      accentColor: currentTheme.testSetupColor,
+                      onChanged: (val) { 
+                        setState(() => _learnCardCount = val); 
+                        _saveDouble('test_learnCardCount', val); 
+                      },
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSwitchCard(
-                    title: '3 Možnosti', 
-                    subtitle: 'O jednu nesprávnu odpoveď menej.', 
-                    multiplier: 0.7, 
-                    value: _is3Options, 
-                    isDisabled: _isHardcore, 
-                    currentTheme: currentTheme,
-                    accentColor: currentTheme.testSetupColor,
-                    onChanged: (val) { 
-                      setState(() => _is3Options = val); 
-                      _saveBool('test_is3Options', val); 
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSwitchCard(
-                    title: 'Vymeň kartu', 
-                    subtitle: '1-krát za test môžeš vymeniť ťažkú otázku za novú.', 
-                    multiplier: 0.85, 
-                    value: _isSwapQuestion, 
-                    currentTheme: currentTheme,
-                    accentColor: currentTheme.testSetupColor,
-                    onChanged: (val) { 
-                      setState(() => _isSwapQuestion = val); 
-                      _saveBool('test_isSwapQuestion', val); 
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSwitchCard(
-                    title: 'Druhá šanca', 
-                    subtitle: 'Jedna nesprávna odpoveď za celý test sa ti odpustí.', 
-                    multiplier: 0.8, 
-                    value: _isSecondChance, 
-                    currentTheme: currentTheme,
-                    accentColor: currentTheme.testSetupColor,
-                    onChanged: (val) { 
-                      setState(() => _isSecondChance = val); 
-                      _saveBool('test_isSecondChance', val); 
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSwitchCard(
-                    title: 'Confusion', 
-                    subtitle: 'Pridaná možnosť "Žiadna z odpovedí".', 
-                    multiplier: 1.1, 
-                    value: _isConfusion, 
-                    isDisabled: _isHardcore, 
-                    currentTheme: currentTheme,
-                    accentColor: currentTheme.testSetupColor,
-                    onChanged: (val) { 
-                      setState(() => _isConfusion = val); 
-                      _saveBool('test_isConfusion', val); 
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSwitchCard(
-                    title: 'Slepý test', 
-                    subtitle: 'Správnosť odpovedí sa dozvieš až na záver testu.', 
-                    multiplier: 1.25, 
-                    value: _isBlindTest, 
-                    currentTheme: currentTheme,
-                    accentColor: currentTheme.testSetupColor,
-                    onChanged: (val) { 
-                      setState(() => _isBlindTest = val); 
-                      _saveBool('test_isBlindTest', val); 
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSwitchCard(
-                    title: 'Double Test', 
-                    subtitle: 'Musíš zvládnuť 2 testy po sebe. Odmenu dostaneš až po druhom.', 
-                    multiplier: 1.75, 
-                    value: _isDoubleTest, 
-                    isGold: false,
-                    currentTheme: currentTheme,
-                    accentColor: currentTheme.testSetupColor,
-                    onChanged: (val) { 
-                      setState(() {
-                        _isDoubleTest = val;
-                        _saveBool('test_isDoubleTest', val);
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSwitchCard(
-                    title: 'Hardcore (Write-in)', 
-                    subtitle: 'Bez možností. Odpoveď musíš ručne napísať.', 
-                    multiplier: 1.5, 
-                    value: _isHardcore, 
-                    isGold: false, 
-                    currentTheme: currentTheme,
-                    accentColor: currentTheme.testSetupColor,
-                    onChanged: (val) {
-                      setState(() {
-                        _isHardcore = val;
-                        _saveBool('test_isHardcore', val);
-                        if (_isHardcore) { 
-                          _is3Options = false; 
-                          _isConfusion = false; 
-                          _saveBool('test_is3Options', false); 
-                          _saveBool('test_isConfusion', false); 
-                        }
-                      });
-                    },
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    _buildSliderCard(
+                      title: 'Frekvencia uzamknutia (Pop-up)',
+                      valueLabel: () {
+                      int totalSeconds = (_learnInterval * 60).round();
+                      int minutes = totalSeconds ~/ 60;
+                      int seconds = totalSeconds % 60;
+                      
+                      if (seconds == 0) {
+                        return 'Každé $minutes min.';
+                      } else {
+                        return 'Každé $minutes min. $seconds s.';
+                      }
+                    }(),
+                      value: _learnInterval,
+                      min: 1, max: 5, divisions: 8,
+                      currentTheme: currentTheme,
+                      accentColor: currentTheme.testSetupColor,
+                      onChanged: (val) { 
+                        setState(() => _learnInterval = val); 
+                        _saveDouble('test_learnInterval', val); 
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    _buildSwitchCard(
+                      title: 'Opakovanie nevedomostí',
+                      subtitle: 'Karty, ktoré si nevedel, sa ukážu znovu na konci.',
+                      multiplier: 1.0,
+                      showMultiplier: false,
+                      value: _learnRepeat,
+                      currentTheme: currentTheme,
+                      accentColor: currentTheme.testSetupColor,
+                      onChanged: (val) { 
+                        setState(() => _learnRepeat = val); 
+                        _saveBool('test_learnRepeat', val); 
+                      },
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ] 
-          else ...[
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(20),
-                physics: const BouncingScrollPhysics(),
-                children: [
-                  Text(
-                    'NASTAVENIA UČENIA', 
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6), 
-                      fontSize: 13, 
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSliderCard(
-                    title: 'Počet kartičiek v dávke',
-                    valueLabel: '${currentLearnValue.toInt()} kartičiek',
-                    value: currentLearnValue,
-                    min: minLearnCards, 
-                    max: maxLearnCards, 
-                    divisions: learnDivisions,
-                    currentTheme: currentTheme,
-                    accentColor: currentTheme.testSetupColor,
-                    onChanged: (val) { 
-                      setState(() => _learnCardCount = val); 
-                      _saveDouble('test_learnCardCount', val); 
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSliderCard(
-                    title: 'Frekvencia uzamknutia (Pop-up)',
-                    valueLabel: 'Každé ${_learnInterval.toInt()} min.',
-                    value: _learnInterval,
-                    min: 1, max: 5, divisions: 4,
-                    currentTheme: currentTheme,
-                    accentColor: currentTheme.testSetupColor,
-                    onChanged: (val) { 
-                      setState(() => _learnInterval = val); 
-                      _saveDouble('test_learnInterval', val); 
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSwitchCard(
-                    title: 'Opakovanie nevedomostí',
-                    subtitle: 'Karty, ktoré si nevedel, sa ukážu znovu na konci.',
-                    multiplier: 1.0,
-                    showMultiplier: false,
-                    value: _learnRepeat,
-                    currentTheme: currentTheme,
-                    accentColor: currentTheme.testSetupColor,
-                    onChanged: (val) { 
-                      setState(() => _learnRepeat = val); 
-                      _saveBool('test_learnRepeat', val); 
-                    },
-                  ),
-                ],
-              ),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

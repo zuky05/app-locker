@@ -60,8 +60,18 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
 
-    final Color sectionColor = currentTheme.decksColor;
-    final Color textColor = currentTheme.getContrastTextColor(sectionColor);
+    final Color buttonBgColor = currentTheme.decksColor;
+    final Color buttonTextColor = currentTheme.getContrastTextColor(buttonBgColor);
+
+    // Jednotná neutrálna dekorácia pre VŠETKY vstupujúce polia pre VŠETKY témy
+    final BoxDecoration inputDecoration = BoxDecoration(
+      color: theme.cardColor,
+      borderRadius: currentTheme.cardBorderRadius,
+      border: Border.all(
+        color: theme.colorScheme.onSurface.withValues(alpha: 0.12),
+        width: 1.2,
+      ),
+    );
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -77,20 +87,20 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. NÁZOV BALÍČKA
+            // 1. NÁZOV BALÍČKA (NEUTRÁLNY PRE VŠETKY TÉMY)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              decoration: currentTheme.getCardDecoration(sectionColor),
+              decoration: inputDecoration,
               child: TextField(
                 controller: _deckNameController,
                 style: TextStyle(
-                  color: textColor,
+                  color: theme.colorScheme.onSurface,
                   fontWeight: FontWeight.w600,
                 ),
                 decoration: InputDecoration(
                   labelText: "Názov balíčka (napr. Nemčina)",
                   labelStyle: TextStyle(
-                    color: textColor.withValues(alpha: 0.7),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                   border: InputBorder.none,
                 ),
@@ -102,7 +112,7 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
             // 2. KATEGÓRIA BALÍČKA
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              decoration: currentTheme.getCardDecoration(theme.cardColor),
+              decoration: inputDecoration,
               child: TextField(
                 controller: _categoryController,
                 style: TextStyle(
@@ -132,10 +142,10 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
 
             const SizedBox(height: 14),
 
-            // 3. OTÁZKA / POJEM (VIACRIADKOVÉ POLE)
+            // 3. OTÁZKA / POJEM
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: currentTheme.getCardDecoration(theme.cardColor),
+              decoration: inputDecoration,
               child: TextField(
                 controller: _promptController,
                 minLines: 2,
@@ -158,10 +168,10 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
 
             const SizedBox(height: 14),
 
-            // 4. SPRÁVNA ODPOVEĎ (VIACRIADKOVÉ POLE)
+            // 4. SPRÁVNA ODPOVEĎ
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: currentTheme.getCardDecoration(theme.cardColor),
+              decoration: inputDecoration,
               child: TextField(
                 controller: _answerController,
                 minLines: 2,
@@ -184,17 +194,19 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
 
             const SizedBox(height: 32),
 
-            // TLAČIDLO ULOŽIŤ
+            // TLAČIDLO ULOŽIŤ (Vypnutý outline pre Cyberpunk tému)
             Center(
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 52),
-                  backgroundColor: sectionColor,
-                  foregroundColor: textColor,
+                  backgroundColor: buttonBgColor,
+                  foregroundColor: buttonTextColor,
                   elevation: currentTheme.cardShadows != null ? 2 : 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: currentTheme.buttonBorderRadius,
-                    side: currentTheme.buttonBorder,
+                    side: currentTheme.id == 4 
+                        ? BorderSide.none 
+                        : currentTheme.buttonBorder,
                   ),
                 ),
                 onPressed: _saveData,
@@ -203,7 +215,7 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
                   style: TextStyle(
                     fontSize: 16, 
                     fontWeight: FontWeight.bold,
-                    color: textColor,
+                    color: buttonTextColor,
                   ),
                 ),
               ),

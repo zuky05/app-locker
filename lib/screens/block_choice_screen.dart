@@ -176,7 +176,7 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
                             ),
                             onPressed: _startTest,
                             child: const Text(
-                              "Spustiť TEST (5 minút)", 
+                              "Spustiť TEST", 
                               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                             ),
                           ),

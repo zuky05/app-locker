@@ -8,6 +8,7 @@ import '../services/database_helper.dart';
 import '../services/anki_importer.dart';
 import '../themes/theme_provider.dart';
 import '../themes/app_themes.dart';
+import '../themes/themed_background.dart';
 import '../services/stats_provider.dart';
 import 'settings_screen.dart';
 import 'test_setup_screen.dart';
@@ -27,12 +28,10 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isPremium = false;
   bool isLoading = true;
 
-  // --- CAROUSEL STAV & AUTOSCROLL TIMER ---
   final PageController _pageController = PageController();
   int _currentCarouselPage = 0;
   Timer? _carouselTimer;
 
-  // --- DENNÁ VÝZVA STAV ---
   DailyChallenge? _todayChallenge;
   int _challengeProgress = 0;
   bool _isChallengeCompleted = false;
@@ -52,7 +51,6 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  // Obnovenie všetkých dát naraz (Deck count, Výzva, StatsProvider)
   Future<void> _refreshAllData() async {
     await _checkDeckCount();
     await _loadDailyChallenge();
@@ -180,7 +178,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -191,8 +189,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
+      extendBody: true,
+
       appBar: AppBar(
-        backgroundColor: theme.appBarTheme.backgroundColor ?? Colors.transparent,
+        backgroundColor: theme.appBarTheme.backgroundColor ?? theme.scaffoldBackgroundColor,
         elevation: theme.appBarTheme.elevation ?? 0,
         title: Text(
           'Brainlock Decks',
@@ -234,22 +234,31 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: theme.scaffoldBackgroundColor,
-        ),
+        color: Colors.transparent,
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.only(left: 20.0, right: 20.0, bottom: 16.0, top: 8.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  'QUICK IMPORT',
-                  style: TextStyle(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.0,
+                // 🟢 Zlepšená čitateľnosť nápisu QUICK IMPORT na pozadí
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: theme.scaffoldBackgroundColor.withValues(alpha: 0.8),
+                    borderRadius: BorderRadius.circular(6),
+                    border: currentTheme.id == 0 
+                        ? Border.all(color: const Color(0xFF00FF66).withValues(alpha: 0.4), width: 1) 
+                        : null,
+                  ),
+                  child: Text(
+                    'QUICK IMPORT',
+                    style: TextStyle(
+                      color: currentTheme.id == 0 ? const Color(0xFF00FF66) : theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.2,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -299,227 +308,218 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       
-      body: isLoading
-          ? Center(child: CircularProgressIndicator(color: currentTheme.decksColor))
-          : Consumer<StatsProvider>(
-              builder: (context, statsProvider, child) {
-                final todayStats = statsProvider.todayStats;
-                final int streak = statsProvider.currentStreak;
-                final int cardsDone = (todayStats['cards'] as num?)?.toInt() ?? 0;
-                final int timeEarnedSeconds = (todayStats['time'] as num?)?.toInt() ?? 0;
-                
-                const int dailyTarget = 20;
-                double progressValue = (cardsDone / dailyTarget).clamp(0.0, 1.0);
+      body: ThemedBackground(
+        child: isLoading
+            ? Center(child: CircularProgressIndicator(color: currentTheme.decksColor))
+            : Consumer<StatsProvider>(
+                builder: (context, statsProvider, child) {
+                  final todayStats = statsProvider.todayStats;
+                  final int streak = statsProvider.currentStreak;
+                  final int cardsDone = (todayStats['cards'] as num?)?.toInt() ?? 0;
+                  final int timeEarnedSeconds = (todayStats['time'] as num?)?.toInt() ?? 0;
+                  
+                  const int dailyTarget = 20;
+                  double progressValue = (cardsDone / dailyTarget).clamp(0.0, 1.0);
 
-                return ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
-                  physics: const BouncingScrollPhysics(),
-                  children: [
-                    
-                    // 1. CAROUSEL WITH AUTO-SCROLL (4 KARTY)
-                    SizedBox(
-                      height: 215,
-                      child: Column(
+                  return ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+                    physics: const BouncingScrollPhysics(),
+                    children: [
+                      SizedBox(
+                        height: 215,
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: PageView(
+                                controller: _pageController,
+                                onPageChanged: (index) {
+                                  setState(() => _currentCarouselPage = index);
+                                  _startAutoScroll();
+                                },
+                                children: [
+                                  _buildDailyGoalCard(
+                                    context: context,
+                                    currentTheme: currentTheme,
+                                    theme: theme,
+                                    streak: streak,
+                                    cardsDone: cardsDone,
+                                    dailyTarget: dailyTarget,
+                                    progressValue: progressValue,
+                                  ),
+
+                                  _buildDailyChallengeCard(
+                                    context: context,
+                                    currentTheme: currentTheme,
+                                    theme: theme,
+                                  ),
+
+                                  _buildTimeEarnedCard(
+                                    context: context,
+                                    currentTheme: currentTheme,
+                                    theme: theme,
+                                    earnedSeconds: timeEarnedSeconds,
+                                  ),
+
+                                  _buildAccuracyMasteryCard(
+                                    context: context,
+                                    currentTheme: currentTheme,
+                                    theme: theme,
+                                    statsProvider: statsProvider,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(4, (index) {
+                                bool isSelected = _currentCarouselPage == index;
+                                Color dotColor;
+                                switch (index) {
+                                  case 0: dotColor = currentTheme.dailyGoalColor; break;
+                                  case 1: dotColor = currentTheme.id == 5 ? const Color(0xFFE50914) : currentTheme.testSetupColor; break;
+                                  case 2: dotColor = currentTheme.quickImportColor; break;
+                                  case 3: dotColor = currentTheme.id == 5 ? currentTheme.decksColor : currentTheme.blockedAppsColor; break;
+                                  default: dotColor = currentTheme.dailyGoalColor;
+                                }
+
+                                return AnimatedContainer(
+                                  duration: const Duration(milliseconds: 250),
+                                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                                  width: isSelected ? 20 : 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: isSelected 
+                                        ? dotColor
+                                        : theme.colorScheme.onSurface.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                );
+                              }),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      InkWell(
+                        onTap: () async {
+                          if (isPremium) {
+                            RevenueCatService.showCustomerCenter();
+                          } else {
+                            final success = await RevenueCatService.presentPaywall();
+                            if (success) _checkDeckCount();
+                          }
+                        },
+                        borderRadius: currentTheme.cardBorderRadius,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                          decoration: currentTheme.id == 5 ? currentTheme.getCardDecoration(currentTheme.quickImportColor) : currentTheme.getCardDecoration(currentTheme.warningColor),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.star_rounded, 
+                                color: currentTheme.id == 5 ? Colors.black : Colors.amber, 
+                                size: 26,
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                isPremium ? 'MANAGE PREMIUM' : 'PREMIUM ACCESS',
+                                style: TextStyle(
+                                  color: currentTheme.id == 2 || currentTheme.id == 5 
+                                      ? Colors.black 
+                                      : currentTheme.warningColor,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.2,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      InkWell(
+                        onTap: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const DeckManagerScreen()),
+                          );
+                          _refreshAllData();
+                        },
+                        borderRadius: currentTheme.cardBorderRadius,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+                          decoration: currentTheme.getCardDecoration(currentTheme.decksColor),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.style_rounded, 
+                                size: 52, 
+                                color: currentTheme.getIconColor(currentTheme.decksColor),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Decks',
+                                style: TextStyle(
+                                  color: theme.colorScheme.onSurface,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      Row(
                         children: [
                           Expanded(
-                            child: PageView(
-                              controller: _pageController,
-                              onPageChanged: (index) {
-                                setState(() => _currentCarouselPage = index);
-                                _startAutoScroll();
+                            child: _buildActionTile(
+                              icon: Icons.settings_suggest_rounded,
+                              title: 'Test Setup',
+                              accentColor: currentTheme.testSetupColor,
+                              currentTheme: currentTheme,
+                              onTap: () {
+                                Navigator.push(context, MaterialPageRoute(builder: (context) => const TestSetupScreen()))
+                                    .then((_) => _refreshAllData());
                               },
-                              children: [
-                                // Karta 1: Daily Goal
-                                _buildDailyGoalCard(
-                                  context: context,
-                                  currentTheme: currentTheme,
-                                  theme: theme,
-                                  streak: streak,
-                                  cardsDone: cardsDone,
-                                  dailyTarget: dailyTarget,
-                                  progressValue: progressValue,
-                                ),
-
-                                // Karta 2: Denná Výzva
-                                _buildDailyChallengeCard(
-                                  context: context,
-                                  currentTheme: currentTheme,
-                                  theme: theme,
-                                ),
-
-                                // Karta 3: Získaný Čas (Time Earned)
-                                _buildTimeEarnedCard(
-                                  context: context,
-                                  currentTheme: currentTheme,
-                                  theme: theme,
-                                  earnedSeconds: timeEarnedSeconds,
-                                ),
-
-                                // Karta 4: Úspešnosť a Mastery
-                                _buildAccuracyMasteryCard(
-                                  context: context,
-                                  currentTheme: currentTheme,
-                                  theme: theme,
-                                  statsProvider: statsProvider,
-                                ),
-                              ],
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          // Indikátor stránok (4 Bodky)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(4, (index) {
-                              bool isSelected = _currentCarouselPage == index;
-                              Color dotColor;
-                              switch (index) {
-                                case 0: dotColor = currentTheme.dailyGoalColor; break;
-                                case 1: dotColor = currentTheme.testSetupColor; break;
-                                case 2: dotColor = currentTheme.quickImportColor; break;
-                                case 3: dotColor = currentTheme.blockedAppsColor; break;
-                                default: dotColor = currentTheme.dailyGoalColor;
-                              }
-
-                              return AnimatedContainer(
-                                duration: const Duration(milliseconds: 250),
-                                margin: const EdgeInsets.symmetric(horizontal: 4),
-                                width: isSelected ? 20 : 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  color: isSelected 
-                                      ? dotColor
-                                      : theme.colorScheme.onSurface.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                              );
-                            }),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _buildActionTile(
+                              icon: Icons.smartphone_rounded,
+                              title: 'Blocked Apps',
+                              accentColor: currentTheme.blockedAppsColor,
+                              currentTheme: currentTheme,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const AppSelectorScreen()),
+                                );
+                              },
+                            ),
                           ),
                         ],
                       ),
-                    ),
 
-                    const SizedBox(height: 16),
-
-                    // 2. PREMIUM ACCESS BANNER
-                    InkWell(
-                      onTap: () async {
-                        if (isPremium) {
-                          RevenueCatService.showCustomerCenter();
-                        } else {
-                          final success = await RevenueCatService.presentPaywall();
-                          if (success) _checkDeckCount();
-                        }
-                      },
-                      borderRadius: currentTheme.cardBorderRadius,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                        decoration: currentTheme.id == 5 ? currentTheme.getCardDecoration(currentTheme.quickImportColor) : currentTheme.getCardDecoration(currentTheme.warningColor),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.star_rounded, 
-                              color: currentTheme.id == 5 ? Colors.black : Colors.amber, 
-                              size: 26,
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              isPremium ? 'MANAGE PREMIUM' : 'PREMIUM ACCESS',
-                              style: TextStyle(
-                                color: currentTheme.id == 2 || currentTheme.id == 5 
-                                    ? Colors.black 
-                                    : currentTheme.warningColor,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 1.2,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // 3. DECKS 
-                    InkWell(
-                      onTap: () async {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const DeckManagerScreen()),
-                        );
-                        _refreshAllData();
-                      },
-                      borderRadius: currentTheme.cardBorderRadius,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
-                        decoration: currentTheme.getCardDecoration(currentTheme.decksColor),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.style_rounded, 
-                              size: 52, 
-                              color: currentTheme.getIconColor(currentTheme.decksColor),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Decks',
-                              style: TextStyle(
-                                color: theme.colorScheme.onSurface,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // 4. TEST SETUP & BLOCKED APPS
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildActionTile(
-                            icon: Icons.settings_suggest_rounded,
-                            title: 'Test Setup',
-                            accentColor: currentTheme.testSetupColor,
-                            currentTheme: currentTheme,
-                            onTap: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (context) => const TestSetupScreen()))
-                                  .then((_) => _refreshAllData());
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _buildActionTile(
-                            icon: Icons.smartphone_rounded,
-                            title: 'Blocked Apps',
-                            accentColor: currentTheme.blockedAppsColor,
-                            currentTheme: currentTheme,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => const AppSelectorScreen()),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 24),
-                  ],
-                );
-              },
-            ),
+                      const SizedBox(height: 24),
+                    ],
+                  );
+                },
+              ),
+      ),
     );
   }
 
-  // --- KARTA 1: DAILY GOAL ---
   Widget _buildDailyGoalCard({
     required BuildContext context,
     required AppThemeData currentTheme,
@@ -529,6 +529,8 @@ class _HomeScreenState extends State<HomeScreen> {
     required int dailyTarget,
     required double progressValue,
   }) {
+    final bool isNeobrutalism = currentTheme.id == 2;
+
     return InkWell(
       onTap: () {
         Navigator.push(
@@ -546,7 +548,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Text(
               'DAILY GOAL',
               style: TextStyle(
-                color: currentTheme.id == 2 || currentTheme.id == 5 ? Colors.black : currentTheme.dailyGoalColor,
+                color: isNeobrutalism || currentTheme.id == 5 ? Colors.black : currentTheme.dailyGoalColor,
                 fontSize: 13,
                 letterSpacing: 1.2,
                 fontWeight: FontWeight.w800,
@@ -571,13 +573,22 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: LinearProgressIndicator(
-                value: progressValue,
-                minHeight: 10,
-                backgroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.12),
-                valueColor: AlwaysStoppedAnimation<Color>(currentTheme.dailyGoalColor),
+            Container(
+              height: 14,
+              decoration: BoxDecoration(
+                color: isNeobrutalism ? Colors.white : theme.colorScheme.onSurface.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(isNeobrutalism ? 6 : 8),
+                border: isNeobrutalism ? Border.all(color: Colors.black, width: 2.5) : null,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(isNeobrutalism ? 3 : 8),
+                child: LinearProgressIndicator(
+                  value: progressValue,
+                  backgroundColor: Colors.transparent,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    isNeobrutalism ? Colors.black : currentTheme.dailyGoalColor,
+                  ),
+                ),
               ),
             ),
           ],
@@ -586,15 +597,30 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- KARTA 2: DENNÁ VÝZVA ---
   Widget _buildDailyChallengeCard({
     required BuildContext context,
     required AppThemeData currentTheme,
     required ThemeData theme,
   }) {
+    final bool isVibrantGradient = currentTheme.id == 5;
+    final bool isNeobrutalism = currentTheme.id == 2;
+    
+    final Color textColor = isVibrantGradient || isNeobrutalism
+        ? Colors.black 
+        : currentTheme.getContrastTextColor(currentTheme.testSetupColor);
+
     if (_todayChallenge == null) {
       return Container(
-        decoration: currentTheme.getCardDecoration(currentTheme.testSetupColor),
+        decoration: isVibrantGradient 
+            ? BoxDecoration(
+                borderRadius: currentTheme.cardBorderRadius,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFE50914), Color(0xFFB70610)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              )
+            : currentTheme.getCardDecoration(currentTheme.testSetupColor),
         child: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -604,9 +630,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: currentTheme.getCardDecoration(
-        _isChallengeCompleted ? currentTheme.successColor.withValues(alpha: 0.15) : currentTheme.testSetupColor,
-      ),
+      decoration: isVibrantGradient 
+          ? BoxDecoration(
+              borderRadius: currentTheme.cardBorderRadius,
+              gradient: const LinearGradient(
+                colors: [Color(0xFFE50914), Color(0xFFB70610)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            )
+          : currentTheme.getCardDecoration(currentTheme.testSetupColor),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -621,7 +654,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text(
                     'DENNÁ VÝZVA',
                     style: TextStyle(
-                      color: currentTheme.getContrastTextColor(currentTheme.testSetupColor).withValues(alpha: 0.8),
+                      color: textColor.withValues(alpha: 0.8),
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.1,
@@ -629,36 +662,36 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-              if (_challengeStreak > 0)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.orange, width: 1.2),
-                  ),
-                  child: Row(
-                    children: [
-                      const Text('🔥', style: TextStyle(fontSize: 12)),
-                      const SizedBox(width: 4),
-                      Text(
-                        '$_challengeStreak d',
-                        style: const TextStyle(
-                          color: Colors.orange,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
+            if (_challengeStreak > 0)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.orange, width: 1.5),
                 ),
+                child: Row(
+                  children: [
+                    const Text('🔥', style: TextStyle(fontSize: 12)),
+                    const SizedBox(width: 4),
+                    Text(
+                      '$_challengeStreak d',
+                      style: const TextStyle(
+                        color: Colors.orange,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
             _todayChallenge!.title,
             style: TextStyle(
-              color: currentTheme.getContrastTextColor(currentTheme.testSetupColor),
+              color: textColor,
               fontSize: 17,
               fontWeight: FontWeight.bold,
             ),
@@ -669,7 +702,7 @@ class _HomeScreenState extends State<HomeScreen> {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              color: currentTheme.getContrastTextColor(currentTheme.testSetupColor).withValues(alpha: 0.8),
+              color: textColor.withValues(alpha: 0.8),
               fontSize: 12,
             ),
           ),
@@ -677,13 +710,22 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             children: [
               Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: LinearProgressIndicator(
-                    value: challengeProgressPct,
-                    minHeight: 8,
-                    backgroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.12),
-                    color: _isChallengeCompleted ? currentTheme.successColor : theme.colorScheme.primary,
+                child: Container(
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: isNeobrutalism ? Colors.white : Colors.black.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(isNeobrutalism ? 6 : 8),
+                    border: isNeobrutalism ? Border.all(color: Colors.black, width: 2.0) : null,
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(isNeobrutalism ? 3 : 8),
+                    child: LinearProgressIndicator(
+                      value: challengeProgressPct,
+                      backgroundColor: Colors.transparent,
+                      color: isNeobrutalism 
+                          ? Colors.black 
+                          : (_isChallengeCompleted ? currentTheme.successColor : theme.colorScheme.primary),
+                    ),
                   ),
                 ),
               ),
@@ -691,7 +733,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Text(
                 '$_challengeProgress / ${_todayChallenge!.target}',
                 style: TextStyle(
-                  color: currentTheme.getContrastTextColor(currentTheme.testSetupColor),
+                  color: textColor,
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
                 ),
@@ -704,13 +746,14 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.2),
+                color: isNeobrutalism ? Colors.white : Colors.amber.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
+                border: isNeobrutalism ? Border.all(color: Colors.black, width: 2.0) : null,
               ),
               child: Text(
                 'Odmena: +$bonusMin min',
                 style: TextStyle(
-                  color: currentTheme.getContrastTextColor(currentTheme.testSetupColor),
+                  color: textColor,
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
                 ),
@@ -722,7 +765,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- KARTA 3: ZÍSKANÝ ČAS (TIME EARNED) ---
   Widget _buildTimeEarnedCard({
     required BuildContext context,
     required AppThemeData currentTheme,
@@ -787,7 +829,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- KARTA 4: ÚSPEŠNOSŤ A MASTERY ---
   Widget _buildAccuracyMasteryCard({
     required BuildContext context,
     required AppThemeData currentTheme,
@@ -800,6 +841,10 @@ class _HomeScreenState extends State<HomeScreen> {
     double accuracyPct = val > 1.0 ? val : val * 100;
     int masteredCount = (statsProvider.todayStats['mastered'] as num?)?.toInt() ?? 0;
 
+    final Color accuracyCardColor = currentTheme.id == 5 
+        ? currentTheme.decksColor 
+        : currentTheme.blockedAppsColor;
+
     return InkWell(
       onTap: () {
         Navigator.push(
@@ -810,14 +855,14 @@ class _HomeScreenState extends State<HomeScreen> {
       borderRadius: currentTheme.cardBorderRadius,
       child: Container(
         padding: const EdgeInsets.all(20),
-        decoration: currentTheme.getCardDecoration(currentTheme.blockedAppsColor),
+        decoration: currentTheme.getCardDecoration(accuracyCardColor),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               'ÚSPEŠNOSŤ & ZVLÁDNUTIE',
               style: TextStyle(
-                color: currentTheme.id == 2 || currentTheme.id == 5 ? Colors.black : currentTheme.blockedAppsColor,
+                color: currentTheme.id == 2 || currentTheme.id == 5 ? Colors.black : accuracyCardColor,
                 fontSize: 13,
                 letterSpacing: 1.2,
                 fontWeight: FontWeight.w800,

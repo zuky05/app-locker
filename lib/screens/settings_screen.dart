@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../themes/app_themes.dart';
 import '../themes/theme_provider.dart';
 import '../services/revenuecat_service.dart';
+import '../themes/themed_background.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -214,189 +215,191 @@ class _SettingsScreenState extends State<SettingsScreen> {
         return 0;
       });
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text(
-          'Settings',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onSurface,
+    return ThemedBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          title: Text(
+            'Settings',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
+            ),
           ),
+          backgroundColor: theme.scaffoldBackgroundColor, // Nepriehľadný AppBar
+          foregroundColor: theme.colorScheme.onSurface,
+          elevation: theme.appBarTheme.elevation ?? 0,
         ),
-        backgroundColor: theme.appBarTheme.backgroundColor ?? Colors.transparent,
-        foregroundColor: theme.colorScheme.onSurface,
-        elevation: theme.appBarTheme.elevation ?? 0,
-      ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator(color: currentTheme.decksColor))
-          : ListView(
-              padding: const EdgeInsets.all(16.0),
-              physics: const BouncingScrollPhysics(),
-              children: [
-                // --- SEKCIA: VIBRÁCIE ---
-                Container(
-                  decoration: isVibrant
-                      ? BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF00C6FF), Color(0xFF0072FF)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: currentTheme.cardBorderRadius,
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.5),
-                        )
-                      : currentTheme.getCardDecoration(currentTheme.decksColor),
-                  child: SwitchListTile(
-                    secondary: Icon(
-                      Icons.vibration, 
-                      color: isVibrant ? Colors.white : currentTheme.getIconColor(currentTheme.decksColor),
-                    ),
-                    title: Text(
-                      "Vibrovanie pri chybe",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: isVibrant ? Colors.white : theme.colorScheme.onSurface,
+        body: isLoading
+            ? Center(child: CircularProgressIndicator(color: currentTheme.decksColor))
+            : ListView(
+                padding: const EdgeInsets.all(16.0),
+                physics: const BouncingScrollPhysics(),
+                children: [
+                  // --- SEKCIA: VIBRÁCIE ---
+                  Container(
+                    decoration: isVibrant
+                        ? BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF00C6FF), Color(0xFF0072FF)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: currentTheme.cardBorderRadius,
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.5),
+                          )
+                        : currentTheme.getCardDecoration(currentTheme.decksColor),
+                    child: SwitchListTile(
+                      secondary: Icon(
+                        Icons.vibration, 
+                        color: isVibrant ? Colors.white : currentTheme.getIconColor(currentTheme.decksColor),
                       ),
-                    ),
-                    subtitle: Text(
-                      "Zavibruje pri nesprávnej odpovedi v kvíze",
-                      style: TextStyle(
-                        color: isVibrant ? Colors.white.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                      ),
-                    ),
-                    value: isVibrationEnabled,
-                    activeColor: isVibrant ? Colors.white : currentTheme.decksColor,
-                    onChanged: _saveVibrationSetting,
-                  ),
-                ),
-
-                const SizedBox(height: 28),
-
-                // --- SEKCIA: VÝBER TÉMY ---
-                Text(
-                  "Vizuálny štýl aplikácie",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 14),
-
-                // 2-STĹPCOVÁ MRIEŽKA (GRID) PRE TÉMY
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 1.15,
-                  ),
-                  itemCount: displayedThemes.length,
-                  itemBuilder: (context, index) {
-                    final appTheme = displayedThemes[index];
-                    final bool isSelected = currentTheme.id == appTheme.id;
-                    final itemTheme = appTheme.theme;
-
-                    final previewDeco = _getPreviewDecoration(appTheme, isSelected);
-                    final colors = _getPreviewColors(appTheme);
-
-                    final Color textColor = colors['text']!;
-                    final Color subtextColor = colors['subtext']!;
-                    final Color accentColor = colors['accent']!;
-
-                    return InkWell(
-                      onTap: () => _onThemeTap(appTheme, themeProvider),
-                      borderRadius: BorderRadius.circular(16),
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: previewDeco,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Icon(
-                                  isSelected ? Icons.check_circle_rounded : Icons.circle_outlined,
-                                  color: isSelected ? accentColor : textColor.withValues(alpha: 0.4),
-                                  size: 22,
-                                ),
-                                if (appTheme.isPremium)
-                                  Icon(
-                                    Icons.star_rounded,
-                                    color: accentColor,
-                                    size: 20,
-                                  ),
-                              ],
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  appTheme.name,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                    color: textColor,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  appTheme.isPremium ? "Premium štýl" : "Základný štýl",
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: subtextColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Row(
-                              children: [
-                                Container(
-                                  width: 10,
-                                  height: 10,
-                                  decoration: BoxDecoration(
-                                    color: itemTheme.colorScheme.primary,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: textColor.withValues(alpha: 0.3), width: 1),
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                Container(
-                                  width: 10,
-                                  height: 10,
-                                  decoration: BoxDecoration(
-                                    color: appTheme.decksColor,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: textColor.withValues(alpha: 0.3), width: 1),
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                Container(
-                                  width: 10,
-                                  height: 10,
-                                  decoration: BoxDecoration(
-                                    color: appTheme.testSetupColor,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: textColor.withValues(alpha: 0.3), width: 1),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                      title: Text(
+                        "Vibrovanie pri chybe",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isVibrant ? Colors.white : theme.colorScheme.onSurface,
                         ),
                       ),
-                    );
-                  },
-                ),
-              ],
-            ),
+                      subtitle: Text(
+                        "Zavibruje pri nesprávnej odpovedi v kvíze",
+                        style: TextStyle(
+                          color: isVibrant ? Colors.white.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        ),
+                      ),
+                      value: isVibrationEnabled,
+                      activeColor: isVibrant ? Colors.white : currentTheme.decksColor,
+                      onChanged: _saveVibrationSetting,
+                    ),
+                  ),
+
+                  const SizedBox(height: 28),
+
+                  // --- SEKCIA: VÝBER TÉMY ---
+                  Text(
+                    "Vizuálny štýl aplikácie",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // 2-STĹPCOVÁ MRIEŽKA (GRID) PRE TÉMY
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 1.15,
+                    ),
+                    itemCount: displayedThemes.length,
+                    itemBuilder: (context, index) {
+                      final appTheme = displayedThemes[index];
+                      final bool isSelected = currentTheme.id == appTheme.id;
+                      final itemTheme = appTheme.theme;
+
+                      final previewDeco = _getPreviewDecoration(appTheme, isSelected);
+                      final colors = _getPreviewColors(appTheme);
+
+                      final Color textColor = colors['text']!;
+                      final Color subtextColor = colors['subtext']!;
+                      final Color accentColor = colors['accent']!;
+
+                      return InkWell(
+                        onTap: () => _onThemeTap(appTheme, themeProvider),
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: previewDeco,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Icon(
+                                    isSelected ? Icons.check_circle_rounded : Icons.circle_outlined,
+                                    color: isSelected ? accentColor : textColor.withValues(alpha: 0.4),
+                                    size: 22,
+                                  ),
+                                  if (appTheme.isPremium)
+                                    Icon(
+                                      Icons.star_rounded,
+                                      color: accentColor,
+                                      size: 20,
+                                    ),
+                                ],
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    appTheme.name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                      color: textColor,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    appTheme.isPremium ? "Premium štýl" : "Základný štýl",
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: subtextColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 10,
+                                    height: 10,
+                                    decoration: BoxDecoration(
+                                      color: itemTheme.colorScheme.primary,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: textColor.withValues(alpha: 0.3), width: 1),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Container(
+                                    width: 10,
+                                    height: 10,
+                                    decoration: BoxDecoration(
+                                      color: appTheme.decksColor,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: textColor.withValues(alpha: 0.3), width: 1),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Container(
+                                    width: 10,
+                                    height: 10,
+                                    decoration: BoxDecoration(
+                                      color: appTheme.testSetupColor,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: textColor.withValues(alpha: 0.3), width: 1),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+      ),
     );
   }
 }

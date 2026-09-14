@@ -73,11 +73,11 @@ class AppThemeData {
       // STARLIGHT GLASS: Výrazný neónový okraj tlačidiel
       return BorderSide(color: activeAccent, width: 2.0);
     } else if (id == 1) {
-      // SOFT NEUMORPHISM
-      return const BorderSide(color: Color(0xFF2C2C3E), width: 1.5);
+      // SOFT NEUMORPHISM: Zvýraznený okraj tlačidiel
+      return const BorderSide(color: Color(0xFF2C2C3E), width: 1.8);
     } else if (id == 5) {
       // VIBRANT GRADIENTS
-      return BorderSide(color: Colors.white.withValues(alpha: 0.6), width: 1.5);
+      return BorderSide(color: Colors.white.withValues(alpha: 0.75), width: 1.5);
     }
 
     return BorderSide.none;
@@ -116,64 +116,50 @@ class AppThemeData {
     } else if (id == 1) {
       // SOFT NEUMORPHISM
       return BoxDecoration(
-        color: Color.alphaBlend(accentColor.withValues(alpha: 0.08), theme.cardColor),
+        color: Color.alphaBlend(accentColor.withValues(alpha: 0.10), theme.cardColor),
         borderRadius: cardBorderRadius,
         border: isSelected 
-            ? Border.all(color: accentColor, width: 2) 
-            : Border.all(color: accentColor.withValues(alpha: 0.2), width: 2),
+            ? Border.all(color: accentColor, width: 2.4) 
+            : Border.all(color: accentColor.withValues(alpha: 0.35), width: 2.4),
         boxShadow: cardShadows,
       );
     } else if (id == 4) {
       // STARLIGHT GLASS
       return BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            accentColor.withValues(alpha: 0.38),
-            accentColor.withValues(alpha: 0.12),
-            Colors.white.withValues(alpha: 0.08),
-          ],
-          stops: const [0.0, 0.65, 1.0],
-        ),
+        color: const Color(0xFF0F172A).withValues(alpha: 0.65),
         borderRadius: cardBorderRadius,
         border: Border.all(
           color: accentColor.withValues(alpha: 0.8),
-          width: 2.0,
+          width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: accentColor.withValues(alpha: 0.45),
-            blurRadius: 24,
-            spreadRadius: 1,
+            color: accentColor.withValues(alpha: 0.20),
+            blurRadius: 15,
+            spreadRadius: 0,
             offset: const Offset(0, 4),
           ),
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.6),
-            blurRadius: 14,
-            offset: const Offset(0, 8),
+            color: Colors.black.withValues(alpha: 0.4),
+            blurRadius: 10,
+            offset: const Offset(0, 6),
           ),
         ],
       );
     } else if (id == 5) {
-      // VIBRANT GRADIENTS
+      // 🟢 VIBRANT GRADIENTS: Upravené prechody podľa požiadaviek
       List<Color> gradientColors;
 
       if (accentColor.toARGB32() == dailyGoalColor.toARGB32()) {
-        // Výrazný široký mätovo-smaragdový prechod (od svetlej mäty po tmavší smaragd)
-        gradientColors = [const Color(0xFF00FF9D), const Color(0xFF047857)];
+        gradientColors = [const Color(0xFF00FF87), const Color(0xFF11998E)]; // Mätová zelená
       } else if (accentColor.toARGB32() == decksColor.toARGB32()) {
-        // Jasný azúrovo-modrý gradient
-        gradientColors = [const Color(0xFF00C6FF), const Color(0xFF0072FF)];
+        gradientColors = [const Color(0xFF2EC4B6), const Color(0xFF0077B6), const Color(0xFF03045E)]; // Zelenkastá tyrkysová do hlbokej tmavomodrej
       } else if (accentColor.toARGB32() == testSetupColor.toARGB32()) {
-        // Sýta fialovo-neónová
-        gradientColors = [const Color(0xFFA855F7), const Color(0xFFD946EF)];
+        gradientColors = [const Color(0xFFFF85C0), const Color(0xFFFF1493), const Color(0xFF8B008B)]; // Výrazne do ružova / magenta
       } else if (accentColor.toARGB32() == blockedAppsColor.toARGB32()) {
-        // Výrazný krvavo-červený gradient
-        gradientColors = [const Color(0xFFFF1744), const Color(0xFFB71C1C)];
+        gradientColors = [const Color(0xFFFF0000), const Color(0xFFB30000), const Color(0xFF5A0000)]; // Extra červené (sýta červená až krvavá)
       } else {
-        // Zlatisto-žltý prechod pre Premium Access a Quick Import
-        gradientColors = [const Color(0xFFFFD700), const Color(0xFFFF9800)];
+        gradientColors = [const Color(0xFFFFD700), const Color(0xFFFF8C00), const Color(0xFFE65100)]; // Žlto-oranžové (Manage Premium / Quick Import)
       }
 
       return BoxDecoration(
@@ -183,13 +169,13 @@ class AppThemeData {
           end: Alignment.bottomRight,
         ),
         borderRadius: cardBorderRadius,
-        border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 1.5),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.75), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: gradientColors.first.withValues(alpha: 0.35),
-            blurRadius: 16,
+            color: gradientColors.first.withValues(alpha: 0.45),
+            blurRadius: 20,
             spreadRadius: 1,
-            offset: const Offset(0, 6),
+            offset: const Offset(0, 8),
           ),
         ],
       );
@@ -212,13 +198,12 @@ class AppThemeData {
     }
 
     if (id == 5) {
-      // Čierny text pre žltý Premium Access, Quick Import aj svetlejší Daily Goal
       if (accentColor.toARGB32() == quickImportColor.toARGB32() || 
           accentColor.toARGB32() == warningColor.toARGB32() || 
           accentColor.toARGB32() == dailyGoalColor.toARGB32()) {
         return Colors.black;
       }
-      return Colors.white; // Na ostatných sýtych gradientoch (červená, modrá, fialová)
+      return Colors.white;
     }
 
     if (accentColor.toARGB32() == quickImportColor.toARGB32() || accentColor.toARGB32() == warningColor.toARGB32()) {
@@ -272,6 +257,58 @@ class AppThemeData {
     return BorderSide(
       color: customColor ?? testSetupColor.withValues(alpha: isChecked ? 1.0 : 0.6),
       width: isChecked ? 2.0 : 1.5,
+    );
+  }
+
+  PreferredSizeWidget getAppBarDivider() {
+    if (id == 2) {
+      // NEO BRUTALISM: Hrubá čierna čiara
+      return const PreferredSize(
+        preferredSize: Size.fromHeight(3.5),
+        child: Divider(height: 3.5, thickness: 3.5, color: Colors.black),
+      );
+    } else if (id == 0) {
+      // CYBERPUNK: Neónová čiara vo farbe testSetupColor (cyan/azúrová)
+      return PreferredSize(
+        preferredSize: const Size.fromHeight(1.5),
+        child: Container(
+          height: 1.5,
+          color: testSetupColor.withValues(alpha: 0.6),
+        ),
+      );
+    } else if (id == 4) {
+      // STARLIGHT GLASS: Jemná neónovo priehľadná čiara
+      return PreferredSize(
+        preferredSize: const Size.fromHeight(1.5),
+        child: Container(
+          height: 1.5,
+          color: dailyGoalColor.withValues(alpha: 0.4),
+        ),
+      );
+    } else if (id == 5) {
+      // VIBRANT GRADIENTS: Biely svietivý pruh s opacitou
+      return PreferredSize(
+        preferredSize: const Size.fromHeight(1.5),
+        child: Container(
+          height: 1.5,
+          color: Colors.white.withValues(alpha: 0.5),
+        ),
+      );
+    } else if (id == 1) {
+      // SOFT NEUMORPHISM: Jemná tmavšia čiara pre kontrast
+      return PreferredSize(
+        preferredSize: const Size.fromHeight(1.5),
+        child: Container(
+          height: 1.5,
+          color: const Color(0xFF2C2C3E).withValues(alpha: 0.2),
+        ),
+      );
+    }
+
+    // CLEAN MINIMAL / DEFAULT
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(1.0),
+      child: Divider(height: 1.0, thickness: 1.0, color: theme.colorScheme.onSurface.withValues(alpha: 0.15)),
     );
   }
 }
@@ -352,14 +389,14 @@ class AppThemes {
     buttonBorderRadius: BorderRadius.circular(16),
     cardShadows: [
       BoxShadow(
-        color: Colors.black.withValues(alpha: 0.15),
-        offset: const Offset(6, 6),
-        blurRadius: 12,
+        color: Colors.black.withValues(alpha: 0.20),
+        offset: const Offset(7, 7),
+        blurRadius: 14,
       ),
       const BoxShadow(
         color: Colors.white,
-        offset: Offset(-6, -6),
-        blurRadius: 12,
+        offset: Offset(-7, -7),
+        blurRadius: 14,
       ),
     ],
     dailyGoalColor: const Color(0xFF5C6BC0),
@@ -374,7 +411,7 @@ class AppThemes {
     primaryButtonFg: Colors.white,
     buttonBorder: BorderSide.none,
     circleAvatarBg: const Color(0xFFF0F0F3),
-    circleAvatarBorder: Border.all(color: const Color(0xFFD1D9E6), width: 1.5),
+    circleAvatarBorder: Border.all(color: const Color(0xFFD1D9E6), width: 1.8),
     theme: ThemeData(
       brightness: Brightness.light,
       scaffoldBackgroundColor: const Color(0xFFF0F0F3),
@@ -554,25 +591,25 @@ class AppThemes {
     cardBorderRadius: BorderRadius.circular(24),
     buttonBorderRadius: BorderRadius.circular(20),
     cardBorder: Border.all(
-      color: Colors.white.withValues(alpha: 0.6),
+      color: Colors.white.withValues(alpha: 0.75),
       width: 1.5,
     ),
     cardShadows: [
       BoxShadow(
-        color: const Color(0xFF00FF9D).withValues(alpha: 0.25),
-        blurRadius: 16,
+        color: const Color(0xFFFF9800).withValues(alpha: 0.35),
+        blurRadius: 18,
         offset: const Offset(0, 8),
       ),
     ],
-    dailyGoalColor: const Color(0xFF00FF9D),    // Svieža neónovo-mätová zelená
-    decksColor: const Color(0xFF00C6FF),        // Azúrová modrá
-    testSetupColor: const Color(0xFFA855F7),    // Fialová
-    blockedAppsColor: const Color(0xFFFF1744),  // Výrazná červená
-    quickImportColor: const Color(0xFFFFD700),  // Žiarivá zlatá
-    successColor: const Color(0xFF00FF9D),
+    dailyGoalColor: const Color(0xFF00FF87),    // Neónová zeleno-mätová
+    decksColor: const Color(0xFF2EC4B6),        // Zelenkastá tyrkysová do modra
+    testSetupColor: const Color(0xFFFF69B4),    // Ružová / Magenta
+    blockedAppsColor: const Color(0xFFFF0000),  // Čistá sýta červená
+    quickImportColor: const Color(0xFFFFD700),  // Žlto-oranžová (Premium)
+    successColor: const Color(0xFF00FF87),
     warningColor: const Color(0xFFFFD700),
-    errorColor: const Color(0xFFFF1744),
-    primaryButtonBg: const Color(0xFFFFD700),
+    errorColor: const Color(0xFFFF0000),
+    primaryButtonBg: const Color(0xFFFF9800),   // Žlto-oranžové tlačidlo
     primaryButtonFg: Colors.black,
     buttonBorder: BorderSide.none,
     circleAvatarBg: Colors.white,
@@ -581,14 +618,14 @@ class AppThemes {
       brightness: Brightness.light,
       scaffoldBackgroundColor: const Color(0xFFF4F5F9),
       cardColor: const Color(0xFFFFFFFF),
-      primaryColor: const Color(0xFFFFD700),
+      primaryColor: const Color(0xFFFF9800),
       colorScheme: const ColorScheme.light(
-        primary: Color(0xFFFFD700),
+        primary: Color(0xFFFF9800),
         onPrimary: Colors.black,
-        secondary: Color(0xFF00C6FF),
+        secondary: Color(0xFF2EC4B6),
         onSecondary: Colors.white,
-        tertiary: Color(0xFFFF1744),
-        surface: Colors.white,
+        tertiary: Color(0xFFFF0000),
+        surface: Color(0xFF0F172A),
         onSurface: Color(0xFF111111),
         onSecondaryContainer: Color(0xFF666666),
       ),

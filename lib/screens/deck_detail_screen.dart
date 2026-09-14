@@ -100,6 +100,16 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
     final Color sectionColor = currentTheme.decksColor;
     final Color textColor = currentTheme.getContrastTextColor(sectionColor);
 
+    // Neutrálna dekorácia bez žltého gradientu pre všetky témy
+    final BoxDecoration inputDecoration = BoxDecoration(
+      color: theme.cardColor,
+      borderRadius: currentTheme.cardBorderRadius,
+      border: Border.all(
+        color: theme.colorScheme.onSurface.withValues(alpha: 0.12),
+        width: 1.2,
+      ),
+    );
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -141,10 +151,10 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
               ),
               const SizedBox(height: 20),
 
-              // 1. OTÁZKA / POJEM (Viacriadkový vstup)
+              // 1. OTÁZKA / POJEM
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: currentTheme.getCardDecoration(theme.cardColor),
+                decoration: inputDecoration,
                 child: TextField(
                   controller: promptController,
                   minLines: 2,
@@ -166,10 +176,10 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
               ),
               const SizedBox(height: 14),
 
-              // 2. SPRÁVNA ODPOVEĎ (Viacriadkový vstup)
+              // 2. SPRÁVNA ODPOVEĎ
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: currentTheme.getCardDecoration(theme.cardColor),
+                decoration: inputDecoration,
                 child: TextField(
                   controller: answerController,
                   minLines: 2,
@@ -191,51 +201,57 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
               ),
               const SizedBox(height: 24),
 
-              // TLAČIDLO ULOŽIŤ
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 52),
-                  backgroundColor: sectionColor,
-                  foregroundColor: textColor,
-                  elevation: currentTheme.cardShadows != null ? 2 : 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: currentTheme.buttonBorderRadius,
-                    side: currentTheme.buttonBorder,
-                  ),
-                ),
-                onPressed: () async {
-                  final prompt = promptController.text.trim();
-                  final answer = answerController.text.trim();
+              // TLAČIDLO ULOŽIŤ (Vlastný InkWell + Container – bez akýchkoľvek systémových okrajov)
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () async {
+                    final prompt = promptController.text.trim();
+                    final answer = answerController.text.trim();
 
-                  if (prompt.isNotEmpty && answer.isNotEmpty) {
-                    await DatabaseHelper.instance.addNewCard(
-                      widget.deck.id!,
-                      prompt,
-                      answer,
-                    );
+                    if (prompt.isNotEmpty && answer.isNotEmpty) {
+                      await DatabaseHelper.instance.addNewCard(
+                        widget.deck.id!,
+                        prompt,
+                        answer,
+                      );
 
-                    if (!mounted) return;
-                    Navigator.pop(bottomSheetContext);
+                      if (!mounted) return;
+                      Navigator.pop(bottomSheetContext);
 
-                    await _loadCards();
+                      await _loadCards();
 
-                    Future.delayed(const Duration(milliseconds: 100), () {
-                      if (cards.isNotEmpty) {
-                        _pageController.animateToPage(
-                          cards.length - 1,
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      }
-                    });
-                  }
-                },
-                child: Text(
-                  "Pridať kartičku",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
+                      Future.delayed(const Duration(milliseconds: 100), () {
+                        if (cards.isNotEmpty) {
+                          _pageController.animateToPage(
+                            cards.length - 1,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                          );
+                        }
+                      });
+                    }
+                  },
+                  borderRadius: currentTheme.buttonBorderRadius,
+                  child: Container(
+                    height: 52,
+                    width: double.infinity,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: sectionColor,
+                      borderRadius: currentTheme.buttonBorderRadius,
+                      border: currentTheme.id == 4 
+                          ? null 
+                          : Border.fromBorderSide(currentTheme.buttonBorder),
+                    ),
+                    child: Text(
+                      "Pridať kartičku",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: textColor,
+                      ),
+                    ),
                   ),
                 ),
               ),

@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'home_screen.dart';
 import '../themes/theme_provider.dart';
 import '../themes/app_themes.dart';
+import '../themes/themed_background.dart';
 
 class PermissionScreen extends StatefulWidget {
   const PermissionScreen({super.key});
@@ -101,11 +102,13 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
     final bool isNeo = currentTheme.id == 2;
 
     if (isLoading) {
-      return Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        body: Center(
-          child: CircularProgressIndicator(
-            color: isVibrant ? currentTheme.decksColor : currentTheme.buttonBorder.color,
+      return ThemedBackground(
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Center(
+            child: CircularProgressIndicator(
+              color: isVibrant ? currentTheme.decksColor : currentTheme.buttonBorder.color,
+            ),
           ),
         ),
       );
@@ -125,116 +128,118 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
         ? Colors.white 
         : currentTheme.getIconColor(currentTheme.buttonBorder.color);
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(28.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const Spacer(),
-              
-              // Ikona zabezpečenia HORE
-              Container(
-                padding: const EdgeInsets.all(22),
-                decoration: BoxDecoration(
-                  color: circleBgColor,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isVibrant ? Colors.black : currentTheme.buttonBorder.color, 
-                    width: isVibrant ? 2.5 : 2.0,
+    return ThemedBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(28.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Spacer(),
+                
+                // Ikona zabezpečenia HORE
+                Container(
+                  padding: const EdgeInsets.all(22),
+                  decoration: BoxDecoration(
+                    color: circleBgColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isVibrant ? Colors.black : currentTheme.buttonBorder.color, 
+                      width: isVibrant ? 2.5 : 2.0,
+                    ),
+                    boxShadow: isVibrant 
+                        ? const [BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4))] 
+                        : currentTheme.cardShadows,
                   ),
-                  boxShadow: isVibrant 
-                      ? const [BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4))] 
-                      : currentTheme.cardShadows,
+                  child: Icon(
+                    Icons.security_rounded,
+                    size: 64,
+                    color: circleIconColor,
+                  ),
                 ),
-                child: Icon(
-                  Icons.security_rounded,
-                  size: 64,
-                  color: circleIconColor,
-                ),
-              ),
-              const SizedBox(height: 32),
-              
-              Text(
-                "Vyžaduje sa aktivácia",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface,
-                ),
-              ),
-              const SizedBox(height: 14),
-              Text(
-                "Pre správne fungovanie blokovania a odpočítavania času je potrebné povoliť nasledujúce tri funkcie.",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 28),
-
-              _buildPermissionTile(
-                title: "Prekrytie aplikácií (Overlay)",
-                isGranted: isOverlayGranted,
-                currentTheme: currentTheme,
-              ),
-              const SizedBox(height: 12),
-              _buildPermissionTile(
-                title: "Zjednodušenie prístupu (Accessibility)",
-                isGranted: isAccessibilityGranted,
-                currentTheme: currentTheme,
-              ),
-              const SizedBox(height: 12),
-              _buildPermissionTile(
-                title: "Upozornenia a odpočet času (Notifications)",
-                isGranted: isNotificationGranted,
-                currentTheme: currentTheme,
-              ),
-
-              const Spacer(),
-
-              // Hlavné akčné tlačidlo DOLE
-              ElevatedButton.icon(
-                onPressed: allGranted ? _navigateToMain : _openSettingsOrRequest,
-                icon: Icon(
-                  allGranted ? Icons.arrow_forward : Icons.settings,
-                  color: buttonFgColor,
-                ),
-                label: Text(
-                  allGranted
-                      ? "Pokračovať"
-                      : (!isOverlayGranted
-                          ? "Povoliť prekrytie"
-                          : (!isAccessibilityGranted
-                              ? "Povoliť Zjednodušenie prístupu"
-                              : "Povoliť Upozornenia")),
+                const SizedBox(height: 32),
+                
+                Text(
+                  "Vyžaduje sa aktivácia",
+                  textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 16,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  "Pre správne fungovanie blokovania a odpočítavania času je potrebné povoliť nasledujúce tri funkcie.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 28),
+
+                _buildPermissionTile(
+                  title: "Prekrytie aplikácií (Overlay)",
+                  isGranted: isOverlayGranted,
+                  currentTheme: currentTheme,
+                ),
+                const SizedBox(height: 12),
+                _buildPermissionTile(
+                  title: "Zjednodušenie prístupu (Accessibility)",
+                  isGranted: isAccessibilityGranted,
+                  currentTheme: currentTheme,
+                ),
+                const SizedBox(height: 12),
+                _buildPermissionTile(
+                  title: "Upozornenia a odpočet času (Notifications)",
+                  isGranted: isNotificationGranted,
+                  currentTheme: currentTheme,
+                ),
+
+                const Spacer(),
+
+                // Hlavné akčné tlačidlo DOLE
+                ElevatedButton.icon(
+                  onPressed: allGranted ? _navigateToMain : _openSettingsOrRequest,
+                  icon: Icon(
+                    allGranted ? Icons.arrow_forward : Icons.settings,
                     color: buttonFgColor,
                   ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 54),
-                  backgroundColor: buttonBgColor,
-                  foregroundColor: buttonFgColor,
-                  elevation: isVibrant ? 0 : (theme.appBarTheme.elevation ?? 0),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: currentTheme.buttonBorderRadius,
-                    side: BorderSide(
-                      color: isVibrant ? Colors.black : currentTheme.buttonBorder.color, 
-                      width: 2.0,
+                  label: Text(
+                    allGranted
+                        ? "Pokračovať"
+                        : (!isOverlayGranted
+                            ? "Povoliť prekrytie"
+                            : (!isAccessibilityGranted
+                                ? "Povoliť Zjednodušenie prístupu"
+                                : "Povoliť Upozornenia")),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 16,
+                      color: buttonFgColor,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 54),
+                    backgroundColor: buttonBgColor,
+                    foregroundColor: buttonFgColor,
+                    elevation: isVibrant ? 0 : 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: currentTheme.buttonBorderRadius,
+                      side: BorderSide(
+                        color: isVibrant ? Colors.black : currentTheme.buttonBorder.color, 
+                        width: 2.0,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

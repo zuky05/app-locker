@@ -12,6 +12,7 @@ import 'quiz_overlay_screen.dart';
 import 'quizlet_playground_screen.dart';
 import '../services/anki_importer.dart';
 import '../services/revenuecat_service.dart';
+import '../themes/themed_background.dart';
 
 class DeckManagerScreen extends StatefulWidget {
   const DeckManagerScreen({super.key});
@@ -52,7 +53,6 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     final prefs = await SharedPreferences.getInstance();
     int? activeId = prefs.getInt('active_test_deck_id');
 
-    // 1. Kontrola, či aktívny deck vôbec existuje v DB a či má aspoň 5 kariet
     if (activeId != null) {
       final bool exists = loadedDecks.any((d) => d.id == activeId);
       final int activeCardCount = exists ? await DatabaseHelper.instance.getCardCountForDeck(activeId) : 0;
@@ -63,11 +63,9 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
       }
     }
 
-    // 2. Ak nie je nastavený žiaden aktívny deck, automaticky vyberieme World Capitals (alebo prvý vhodný)
     if (activeId == null && loadedDecks.isNotEmpty) {
       Deck? defaultDeck;
 
-      // Hľadáme balíček "World Capitals" / "Hlavné mestá"
       for (var d in loadedDecks) {
         final nameLower = d.name.toLowerCase();
         if (nameLower.contains('capital') || nameLower.contains('hlavné mestá') || nameLower.contains('world capitals')) {
@@ -79,7 +77,6 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
         }
       }
 
-      // Ak sa nenašiel podľa názvu, vezmeme prvý dostupný premade deck s >= 5 kartami
       if (defaultDeck == null) {
         for (var d in loadedDecks) {
           if (d.isPremade == 1 || d.isPremade == true) {
@@ -92,7 +89,6 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
         }
       }
 
-      // Uloženie predvoleného balíčka do SharedPreferences
       if (defaultDeck != null) {
         await prefs.setInt('active_test_deck_id', defaultDeck.id!);
         activeId = defaultDeck.id;
@@ -421,7 +417,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                 final prefs = await SharedPreferences.getInstance();
                 await prefs.remove('active_test_deck_id');
               }
-              await _loadDecks(); // Automaticky nahradí aktívny deck fallbackom
+              await _loadDecks();
             },
             child: const Text('Vymazať'),
           ),
@@ -801,41 +797,43 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     final Color fabBgColor = isLimitReached ? currentTheme.warningColor : sectionColor;
     final Color fabFgColor = currentTheme.getContrastTextColor(fabBgColor);
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text('Balíčky Brainlock'),
-        backgroundColor: theme.appBarTheme.backgroundColor ?? Colors.transparent,
-        foregroundColor: theme.colorScheme.onSurface,
-        elevation: theme.appBarTheme.elevation ?? 0,
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: sectionColor,
-          unselectedLabelColor: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-          indicatorColor: sectionColor,
-          tabs: const [
-            Tab(text: 'Moje balíčky', icon: Icon(Icons.person)),
-            Tab(text: 'Pripravené', icon: Icon(Icons.library_books)),
-          ],
+    return ThemedBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          title: const Text('Balíčky Brainlock'),
+          backgroundColor: theme.scaffoldBackgroundColor, // Nepriehľadný AppBar
+          foregroundColor: theme.colorScheme.onSurface,
+          elevation: theme.appBarTheme.elevation ?? 0,
+          bottom: TabBar(
+            controller: _tabController,
+            labelColor: sectionColor,
+            unselectedLabelColor: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+            indicatorColor: sectionColor,
+            tabs: const [
+              Tab(text: 'Moje balíčky', icon: Icon(Icons.person)),
+              Tab(text: 'Pripravené', icon: Icon(Icons.library_books)),
+            ],
+          ),
         ),
+        body: isLoading
+            ? Center(child: CircularProgressIndicator(color: currentTheme.decksColor))
+            : TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildCustomDeckList(myDecks), 
+                  _buildGroupedPremadeDeckList(premadeDecks),
+                ],
+              ),
+        floatingActionButton: _tabController.index == 0
+            ? FloatingActionButton(
+                onPressed: _showAddDeckDialog,
+                backgroundColor: fabBgColor,
+                foregroundColor: fabFgColor,
+                child: Icon(isLimitReached ? Icons.block : Icons.add),
+              )
+            : null,
       ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator(color: currentTheme.decksColor))
-          : TabBarView(
-              controller: _tabController,
-              children: [
-                _buildCustomDeckList(myDecks), 
-                _buildGroupedPremadeDeckList(premadeDecks),
-              ],
-            ),
-      floatingActionButton: _tabController.index == 0
-          ? FloatingActionButton(
-              onPressed: _showAddDeckDialog,
-              backgroundColor: fabBgColor,
-              foregroundColor: fabFgColor,
-              child: Icon(isLimitReached ? Icons.block : Icons.add),
-            )
-          : null,
     );
   }
 }

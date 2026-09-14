@@ -159,16 +159,16 @@ class AppThemeData {
       // VIBRANT GRADIENTS
       List<Color> gradientColors;
 
-      if (accentColor.value == dailyGoalColor.value) {
+      if (accentColor.toARGB32() == dailyGoalColor.toARGB32()) {
         // Výrazný široký mätovo-smaragdový prechod (od svetlej mäty po tmavší smaragd)
         gradientColors = [const Color(0xFF00FF9D), const Color(0xFF047857)];
-      } else if (accentColor.value == decksColor.value) {
+      } else if (accentColor.toARGB32() == decksColor.toARGB32()) {
         // Jasný azúrovo-modrý gradient
         gradientColors = [const Color(0xFF00C6FF), const Color(0xFF0072FF)];
-      } else if (accentColor.value == testSetupColor.value) {
+      } else if (accentColor.toARGB32() == testSetupColor.toARGB32()) {
         // Sýta fialovo-neónová
         gradientColors = [const Color(0xFFA855F7), const Color(0xFFD946EF)];
-      } else if (accentColor.value == blockedAppsColor.value) {
+      } else if (accentColor.toARGB32() == blockedAppsColor.toARGB32()) {
         // Výrazný krvavo-červený gradient
         gradientColors = [const Color(0xFFFF1744), const Color(0xFFB71C1C)];
       } else {
@@ -213,15 +213,15 @@ class AppThemeData {
 
     if (id == 5) {
       // Čierny text pre žltý Premium Access, Quick Import aj svetlejší Daily Goal
-      if (accentColor.value == quickImportColor.value || 
-          accentColor.value == warningColor.value || 
-          accentColor.value == dailyGoalColor.value) {
+      if (accentColor.toARGB32() == quickImportColor.toARGB32() || 
+          accentColor.toARGB32() == warningColor.toARGB32() || 
+          accentColor.toARGB32() == dailyGoalColor.toARGB32()) {
         return Colors.black;
       }
       return Colors.white; // Na ostatných sýtych gradientoch (červená, modrá, fialová)
     }
 
-    if (accentColor.value == quickImportColor.value || accentColor.value == warningColor.value) {
+    if (accentColor.toARGB32() == quickImportColor.toARGB32() || accentColor.toARGB32() == warningColor.toARGB32()) {
       return Colors.black;
     }
 

@@ -3,7 +3,6 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:provider/provider.dart';
 import '../services/revenuecat_service.dart';
 import '../themes/theme_provider.dart';
-import '../themes/app_themes.dart';
 
 class PremiumScreen extends StatefulWidget {
   const PremiumScreen({super.key});

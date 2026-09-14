@@ -7,6 +7,7 @@ import '../services/database_helper.dart';
 import '../models/deck_model.dart';
 import '../themes/theme_provider.dart';
 import 'deck_detail_screen.dart';
+import 'create_deck_screen.dart';
 import 'quiz_overlay_screen.dart';
 import 'quizlet_playground_screen.dart';
 import '../services/anki_importer.dart';
@@ -51,19 +52,50 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     final prefs = await SharedPreferences.getInstance();
     int? activeId = prefs.getInt('active_test_deck_id');
 
+    // 1. Kontrola, či aktívny deck vôbec existuje v DB a či má aspoň 5 kariet
     if (activeId != null) {
-      final activeCardCount = await DatabaseHelper.instance.getCardCountForDeck(activeId);
-      if (activeCardCount < 5) {
+      final bool exists = loadedDecks.any((d) => d.id == activeId);
+      final int activeCardCount = exists ? await DatabaseHelper.instance.getCardCountForDeck(activeId) : 0;
+
+      if (!exists || activeCardCount < 5) {
         await prefs.remove('active_test_deck_id');
         activeId = null;
+      }
+    }
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Aktívny balíček bol odznačený, pretože má menej ako 5 kariet."),
-            ),
-          );
+    // 2. Ak nie je nastavený žiaden aktívny deck, automaticky vyberieme World Capitals (alebo prvý vhodný)
+    if (activeId == null && loadedDecks.isNotEmpty) {
+      Deck? defaultDeck;
+
+      // Hľadáme balíček "World Capitals" / "Hlavné mestá"
+      for (var d in loadedDecks) {
+        final nameLower = d.name.toLowerCase();
+        if (nameLower.contains('capital') || nameLower.contains('hlavné mestá') || nameLower.contains('world capitals')) {
+          final count = await DatabaseHelper.instance.getCardCountForDeck(d.id!);
+          if (count >= 5) {
+            defaultDeck = d;
+            break;
+          }
         }
+      }
+
+      // Ak sa nenašiel podľa názvu, vezmeme prvý dostupný premade deck s >= 5 kartami
+      if (defaultDeck == null) {
+        for (var d in loadedDecks) {
+          if (d.isPremade == 1 || d.isPremade == true) {
+            final count = await DatabaseHelper.instance.getCardCountForDeck(d.id!);
+            if (count >= 5) {
+              defaultDeck = d;
+              break;
+            }
+          }
+        }
+      }
+
+      // Uloženie predvoleného balíčka do SharedPreferences
+      if (defaultDeck != null) {
+        await prefs.setInt('active_test_deck_id', defaultDeck.id!);
+        activeId = defaultDeck.id;
       }
     }
     
@@ -221,10 +253,13 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                 ),
                 onPressed: () {
                   Navigator.pop(context);
-                  _showCreateManualDeckDialog();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const CreateDeckScreen()),
+                  ).then((_) => _loadDecks());
                 },
                 icon: const Icon(Icons.add_circle_outline),
-                label: const Text("Add new deck", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                label: const Text("Pridať vlastný balíček", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
             const SizedBox(height: 12),
@@ -247,7 +282,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                   ).then((_) => _loadDecks());
                 },
                 icon: const Icon(Icons.school),
-                label: const Text("Import from Quizlet", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                label: const Text("Import z Quizletu", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
             const SizedBox(height: 12),
@@ -267,86 +302,11 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                   _handleAnkiImport();
                 },
                 icon: const Icon(Icons.upload_file),
-                label: const Text("Import from Anki", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                label: const Text("Import z Anki", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  void _showCreateManualDeckDialog() {
-    final nameController = TextEditingController();
-    final categoryController = TextEditingController();
-    final currentTheme = Provider.of<ThemeProvider>(context, listen: false).currentThemeData;
-    final theme = currentTheme.theme;
-    final Color sectionColor = currentTheme.decksColor;
-    final Color textColor = currentTheme.getContrastTextColor(sectionColor);
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: theme.cardColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: currentTheme.cardBorderRadius,
-          side: currentTheme.getButtonBorderSide(currentTheme.decksColor),
-        ),
-        title: Text(
-          'Nový balíček', 
-          style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController, 
-              style: TextStyle(color: theme.colorScheme.onSurface),
-              decoration: InputDecoration(
-                labelText: 'Názov',
-                labelStyle: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
-                focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: sectionColor, width: 2)),
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: categoryController, 
-              style: TextStyle(color: theme.colorScheme.onSurface),
-              decoration: InputDecoration(
-                labelText: 'Kategória (napr. Jazyky)',
-                labelStyle: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
-                focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: sectionColor, width: 2)),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context), 
-            child: Text(
-              'Zrušiť', 
-              style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (nameController.text.isNotEmpty && categoryController.text.isNotEmpty) {
-                await DatabaseHelper.instance.addNewDeck(nameController.text, categoryController.text);
-                if (!context.mounted) return;
-                Navigator.pop(context);
-                _loadDecks();
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: sectionColor, 
-              foregroundColor: textColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: currentTheme.buttonBorderRadius,
-              ),
-            ),
-            child: const Text('Vytvoriť'),
-          ),
-        ],
       ),
     );
   }
@@ -461,7 +421,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                 final prefs = await SharedPreferences.getInstance();
                 await prefs.remove('active_test_deck_id');
               }
-              _loadDecks();
+              await _loadDecks(); // Automaticky nahradí aktívny deck fallbackom
             },
             child: const Text('Vymazať'),
           ),
@@ -639,7 +599,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                             ),
                             _buildActionButton(
                               icon: Icons.style,
-                              label: "View",
+                              label: "Zobraziť",
                               color: currentTheme.blockedAppsColor,
                               onTap: () => Navigator.push(
                                 context,
@@ -664,7 +624,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                             ),
                             _buildActionButton(
                               icon: Icons.share,
-                              label: "Share",
+                              label: "Zdieľať",
                               color: currentTheme.testSetupColor,
                               onTap: () async {
                                 final cards = await DatabaseHelper.instance.getCardsForDeck(deck.id!);
@@ -696,7 +656,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                             children: [
                               _buildActionButton(
                                 icon: Icons.add_circle_outline_outlined,
-                                label: "Edit Cards",
+                                label: "Upraviť karty",
                                 color: currentTheme.dailyGoalColor,
                                 onTap: () => Navigator.push(
                                   context,
@@ -705,13 +665,13 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                               ),
                               _buildActionButton(
                                 icon: Icons.edit,
-                                label: "Rename",
+                                label: "Pomenovať",
                                 color: currentTheme.warningColor,
                                 onTap: () => _showRenameDeckDialog(deck),
                               ),
                               _buildActionButton(
                                 icon: Icons.delete,
-                                label: "Delete",
+                                label: "Vymazať",
                                 color: currentTheme.errorColor,
                                 onTap: () => _showDeleteConfirmDialog(deck),
                               ),
@@ -844,7 +804,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Brainlock Decks'),
+        title: const Text('Balíčky Brainlock'),
         backgroundColor: theme.appBarTheme.backgroundColor ?? Colors.transparent,
         foregroundColor: theme.colorScheme.onSurface,
         elevation: theme.appBarTheme.elevation ?? 0,
@@ -854,8 +814,8 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
           unselectedLabelColor: theme.colorScheme.onSurface.withValues(alpha: 0.6),
           indicatorColor: sectionColor,
           tabs: const [
-            Tab(text: 'My decks', icon: Icon(Icons.person)),
-            Tab(text: 'Premade decks', icon: Icon(Icons.library_books)),
+            Tab(text: 'Moje balíčky', icon: Icon(Icons.person)),
+            Tab(text: 'Pripravené', icon: Icon(Icons.library_books)),
           ],
         ),
       ),

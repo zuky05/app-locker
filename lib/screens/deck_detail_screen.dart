@@ -92,7 +92,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
     });
   }
 
-  void _showAddCardDialog() {
+  void _showAddCardBottomSheet() {
     final promptController = TextEditingController();
     final answerController = TextEditingController();
     final currentTheme = Provider.of<ThemeProvider>(context, listen: false).currentThemeData;
@@ -100,91 +100,149 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
     final Color sectionColor = currentTheme.decksColor;
     final Color textColor = currentTheme.getContrastTextColor(sectionColor);
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: theme.cardColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: currentTheme.cardBorderRadius,
-          side: currentTheme.buttonBorder,
-        ),
-        title: Text(
-          'Nová kartička', 
-          style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: promptController,
-              style: TextStyle(color: theme.colorScheme.onSurface),
-              decoration: InputDecoration(
-                labelText: 'Otázka / Pojem',
-                labelStyle: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: sectionColor, width: 2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: answerController,
-              style: TextStyle(color: theme.colorScheme.onSurface),
-              decoration: InputDecoration(
-                labelText: 'Správna odpoveď',
-                labelStyle: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: sectionColor, width: 2),
-                ),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext), 
-            child: Text(
-              'Zrušiť', 
-              style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (promptController.text.isNotEmpty && answerController.text.isNotEmpty) {
-                await DatabaseHelper.instance.addNewCard(
-                  widget.deck.id!,
-                  promptController.text,
-                  answerController.text,
-                );
-
-                if (!mounted) return;
-                Navigator.pop(dialogContext);
-
-                await _loadCards();
-
-                Future.delayed(const Duration(milliseconds: 100), () {
-                  if (cards.isNotEmpty) {
-                    _pageController.animateToPage(
-                      cards.length - 1,
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                    );
-                  }
-                });
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: sectionColor,
-              foregroundColor: textColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: currentTheme.buttonBorderRadius,
-                side: currentTheme.buttonBorder,
-              ),
-            ),
-            child: const Text('Pridať'),
-          ),
-        ],
+      isScrollControlled: true,
+      backgroundColor: theme.scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
+      builder: (bottomSheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 16,
+            bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Horná potiahnuteľná lišta
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 5,
+                  margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
+              Text(
+                "Nová kartička",
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // 1. OTÁZKA / POJEM (Viacriadkový vstup)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: currentTheme.getCardDecoration(theme.cardColor),
+                child: TextField(
+                  controller: promptController,
+                  minLines: 2,
+                  maxLines: 4,
+                  textCapitalization: TextCapitalization.sentences,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: "Otázka / Pojem (Predná strana)",
+                    alignLabelWithHint: true,
+                    labelStyle: TextStyle(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                    border: InputBorder.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // 2. SPRÁVNA ODPOVEĎ (Viacriadkový vstup)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: currentTheme.getCardDecoration(theme.cardColor),
+                child: TextField(
+                  controller: answerController,
+                  minLines: 2,
+                  maxLines: 5,
+                  textCapitalization: TextCapitalization.sentences,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: "Správna odpoveď (Zadná strana)",
+                    alignLabelWithHint: true,
+                    labelStyle: TextStyle(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                    border: InputBorder.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // TLAČIDLO ULOŽIŤ
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 52),
+                  backgroundColor: sectionColor,
+                  foregroundColor: textColor,
+                  elevation: currentTheme.cardShadows != null ? 2 : 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: currentTheme.buttonBorderRadius,
+                    side: currentTheme.buttonBorder,
+                  ),
+                ),
+                onPressed: () async {
+                  final prompt = promptController.text.trim();
+                  final answer = answerController.text.trim();
+
+                  if (prompt.isNotEmpty && answer.isNotEmpty) {
+                    await DatabaseHelper.instance.addNewCard(
+                      widget.deck.id!,
+                      prompt,
+                      answer,
+                    );
+
+                    if (!mounted) return;
+                    Navigator.pop(bottomSheetContext);
+
+                    await _loadCards();
+
+                    Future.delayed(const Duration(milliseconds: 100), () {
+                      if (cards.isNotEmpty) {
+                        _pageController.animateToPage(
+                          cards.length - 1,
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      }
+                    });
+                  }
+                },
+                child: Text(
+                  "Pridať kartičku",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -361,7 +419,6 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                     foregroundColor: currentTheme.getContrastTextColor(currentTheme.errorColor),
                     shape: RoundedRectangleBorder(
                       borderRadius: currentTheme.cardBorderRadius,
-                      
                     ),
                     child: const Icon(Icons.delete),
                   ),
@@ -370,14 +427,13 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
 
                 FloatingActionButton.extended(
                   heroTag: 'add_btn',
-                  onPressed: _showAddCardDialog,
+                  onPressed: _showAddCardBottomSheet,
                   icon: const Icon(Icons.add),
                   label: const Text("Pridať"),
                   backgroundColor: sectionColor,
                   foregroundColor: currentTheme.getContrastTextColor(sectionColor),
                   shape: RoundedRectangleBorder(
                     borderRadius: currentTheme.cardBorderRadius,
-                    
                   ),
                 ),
               ],

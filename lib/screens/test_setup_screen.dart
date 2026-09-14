@@ -30,7 +30,9 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
 
   bool _is3Options = false;
   bool _isSecondChance = false;
+  bool _isSwapQuestion = false;
   bool _isConfusion = false;
+  bool _isBlindTest = false;
   bool _isHardcore = false;
   bool _isDoubleTest = false;
 
@@ -82,7 +84,9 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
       _lockoutIndex = _prefs!.getDouble('test_lockoutIndex') ?? 2;
       _is3Options = _prefs!.getBool('test_is3Options') ?? false;
       _isSecondChance = _prefs!.getBool('test_isSecondChance') ?? false;
+      _isSwapQuestion = _prefs!.getBool('test_isSwapQuestion') ?? false;
       _isConfusion = _prefs!.getBool('test_isConfusion') ?? false;
+      _isBlindTest = _prefs!.getBool('test_isBlindTest') ?? false;
       _isHardcore = _prefs!.getBool('test_isHardcore') ?? false;
       _isDoubleTest = _prefs!.getBool('test_isDoubleTest') ?? false;
 
@@ -116,8 +120,10 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     mult *= _timeMultipliers[_timeLimitIndex.toInt()];
     mult *= _effectiveLockoutMultiplier;
     if (_is3Options && !_isHardcore) mult *= 0.7;
+    if (_isSwapQuestion) mult *= 0.85;
     if (_isSecondChance) mult *= 0.8;
     if (_isConfusion && !_isHardcore) mult *= 1.1;
+    if (_isBlindTest) mult *= 1.25;
     if (_isHardcore) mult *= 1.5;
     if (_isDoubleTest) mult *= 1.75;
     return mult;
@@ -413,6 +419,19 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                   ),
                   const SizedBox(height: 12),
                   _buildSwitchCard(
+                    title: 'Vymeň kartu', 
+                    subtitle: '1-krát za test môžeš vymeniť ťažkú otázku za novú.', 
+                    multiplier: 0.85, 
+                    value: _isSwapQuestion, 
+                    currentTheme: currentTheme,
+                    accentColor: currentTheme.testSetupColor,
+                    onChanged: (val) { 
+                      setState(() => _isSwapQuestion = val); 
+                      _saveBool('test_isSwapQuestion', val); 
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _buildSwitchCard(
                     title: 'Druhá šanca', 
                     subtitle: 'Jedna nesprávna odpoveď za celý test sa ti odpustí.', 
                     multiplier: 0.8, 
@@ -436,6 +455,19 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     onChanged: (val) { 
                       setState(() => _isConfusion = val); 
                       _saveBool('test_isConfusion', val); 
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _buildSwitchCard(
+                    title: 'Slepý test', 
+                    subtitle: 'Správnosť odpovedí sa dozvieš až na záver testu.', 
+                    multiplier: 1.25, 
+                    value: _isBlindTest, 
+                    currentTheme: currentTheme,
+                    accentColor: currentTheme.testSetupColor,
+                    onChanged: (val) { 
+                      setState(() => _isBlindTest = val); 
+                      _saveBool('test_isBlindTest', val); 
                     },
                   ),
                   const SizedBox(height: 12),

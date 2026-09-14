@@ -8,13 +8,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/database_helper.dart';
 import '../themes/theme_provider.dart';
 import '../themes/app_themes.dart';
-
-// --- IMPORT REVENUECAT ---
-import '../services/revenuecat_service.dart';
+import '../services/stats_provider.dart';
+import '../services/daily_challenge_service.dart';
 
 class QuizOverlayScreen extends StatefulWidget {
   final int? practiceDeckId; 
-  const QuizOverlayScreen({super.key, this.practiceDeckId});
+  final bool isFromNotification;
+
+  const QuizOverlayScreen({
+    super.key, 
+    this.practiceDeckId,
+    this.isFromNotification = false,
+  });
 
   @override
   State<QuizOverlayScreen> createState() => _QuizOverlayScreenState();
@@ -24,6 +29,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
   bool _isLoading = true;
   bool _isTestFinished = false;
   final List<int> _excludedCardIds = [];
+  final Stopwatch _sessionStopwatch = Stopwatch();
   
   // --- SPOLOČNÉ NASTAVENIA ---
   int? _activeDeckId;
@@ -45,7 +51,10 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
   double _lockoutIndex = 2;
   bool _is3Options = false;
   bool _isSecondChance = false;
+  bool _isSwapQuestion = false;
+  bool _hasUsedSwap = false;
   bool _isConfusion = false;
+  bool _isBlindTest = false;
   bool _isHardcore = false;
   bool _isDoubleTest = false;
   int _currentTestRound = 1;
@@ -80,6 +89,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
   @override
   void initState() {
     super.initState();
+    _sessionStopwatch.start();
     _loadSettingsAndStart();
   }
 
@@ -109,6 +119,8 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
         _is3Options = _isHardcore ? false : (prefs.getBool('test_is3Options') ?? false);
         _isConfusion = _isHardcore ? false : (prefs.getBool('test_isConfusion') ?? false);
         _isSecondChance = prefs.getBool('test_isSecondChance') ?? false;
+        _isSwapQuestion = prefs.getBool('test_isSwapQuestion') ?? false;
+        _isBlindTest = prefs.getBool('test_isBlindTest') ?? false;
         _isDoubleTest = prefs.getBool('test_isDoubleTest') ?? false;
         _maxTime = _timeLimitsInSeconds[_timeLimitIndex.toInt()];
       }
@@ -144,11 +156,50 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     mult *= _timeMultipliers[_timeLimitIndex.toInt()];
     mult *= _effectiveLockoutMultiplier;
     if (_is3Options && !_isHardcore) mult *= 0.7;
+    if (_isSwapQuestion) mult *= 0.85;
     if (_isSecondChance) mult *= 0.8;
     if (_isConfusion && !_isHardcore) mult *= 1.1;
+    if (_isBlindTest) mult *= 1.25;
     if (_isHardcore) mult *= 1.5;
     if (_isDoubleTest) mult *= 1.75; 
     return mult;
+  }
+
+  Future<void> _reportDailyChallengeProgress() async {
+    if (_isLearningMode) {
+      if (_masteredCount > 0) {
+        await DailyChallengeService.reportProgress(
+          type: ChallengeType.learnCards,
+          amount: _masteredCount,
+        );
+      }
+    } else {
+      bool isSuccess = _correctAnswersCount >= _requiredCorrectQuestions;
+      if (isSuccess && !_isRemedialQuiz) {
+        double accuracy = _correctAnswersCount / _questionCount;
+        double mult = _calculatedTotalMultiplier;
+        int earnedSeconds = (_correctAnswersCount * 30 * mult).round();
+
+        await DailyChallengeService.reportProgress(
+          type: ChallengeType.completeQuizzes,
+          accuracy: accuracy,
+          is3Options: _is3Options,
+          isSwapQuestion: _isSwapQuestion,
+          isSecondChance: _isSecondChance,
+          isConfusion: _isConfusion,
+          isBlindTest: _isBlindTest,
+          isDoubleTest: _isDoubleTest,
+          isHardcore: _isHardcore,
+        );
+
+        if (earnedSeconds > 0) {
+          await DailyChallengeService.reportProgress(
+            type: ChallengeType.earnMinutes,
+            amount: earnedSeconds,
+          );
+        }
+      }
+    }
   }
 
   Future<void> _startRemedialLearning() async {
@@ -193,6 +244,8 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       _isConfusion = false;
       _isHardcore = false;
       _isSecondChance = false;
+      _isSwapQuestion = false;
+      _isBlindTest = false;
       _isDoubleTest = false;
     });
 
@@ -281,8 +334,13 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       
       if (knewIt) {
         _masteredCount++;
-      } else if (_learnRepeat || _isRemedialLearning) {
-        _failedCards.add(card);
+      } else {
+        if (card['id'] != null) {
+          DatabaseHelper.instance.incrementCardWrongCount(card['id'] as int);
+        }
+        if (_learnRepeat || _isRemedialLearning) {
+          _failedCards.add(card);
+        }
       }
 
       if (_learningCardsQueue.isEmpty) {
@@ -367,6 +425,58 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     });
   }
 
+  Future<void> _swapCurrentQuestion() async {
+    if (_hasUsedSwap || _isAnswerChecked) return;
+    _timer?.cancel();
+    setState(() {
+      _isLoading = true;
+      _hasUsedSwap = true;
+      _hardcoreController.clear();
+    });
+
+    var questionData = await DatabaseHelper.instance.getRandomQuizQuestion(
+      deckId: _activeDeckId,
+      excludeCardIds: _excludedCardIds,
+    );
+
+    if (questionData == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    if (questionData['id'] != null) {
+      _excludedCardIds.add(questionData['id'] as int);
+    }
+
+    String correct = questionData['correct_answer'].toString();
+    List<String> options = List<String>.from(questionData['options']);
+
+    if (!_isHardcore) {
+      if (_isConfusion) {
+        bool isNoneCorrect = Random().nextDouble() < 0.4;
+        if (isNoneCorrect) {
+          options.remove(correct); options.add("Žiadna z odpovedí"); correct = "Žiadna z odpovedí";
+        } else {
+          String wrongOpt = options.firstWhere((opt) => opt != correct);
+          options.remove(wrongOpt); options.add("Žiadna z odpovedí");
+        }
+      }
+      if (_is3Options && !_isConfusion) {
+        List<String> wrongOptions = options.where((opt) => opt != correct).toList();
+        wrongOptions.shuffle(); options = [correct, wrongOptions[0], wrongOptions[1]];
+      }
+      options.shuffle();
+    }
+
+    setState(() {
+      _currentQuestion = questionData;
+      _currentOptions = options;
+      _actualCorrectAnswer = correct;
+      _isLoading = false;
+      if (_maxTime > 0) { _timeLeft = _maxTime; _startTimer(); }
+    });
+  }
+
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_timeLeft > 0) {
@@ -395,12 +505,30 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       setState(() => _selectedAnswer = selectedOption);
     }
 
+    if (_isBlindTest) {
+      if (isCorrect) {
+        _correctAnswersCount++;
+      } else {
+        if (_currentQuestion != null && _currentQuestion!['id'] != null) {
+          DatabaseHelper.instance.incrementCardWrongCount(_currentQuestion!['id'] as int);
+        }
+      }
+      await Future.delayed(const Duration(milliseconds: 400));
+      if (!mounted) return;
+      _proceedToNextQuiz();
+      return;
+    }
+
     if (isCorrect) {
       _correctAnswersCount++;
       await Future.delayed(const Duration(seconds: 2));
       if (!mounted) return;
       _proceedToNextQuiz();
     } else {
+      if (_currentQuestion != null && _currentQuestion!['id'] != null) {
+        DatabaseHelper.instance.incrementCardWrongCount(_currentQuestion!['id'] as int);
+      }
+
       if (_isVibrationEnabled) HapticFeedback.vibrate();
 
       if (_isSecondChance && !_usedSecondChanceThisQuestion) {
@@ -442,6 +570,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
           _currentTestRound = 2;
           _currentQuestionIndex = 0;
           _correctAnswersCount = 0;
+          _hasUsedSwap = false;
           _excludedCardIds.clear();
         });
         ScaffoldMessenger.of(context).showSnackBar(
@@ -485,93 +614,79 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     }
   }
 
-  // --- UPRAVENÁ FUNKCIA BEZ UMELÝCH ČASOVÝCH BONUSOV PRE PREMIUM ---
   void _finishAndUnlock() async {
+    // Zapísanie pokroku do Denných Výziev
+    _sessionStopwatch.stop();
+    int actualStudyTimeSeconds = _sessionStopwatch.elapsed.inSeconds;
+    if (actualStudyTimeSeconds < 1) actualStudyTimeSeconds = 1;
+
+    await _reportDailyChallengeProgress();
+
     if (widget.practiceDeckId != null) {
+      if (_isLearningMode) {
+        await DatabaseHelper.instance.insertStudySession(
+          deckId: _activeDeckId ?? 0,
+          durationSeconds: actualStudyTimeSeconds, // 👈 Stopky
+          earnedSeconds: 0,
+          correctCount: _masteredCount,
+          totalQuestions: _totalLearnedCards > 0 ? _totalLearnedCards : 1,
+        );
+      } else {
+        await DatabaseHelper.instance.insertStudySession(
+          deckId: _activeDeckId ?? 0,
+          durationSeconds: actualStudyTimeSeconds, // 👈 Stopky
+          earnedSeconds: 0,
+          correctCount: _correctAnswersCount,
+          totalQuestions: _questionCount.toInt(),
+        );
+      }
+
+      if (mounted) {
+        Provider.of<StatsProvider>(context, listen: false).refreshStats();
+      }
+
       _closeOrExitScreen();
       return;
     }
 
-    // 1. ZISTÍME, ČI MÁ POUŽÍVATEĽ PREMIUM
-    final isPremium = await RevenueCatService.isPremium();
-
-    // 2. KONTROLA "ODPUSTKOV" PRE FREE POUŽÍVATEĽOV
-    if (!isPremium) {
-      final prefs = await SharedPreferences.getInstance();
-      
-      final today = DateTime.now().toString().split(' ')[0];
-      final lastDate = prefs.getString('last_unlock_date') ?? '';
-      
-      int unlocksToday = 0;
-      if (lastDate == today) {
-         unlocksToday = prefs.getInt('unlocks_today_count') ?? 0;
-      }
-
-      if (unlocksToday >= 3) {
-        if (!mounted) return;
-        
-        showDialog(
-          context: context,
-          barrierDismissible: false, 
-          builder: (dialogContext) => AlertDialog(
-            title: const Row(
-              children: [
-                Icon(Icons.timer_off, color: Colors.red),
-                SizedBox(width: 8),
-                Text("Limit dosiahnutý", style: TextStyle(fontWeight: FontWeight.bold)),
-              ],
-            ),
-            content: const Text(
-              "Dnes si si už vyčerpal všetky 3 bezplatné odomknutia aplikácií cez test.\n\nPre nekonečné odomykanie a žiadne limity si aktivuj Brainlock Premium!",
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(dialogContext); 
-                  SystemNavigator.pop(); 
-                },
-                child: const Text("Zostať zablokovaný", style: TextStyle(color: Colors.grey)),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.amber.shade700, foregroundColor: Colors.black),
-                onPressed: () async {
-                  Navigator.pop(dialogContext); 
-                  final success = await RevenueCatService.presentPaywall(); 
-                  
-                  if (success) {
-                    _finishAndUnlock(); 
-                  } else {
-                    SystemNavigator.pop(); 
-                  }
-                },
-                child: const Text("Získať Premium", style: TextStyle(fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-        );
-        return; 
-      }
-
-      await prefs.setString('last_unlock_date', today);
-      await prefs.setInt('unlocks_today_count', unlocksToday + 1);
-    }
-
-    // 3. LOGIKA PRE ODOMKNUTIE APLIKÁCIE (Učenie)
     if (_isLearningMode) {
-      // OPRAVA: Už tu nie je 7200, každý dostane presne to, čo si nastavil v _learnInterval
       int earnedSeconds = (_learnInterval * 60).round();
-      
+      int actualAddedSeconds = 0;
+
       const platform = MethodChannel('brainlock.channel');
       try { 
-        await platform.invokeMethod('unlockApp', {'seconds': earnedSeconds, 'maxCap': earnedSeconds}); 
+        final dynamic result = await platform.invokeMethod('unlockApp', {
+          'seconds': earnedSeconds, 
+          'maxCap': earnedSeconds,
+          'isFromNotification': widget.isFromNotification,
+        }); 
+
+        if (result is int) {
+          actualAddedSeconds = result;
+        } else {
+          actualAddedSeconds = earnedSeconds;
+        }
       } catch (e) { 
         debugPrint("Chyba pri odomykaní: $e"); 
+        actualAddedSeconds = earnedSeconds;
       }
+
+      await DatabaseHelper.instance.insertStudySession(
+        deckId: _activeDeckId ?? 0,
+        durationSeconds: actualAddedSeconds,
+        earnedSeconds: 0,
+        correctCount: _masteredCount,
+        totalQuestions: _totalLearnedCards > 0 ? _totalLearnedCards : 1,
+      );
+
+      if (mounted) {
+        Provider.of<StatsProvider>(context, listen: false).refreshStats();
+      }
+
       SystemNavigator.pop();
       return;
     }
 
-    // 4. LOGIKA PRE ODOMKNUTIE APLIKÁCIE (Kvíz)
     double mult = _calculatedTotalMultiplier;
     bool isSuccess = _correctAnswersCount >= _requiredCorrectQuestions;
 
@@ -580,17 +695,39 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       earnedSeconds = (_correctAnswersCount * 30 * mult).round();
     }
     
-    // OPRAVA: Vymazal som 3-násobok pre Premium. 
-    // Max cap sa vypočíta normálne rovnako pre všetkých.
     int maxCapSeconds = (_questionCount * 30 * mult).round(); 
+    int actualAddedSeconds = 0;
 
     if (earnedSeconds > 0) {
       const platform = MethodChannel('brainlock.channel');
       try { 
-        await platform.invokeMethod('unlockApp', {'seconds': earnedSeconds, 'maxCap': maxCapSeconds}); 
+        final dynamic result = await platform.invokeMethod('unlockApp', {
+          'seconds': earnedSeconds, 
+          'maxCap': maxCapSeconds,
+          'isFromNotification': widget.isFromNotification,
+        }); 
+
+        if (result is int) {
+          actualAddedSeconds = result;
+        } else {
+          actualAddedSeconds = earnedSeconds;
+        }
       } catch (e) { 
         debugPrint("Chyba: $e"); 
+        actualAddedSeconds = earnedSeconds;
       }
+    }
+
+    await DatabaseHelper.instance.insertStudySession(
+      deckId: _activeDeckId ?? 0,
+      durationSeconds: actualStudyTimeSeconds, // 👈 Skutočný čas na test
+      earnedSeconds: actualAddedSeconds,
+      correctCount: _correctAnswersCount,
+      totalQuestions: _questionCount.toInt(),
+    );
+
+    if (mounted) {
+      Provider.of<StatsProvider>(context, listen: false).refreshStats();
     }
     
     SystemNavigator.pop();
@@ -604,7 +741,6 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     final theme = currentTheme.theme;
 
     return Scaffold(
-      // Zosvetlené pozadie pod overlayom
       backgroundColor: isPractice 
           ? theme.scaffoldBackgroundColor 
           : Colors.black.withValues(alpha: 0.3),
@@ -613,7 +749,6 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Vonkajší kontajner s bielym základom, aby gradient žiaril
               Container(
                 width: MediaQuery.of(context).size.width * 0.9,
                 decoration: BoxDecoration(
@@ -1055,7 +1190,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     Color hardcoreBorderCol = currentTheme.id == 2 ? Colors.black : Colors.black.withValues(alpha: 0.1);
     Widget? hardcoreFeedbackWidget;
 
-    if (_isHardcore && _isAnswerChecked) {
+    if (_isHardcore && _isAnswerChecked && !_isBlindTest) {
       String typed = _selectedAnswer ?? "";
       String expected = _actualCorrectAnswer.trim().toLowerCase();
       if (typed == expected && typed.isNotEmpty) {
@@ -1114,14 +1249,28 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             style: TextStyle(fontSize: 20, color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold),
           ),
         
-        const SizedBox(height: 32),
+        if (_isSwapQuestion && !_isRemedialQuiz && !_hasUsedSwap && !_isAnswerChecked) ...[
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: _swapCurrentQuestion,
+            icon: const Icon(Icons.swap_horiz_rounded, size: 18),
+            label: const Text("Vymeň kartu (1x)", style: TextStyle(fontWeight: FontWeight.bold)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: theme.colorScheme.primary,
+              side: BorderSide(color: theme.colorScheme.primary, width: 1.5),
+              shape: RoundedRectangleBorder(borderRadius: currentTheme.buttonBorderRadius),
+            ),
+          ),
+        ],
+
+        const SizedBox(height: 24),
         
         if (_isHardcore) ...[
           TextField(
             controller: _hardcoreController,
             textAlign: TextAlign.center,
             enabled: !_isAnswerChecked, 
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _isAnswerChecked ? Colors.white : Colors.black87),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: (_isAnswerChecked && !_isBlindTest) ? Colors.white : Colors.black87),
             decoration: InputDecoration(
               hintText: "Napíš odpoveď sem...",
               hintStyle: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
@@ -1157,14 +1306,21 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                 : BorderSide(color: Colors.black.withValues(alpha: 0.1), width: 1);
 
             if (_isAnswerChecked) {
-              if (option == _actualCorrectAnswer && !_hideCorrectAnswer) {
-                btnColor = Colors.green.shade600; 
-                textColor = Colors.white; 
-                borderSide = const BorderSide(color: Colors.green, width: 2);
-              } else if (option == _selectedAnswer) {
-                btnColor = Colors.red.shade600; 
-                textColor = Colors.white; 
-                borderSide = const BorderSide(color: Colors.red, width: 2);
+              if (_isBlindTest) {
+                if (option == _selectedAnswer) {
+                  btnColor = theme.colorScheme.primary.withValues(alpha: 0.8);
+                  textColor = Colors.white;
+                }
+              } else {
+                if (option == _actualCorrectAnswer && !_hideCorrectAnswer) {
+                  btnColor = Colors.green.shade600; 
+                  textColor = Colors.white; 
+                  borderSide = const BorderSide(color: Colors.green, width: 2);
+                } else if (option == _selectedAnswer) {
+                  btnColor = Colors.red.shade600; 
+                  textColor = Colors.white; 
+                  borderSide = const BorderSide(color: Colors.red, width: 2);
+                }
               }
             } else if (currentTheme.id == 2) {
               btnColor = Colors.white;

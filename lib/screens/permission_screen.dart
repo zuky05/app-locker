@@ -20,6 +20,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
   bool isOverlayGranted = false;
   bool isAccessibilityGranted = false;
   bool isNotificationGranted = false;
+  bool isBatteryOptimizationGranted = false; // 🟢 Pridaný stav pre batériu
   bool isLoading = true;
 
   @override
@@ -47,16 +48,18 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
       final bool overlay = await platform.invokeMethod('isOverlayGranted') ?? false;
       final bool accessibility = await platform.invokeMethod('isAccessibilityGranted') ?? false;
       final bool notification = await Permission.notification.isGranted;
+      final bool battery = await platform.invokeMethod('isBatteryOptimizationIgnored') ?? false; // 🟢 Načítanie stavu batérie
 
       if (mounted) {
         setState(() {
           isOverlayGranted = overlay;
           isAccessibilityGranted = accessibility;
           isNotificationGranted = notification;
+          isBatteryOptimizationGranted = battery;
           isLoading = false;
         });
 
-        if (overlay && accessibility && notification) {
+        if (overlay && accessibility && notification && battery) {
           _navigateToMain();
         }
       }
@@ -80,6 +83,9 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
         } else if (status.isPermanentlyDenied) {
           openAppSettings();
         }
+      } else if (!isBatteryOptimizationGranted) {
+        // 🟢 Vyžiadanie výnimky zo šetrenia batérie
+        await platform.invokeMethod('requestIgnoreBatteryOptimizations');
       }
     } catch (e) {
       debugPrint("Chyba vyžadovania povolení: $e");
@@ -114,12 +120,11 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
       );
     }
 
-    final bool allGranted = isOverlayGranted && isAccessibilityGranted && isNotificationGranted;
+    final bool allGranted = isOverlayGranted && isAccessibilityGranted && isNotificationGranted && isBatteryOptimizationGranted;
     final Color primaryAccent = currentTheme.decksColor;
     final Color buttonBgColor = allGranted ? currentTheme.successColor : primaryAccent;
     final Color buttonFgColor = isVibrant ? Colors.white : currentTheme.getContrastTextColor(buttonBgColor);
 
-    // Farby pre hornú kruhovú ikonu
     final Color circleBgColor = isVibrant 
         ? currentTheme.decksColor 
         : (isNeo ? theme.cardColor : currentTheme.getTileBg(isGranted: false, accentColor: currentTheme.buttonBorder.color));
@@ -140,7 +145,6 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
               children: [
                 const Spacer(),
                 
-                // Ikona zabezpečenia HORE
                 Container(
                   padding: const EdgeInsets.all(22),
                   decoration: BoxDecoration(
@@ -173,7 +177,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
                 ),
                 const SizedBox(height: 14),
                 Text(
-                  "Pre správne fungovanie blokovania a odpočítavania času je potrebné povoliť nasledujúce tri funkcie.",
+                  "Pre správne a neprerušované fungovanie blokovania je potrebné povoliť nasledujúce štyri funkcie.",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
@@ -200,10 +204,16 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
                   isGranted: isNotificationGranted,
                   currentTheme: currentTheme,
                 ),
+                const SizedBox(height: 12),
+                // 🟢 Pridaná dlaždica pre šetrenie batérie
+                _buildPermissionTile(
+                  title: "Vypnutie šetrenia batérie (Unrestricted)",
+                  isGranted: isBatteryOptimizationGranted,
+                  currentTheme: currentTheme,
+                ),
 
                 const Spacer(),
 
-                // Hlavné akčné tlačidlo DOLE
                 ElevatedButton.icon(
                   onPressed: allGranted ? _navigateToMain : _openSettingsOrRequest,
                   icon: Icon(
@@ -217,7 +227,9 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
                             ? "Povoliť prekrytie"
                             : (!isAccessibilityGranted
                                 ? "Povoliť Zjednodušenie prístupu"
-                                : "Povoliť Upozornenia")),
+                                : (!isNotificationGranted
+                                    ? "Povoliť Upozornenia"
+                                    : "Vypnúť šetrenie batérie"))),
                     style: TextStyle(
                       fontWeight: FontWeight.w900,
                       fontSize: 16,
@@ -276,7 +288,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
     return Container(
       decoration: decoration,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
         child: Row(
           children: [
             Icon(

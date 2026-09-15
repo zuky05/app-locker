@@ -624,7 +624,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
 
     int challengeBonusSeconds = await _reportDailyChallengeProgress();
 
-    // 🟢 Získame farbu z aktuálnej témy pre systémovú notifikáciu
+    // Získame farbu z aktuálnej témy pre systémovú notifikáciu
     final currentTheme = Provider.of<ThemeProvider>(context, listen: false).currentThemeData;
     int themeColorValue = currentTheme.testSetupColor.toARGB32();
 
@@ -667,7 +667,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
           'seconds': totalEarned, 
           'maxCap': totalEarned,
           'isFromNotification': widget.isFromNotification,
-          'themeColor': themeColorValue, // 🟢 Posielame farbu do Androidu
+          'themeColor': themeColorValue,
         }); 
 
         if (result is int) {
@@ -708,25 +708,24 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     int maxCapSeconds = (_questionCount * 30 * mult).round() + challengeBonusSeconds; 
     int actualAddedSeconds = 0;
 
-    if (totalEarnedWithChallenge > 0) {
-      const platform = MethodChannel('brainlock.channel');
-      try { 
-        final dynamic result = await platform.invokeMethod('unlockApp', {
-          'seconds': totalEarnedWithChallenge, 
-          'maxCap': maxCapSeconds,
-          'isFromNotification': widget.isFromNotification,
-          'themeColor': themeColorValue, // 🟢 Posielame farbu do Androidu
-        }); 
+    // 🟢 Voláme unlockApp VŽDY (aj pri 0 sekundách), aby sa nastavila ochranná lehota (grace period) a test nevyskakoval dookola
+    const platform = MethodChannel('brainlock.channel');
+    try { 
+      final dynamic result = await platform.invokeMethod('unlockApp', {
+        'seconds': totalEarnedWithChallenge, 
+        'maxCap': maxCapSeconds,
+        'isFromNotification': widget.isFromNotification,
+        'themeColor': themeColorValue,
+      }); 
 
-        if (result is int) {
-          actualAddedSeconds = result;
-        } else {
-          actualAddedSeconds = totalEarnedWithChallenge;
-        }
-      } catch (e) { 
-        debugPrint("Chyba: $e"); 
+      if (result is int) {
+        actualAddedSeconds = result;
+      } else {
         actualAddedSeconds = totalEarnedWithChallenge;
       }
+    } catch (e) { 
+      debugPrint("Chyba: $e"); 
+      actualAddedSeconds = totalEarnedWithChallenge;
     }
 
     await DatabaseHelper.instance.insertStudySession(

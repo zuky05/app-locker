@@ -5,6 +5,8 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application
         android:label="brainlock"
@@ -51,10 +53,13 @@
             android:value="2" />
 
         <!-- ACCESSIBILITY SERVICE PRE BLOKOVANIE -->
+        <!-- 🟢 PRIDANÉ: directBootAware="true" (beží aj pred odomknutím SIM/PIN) a stopWithTask="false" (nezabije sa pri vymazaní z nedávnych appiek) -->
         <service
             android:name=".AppBlockerService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
-            android:exported="true">
+            android:exported="true"
+            android:directBootAware="true"
+            android:stopWithTask="false">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
             </intent-filter>

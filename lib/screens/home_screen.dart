@@ -73,6 +73,8 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+
+
   Future<void> _checkDeckCount() async {
     final count = await DatabaseHelper.instance.getCustomDeckCount();
     final premiumStatus = await RevenueCatService.isPremium();
@@ -520,6 +522,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+
+
   Widget _buildDailyGoalCard({
     required BuildContext context,
     required AppThemeData currentTheme,
@@ -530,6 +534,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required double progressValue,
   }) {
     final bool isNeobrutalism = currentTheme.id == 2;
+    final String dayWord = streak == 1 ? 'deň' : (streak >= 2 && streak <= 4 ? 'dni' : 'dní');
 
     return InkWell(
       onTap: () {
@@ -561,7 +566,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const Text('🔥', style: TextStyle(fontSize: 42)),
                 const SizedBox(width: 14),
                 Text(
-                  '$streak dni streak\n$cardsDone / $dailyTarget Kariet',
+                  '$streak $dayWord streak\n$cardsDone / $dailyTarget Kariet',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: theme.colorScheme.onSurface,

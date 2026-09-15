@@ -1,19 +1,19 @@
 package com.example.brainlock
 
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.os.PowerManager
 import android.provider.Settings
 
-// 1. ZMENA: Importujeme FlutterFragmentActivity namiesto FlutterActivity
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.android.FlutterActivityLaunchConfigs.BackgroundMode
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
-// 2. ZMENA: MainActivity teraz dedí z FlutterFragmentActivity
 class MainActivity: FlutterFragmentActivity() {
     
     private val CHANNEL = "brainlock.channel"
@@ -39,7 +39,6 @@ class MainActivity: FlutterFragmentActivity() {
 
                     val isLauncher = intent.action == Intent.ACTION_MAIN && intent.hasCategory(Intent.CATEGORY_LAUNCHER)
 
-                    // SPRÁVNE PREČÍTANIE PRI ŠTARTE
                     val isFromNotif = intent.getBooleanExtra("isFromNotification", false) || intent.action == "com.example.brainlock.ACTION_RETEST"
                     val isOverlay = if (isLauncher) false else (intent.getBooleanExtra("isOverlay", false) || isFromNotif)
                     val isTimeout = if (isLauncher) false else intent.getBooleanExtra("isTimeout", false)
@@ -60,10 +59,9 @@ class MainActivity: FlutterFragmentActivity() {
                     ))
                 }
                 "unlockApp" -> {
-                    val seconds = call.argument<Int>("seconds") ?: 0
-                    val maxCap = call.argument<Int>("maxCap") ?: 600
-                    // 🟢 Zachytíme farbu témy poslanú z Flutteru (s predvolenou modrou ako zálohou)
-                    val themeColor = call.argument<Int>("themeColor") ?: android.graphics.Color.BLUE
+                    val seconds = (call.argument<Any>("seconds") as? Number)?.toInt() ?: 0
+                    val maxCap = (call.argument<Any>("maxCap") as? Number)?.toInt() ?: 600
+                    val themeColor = (call.argument<Any>("themeColor") as? Number)?.toInt() ?: android.graphics.Color.BLUE
                     
                     isUnlocking = true
                     
@@ -72,8 +70,7 @@ class MainActivity: FlutterFragmentActivity() {
                     intent.removeExtra("isFromNotification")
                     intent.action = null
 
-                    // 🟢 Odšleme farbu do notifikačnej služby
-                    AppBlockerService.instance?.startUnlockTimerNotification(seconds, maxCap, themeColor)
+                    AppBlockerService.requestUnlock(this, seconds, maxCap, themeColor)
                     
                     finish() 
                     result.success(true)
@@ -110,6 +107,21 @@ class MainActivity: FlutterFragmentActivity() {
                     }
                     result.success(true)
                 }
+                // 🟢 PRIDANÉ: Kontrola a vyžiadanie výnimky zo šetrenia batérie
+                "isBatteryOptimizationIgnored" -> {
+                    val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+                    result.success(pm.isIgnoringBatteryOptimizations(packageName))
+                }
+                "requestIgnoreBatteryOptimizations" -> {
+                    val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+                    if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+                        val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                            data = Uri.parse("package:$packageName")
+                        }
+                        startActivity(intent)
+                    }
+                    result.success(true)
+                }
                 else -> result.notImplemented()
             }
         }
@@ -134,7 +146,6 @@ class MainActivity: FlutterFragmentActivity() {
 
         val isLauncher = intent.action == Intent.ACTION_MAIN && intent.hasCategory(Intent.CATEGORY_LAUNCHER)
         
-        // SPRÁVNE PREČÍTANIE PRI BEŽIACEJ APLIKÁCII
         val isFromNotif = intent.getBooleanExtra("isFromNotification", false) || intent.action == "com.example.brainlock.ACTION_RETEST"
         val isOverlay = if (isLauncher) false else (intent.getBooleanExtra("isOverlay", false) || isFromNotif)
         val isTimeout = if (isLauncher) false else intent.getBooleanExtra("isTimeout", false)

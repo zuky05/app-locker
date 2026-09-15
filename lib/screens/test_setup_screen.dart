@@ -117,9 +117,10 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     return (targetPct * _questionCount).round();
   }
 
+  // 🟢 OPRAVA: Násobič sa počíta stabilne priamo zo zvoleného prahu v nastavení
   double get _effectiveLockoutMultiplier {
-    double realRatio = _requiredCorrectQuestions / _questionCount;
-    double mult = 1.0 + (realRatio - 0.5);
+    double targetPct = _lockoutPercentages[_lockoutIndex.toInt()];
+    double mult = 1.0 + (targetPct - 0.5);
     if (mult < 0.6) return 0.6;
     if (mult > 1.5) return 1.5;
     return mult;
@@ -191,7 +192,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-          backgroundColor: theme.scaffoldBackgroundColor, // Nepriehľadný AppBar
+          backgroundColor: theme.scaffoldBackgroundColor,
           elevation: theme.appBarTheme.elevation ?? 0,
           scrolledUnderElevation: 0,
           surfaceTintColor: Colors.transparent,
@@ -510,7 +511,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     const SizedBox(height: 12),
                     _buildSwitchCard(
                       title: 'Slepý test', 
-                      subtitle: 'Správność odpovedí sa dozvieš až na záver testu.', 
+                      subtitle: 'Správnosť odpovedí sa dozvieš až na záver testu.', 
                       multiplier: 1.25, 
                       value: _isBlindTest, 
                       currentTheme: currentTheme,

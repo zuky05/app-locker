@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -26,7 +27,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    
     final bool hasPremium = await RevenueCatService.isPremium();
 
     if (mounted) {
@@ -81,23 +81,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ],
       );
     } else if (cleanName.contains('neumorphism')) {
+      // 🟢 SOFT NEUMORPHISM: Zladená farba náhľadu `#D1D9E6` a stieňovanie
       return BoxDecoration(
-        color: const Color(0xFFE0E5EC),
+        color: const Color(0xFFD1D9E6),
         borderRadius: BorderRadius.circular(16),
-        border: isSelected ? Border.all(color: const Color(0xFF667EEA), width: 3.0) : null,
+        border: isSelected ? Border.all(color: const Color(0xFF6C5CE7), width: 2.5) : null,
         boxShadow: const [
-          BoxShadow(color: Color(0xFFA3B1C6), offset: Offset(4, 4), blurRadius: 8),
+          BoxShadow(color: Color(0xFF97A7C0), offset: Offset(4, 4), blurRadius: 8),
           BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 8),
         ],
       );
     } else if (cleanName.contains('brutalism')) {
       return BoxDecoration(
-        color: const Color(0xFFFFDE59),
+        color: const Color(0xFFFFD166),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.black, width: 3.5),
-        boxShadow: isSelected
-            ? const [BoxShadow(color: Colors.black, offset: Offset(5, 5), blurRadius: 0)]
-            : const [BoxShadow(color: Colors.black, offset: Offset(3, 3), blurRadius: 0)],
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black, 
+            offset: Offset(4, 4), 
+            blurRadius: 0,
+          ),
+        ],
       );
     } else if (cleanName.contains('minimal')) {
       return BoxDecoration(
@@ -117,23 +122,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
     } else if (cleanName.contains('starlight')) {
       return BoxDecoration(
-        color: const Color(0xFF1E1E2C),
+        color: const Color(0xFF030712),
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF030712),
+            Color(0xFF090D1E),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isSelected ? const Color(0xFF38EF7D) : Colors.white24,
-          width: isSelected ? 3.0 : 1.0,
+          color: isSelected 
+              ? const Color(0xFF38BDF8) 
+              : Colors.white.withValues(alpha: 0.25),
+          width: isSelected ? 2.5 : 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF11998E).withValues(alpha: 0.3),
+            color: (isSelected ? const Color(0xFF38BDF8) : const Color(0xFFC084FC))
+                .withValues(alpha: isSelected ? 0.35 : 0.15),
             blurRadius: 10,
-          )
+            spreadRadius: 0,
+            offset: const Offset(0, 4),
+          ),
         ],
       );
     } else if (cleanName.contains('vibrant')) {
       return BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF00C6FF), Color(0xFF0072FF)],
+          colors: [Color(0xFF00F2FE), Color(0xFF003BB3), Color(0xFF010038)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -145,7 +163,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         boxShadow: isSelected
             ? [
                 BoxShadow(
-                  color: const Color(0xFF0072FF).withValues(alpha: 0.4),
+                  color: const Color(0xFF00F2FE).withValues(alpha: 0.4),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 )
@@ -170,12 +188,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       return {
         'text': const Color(0xFF2D3748),
         'subtext': const Color(0xFF718096),
-        'accent': const Color(0xFF667EEA),
+        'accent': const Color(0xFF6C5CE7),
       };
     } else if (cleanName.contains('brutalism')) {
       return {
         'text': Colors.black,
-        'subtext': Colors.black87,
+        'subtext': Colors.black,
         'accent': Colors.black,
       };
     } else if (cleanName.contains('minimal')) {
@@ -187,14 +205,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } else if (cleanName.contains('starlight')) {
       return {
         'text': Colors.white,
-        'subtext': Colors.white70,
-        'accent': const Color(0xFF38EF7D),
+        'subtext': Colors.white.withValues(alpha: 0.75),
+        'accent': const Color(0xFF38BDF8),
       };
     } else {
       return {
         'text': Colors.white,
         'subtext': Colors.white.withValues(alpha: 0.8),
-        'accent': Colors.amberAccent,
+        'accent': Colors.white,
       };
     }
   }
@@ -205,9 +223,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
 
+    final bool isNeo = currentTheme.id == 2;
     final bool isVibrant = currentTheme.id == 5;
+    final bool isSoft = currentTheme.id == 1;
 
-    // Zotriedenie tém pre vykreslenie: ne-prémiové témy pôjdu prvé
     final displayedThemes = List<AppThemeData>.from(AppThemes.availableThemes)
       ..sort((a, b) {
         if (!a.isPremium && b.isPremium) return -1;
@@ -222,12 +241,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           title: Text(
             'Settings',
             style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.onSurface,
+              fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
+              color: isNeo ? Colors.black : theme.colorScheme.onSurface,
             ),
           ),
-          backgroundColor: theme.scaffoldBackgroundColor, // Nepriehľadný AppBar
-          foregroundColor: theme.colorScheme.onSurface,
+          backgroundColor: Colors.transparent,
+          foregroundColor: isNeo ? Colors.black : theme.colorScheme.onSurface,
           elevation: theme.appBarTheme.elevation ?? 0,
         ),
         body: isLoading
@@ -238,37 +257,52 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   // --- SEKCIA: VIBRÁCIE ---
                   Container(
-                    decoration: isVibrant
-                        ? BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF00C6FF), Color(0xFF0072FF)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: currentTheme.cardBorderRadius,
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.5),
-                          )
-                        : currentTheme.getCardDecoration(currentTheme.decksColor),
+                    decoration: currentTheme.getCardDecoration(currentTheme.decksColor),
                     child: SwitchListTile(
                       secondary: Icon(
                         Icons.vibration, 
-                        color: isVibrant ? Colors.white : currentTheme.getIconColor(currentTheme.decksColor),
+                        color: isNeo 
+                            ? Colors.black 
+                            : (isSoft 
+                                ? currentTheme.decksColor 
+                                : (isVibrant ? Colors.white : currentTheme.getIconColor(currentTheme.decksColor))),
                       ),
                       title: Text(
                         "Vibrovanie pri chybe",
                         style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: isVibrant ? Colors.white : theme.colorScheme.onSurface,
+                          fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
+                          color: isNeo 
+                              ? Colors.black 
+                              : (isSoft 
+                                  ? const Color(0xFF2D3748) 
+                                  : (isVibrant ? Colors.white : theme.colorScheme.onSurface)),
                         ),
                       ),
                       subtitle: Text(
                         "Zavibruje pri nesprávnej odpovedi v kvíze",
                         style: TextStyle(
-                          color: isVibrant ? Colors.white.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                          fontWeight: isNeo ? FontWeight.bold : FontWeight.normal,
+                          color: isNeo 
+                              ? Colors.black 
+                              : (isSoft 
+                                  ? const Color(0xFF718096) 
+                                  : (isVibrant ? Colors.white.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.6))),
                         ),
                       ),
                       value: isVibrationEnabled,
-                      activeColor: isVibrant ? Colors.white : currentTheme.decksColor,
+                      trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+                      activeColor: isNeo 
+                          ? Colors.black 
+                          : (isSoft 
+                              ? Colors.white 
+                              : (isVibrant ? Colors.white : currentTheme.decksColor)),
+                      activeTrackColor: isNeo 
+                          ? Colors.white 
+                          : (isSoft 
+                              ? currentTheme.decksColor 
+                              : (isVibrant ? Colors.white.withValues(alpha: 0.35) : null)),
+                      inactiveThumbColor: isSoft ? const Color(0xFF97A7C0) : null,
+                      inactiveTrackColor: isSoft ? const Color(0xFFC8D3E6) : null,
                       onChanged: _saveVibrationSetting,
                     ),
                   ),
@@ -280,13 +314,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     "Vizuálny štýl aplikácie",
                     style: TextStyle(
                       fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onSurface,
+                      fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
+                      color: isNeo ? Colors.black : theme.colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 14),
 
-                  // 2-STĹPCOVÁ MRIEŽKA (GRID) PRE TÉMY
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -308,90 +341,121 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       final Color textColor = colors['text']!;
                       final Color subtextColor = colors['subtext']!;
                       final Color accentColor = colors['accent']!;
+                      
+                      final bool isItemNeo = appTheme.id == 2;
+                      final bool isStarlight = appTheme.id == 4 || appTheme.name.toLowerCase().contains('starlight');
 
                       return InkWell(
                         onTap: () => _onThemeTap(appTheme, themeProvider),
                         borderRadius: BorderRadius.circular(16),
                         child: Container(
-                          padding: const EdgeInsets.all(12),
                           decoration: previewDeco,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Icon(
-                                    isSelected ? Icons.check_circle_rounded : Icons.circle_outlined,
-                                    color: isSelected ? accentColor : textColor.withValues(alpha: 0.4),
-                                    size: 22,
-                                  ),
-                                  if (appTheme.isPremium)
-                                    Icon(
-                                      Icons.star_rounded,
-                                      color: accentColor,
-                                      size: 20,
-                                    ),
-                                ],
-                              ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    appTheme.name,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                      color: textColor,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Stack(
+                              children: [
+                                if (isStarlight)
+                                  Positioned.fill(
+                                    child: CustomPaint(
+                                      painter: MiniStarlightPainter(),
                                     ),
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    appTheme.isPremium ? "Premium štýl" : "Základný štýl",
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: subtextColor,
-                                    ),
+
+                                Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Icon(
+                                            isSelected ? Icons.check_circle_rounded : Icons.circle_outlined,
+                                            color: isItemNeo 
+                                                ? Colors.black 
+                                                : (isSelected ? accentColor : textColor.withValues(alpha: 0.4)),
+                                            size: 22,
+                                          ),
+                                          if (appTheme.isPremium)
+                                            Icon(
+                                              Icons.star_rounded,
+                                              color: isItemNeo ? Colors.black : accentColor,
+                                              size: 20,
+                                            ),
+                                        ],
+                                      ),
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            appTheme.name,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontWeight: isItemNeo ? FontWeight.w900 : FontWeight.bold,
+                                              fontSize: 14,
+                                              color: textColor,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            appTheme.isPremium ? "Premium štýl" : "Základný štýl",
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: isItemNeo ? FontWeight.bold : FontWeight.normal,
+                                              color: subtextColor,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        children: [
+                                          Container(
+                                            width: 10,
+                                            height: 10,
+                                            decoration: BoxDecoration(
+                                              color: isItemNeo ? Colors.black : itemTheme.colorScheme.primary,
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                color: isItemNeo ? Colors.black : textColor.withValues(alpha: 0.3), 
+                                                width: 1,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Container(
+                                            width: 10,
+                                            height: 10,
+                                            decoration: BoxDecoration(
+                                              color: isItemNeo ? const Color(0xFFFF70A6) : appTheme.decksColor,
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                color: isItemNeo ? Colors.black : textColor.withValues(alpha: 0.3), 
+                                                width: 1,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Container(
+                                            width: 10,
+                                            height: 10,
+                                            decoration: BoxDecoration(
+                                              color: isItemNeo ? const Color(0xFF00E5FF) : appTheme.testSetupColor,
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                color: isItemNeo ? Colors.black : textColor.withValues(alpha: 0.3), 
+                                                width: 1,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  Container(
-                                    width: 10,
-                                    height: 10,
-                                    decoration: BoxDecoration(
-                                      color: itemTheme.colorScheme.primary,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: textColor.withValues(alpha: 0.3), width: 1),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Container(
-                                    width: 10,
-                                    height: 10,
-                                    decoration: BoxDecoration(
-                                      color: appTheme.decksColor,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: textColor.withValues(alpha: 0.3), width: 1),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Container(
-                                    width: 10,
-                                    height: 10,
-                                    decoration: BoxDecoration(
-                                      color: appTheme.testSetupColor,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: textColor.withValues(alpha: 0.3), width: 1),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       );
@@ -402,4 +466,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
+}
+
+class MiniStarlightPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final starPaint = Paint()..style = PaintingStyle.fill;
+    final glowPaint = Paint()..style = PaintingStyle.fill;
+    final random = Random(42);
+
+    for (int i = 0; i < 14; i++) {
+      double x = random.nextDouble() * size.width;
+      double y = random.nextDouble() * size.height;
+      double radius = 0.8 + random.nextDouble() * 1.2;
+      double opacity = 0.35 + random.nextDouble() * 0.55;
+
+      glowPaint.color = (i % 3 == 0 
+          ? const Color(0xFF38BDF8) 
+          : const Color(0xFFC084FC)).withValues(alpha: opacity * 0.3);
+      canvas.drawCircle(Offset(x, y), radius * 2.2, glowPaint);
+
+      starPaint.color = Colors.white.withValues(alpha: opacity);
+      canvas.drawCircle(Offset(x, y), radius, starPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

@@ -111,13 +111,11 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
   void _saveDouble(String key, double value) => _prefs?.setDouble(key, value);
   void _saveBool(String key, bool value) => _prefs?.setBool(key, value);
 
-  // --- REÁLNE VYPOČÍTANÉ HODNOTY PRE LOCKOUT ---
   int get _requiredCorrectQuestions {
     double targetPct = _lockoutPercentages[_lockoutIndex.toInt()];
     return (targetPct * _questionCount).round();
   }
 
-  // 🟢 OPRAVA: Násobič sa počíta stabilne priamo zo zvoleného prahu v nastavení
   double get _effectiveLockoutMultiplier {
     double targetPct = _lockoutPercentages[_lockoutIndex.toInt()];
     double mult = 1.0 + (targetPct - 0.5);
@@ -156,6 +154,9 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
 
+    final bool isNeo = currentTheme.id == 2;
+    final bool isSoft = currentTheme.id == 1;
+
     if (_isLoading) {
       return ThemedBackground(
         child: Scaffold(
@@ -186,18 +187,26 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     int targetPctInt = (_lockoutPercentages[_lockoutIndex.toInt()] * 100).round();
     String lockoutLabel = "$targetPctInt% (min. $_requiredCorrectQuestions / ${_questionCount.toInt()})";
 
-    final Color headerContrastColor = currentTheme.getContrastTextColor(currentTheme.testSetupColor);
+    final Color headerContrastColor = isNeo 
+        ? Colors.black 
+        : (isSoft ? const Color(0xFF2D3748) : currentTheme.getContrastTextColor(currentTheme.testSetupColor));
 
     return ThemedBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-          backgroundColor: theme.scaffoldBackgroundColor,
+          backgroundColor: Colors.transparent,
           elevation: theme.appBarTheme.elevation ?? 0,
           scrolledUnderElevation: 0,
           surfaceTintColor: Colors.transparent,
-          iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
-          title: Text('Nastavenie Testu', style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold)),
+          iconTheme: IconThemeData(color: isNeo ? Colors.black : theme.colorScheme.onSurface),
+          title: Text(
+            'Nastavenie Testu', 
+            style: TextStyle(
+              color: isNeo ? Colors.black : theme.colorScheme.onSurface, 
+              fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
+            ),
+          ),
         ),
         body: Column(
           children: [
@@ -221,10 +230,14 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                   child: Row(
                     children: [
                       CircleAvatar(
-                        backgroundColor: Colors.black.withValues(alpha: 0.15),
+                        backgroundColor: isSoft
+                            ? const Color(0xFFC8D3E6)
+                            : (isNeo ? Colors.black : Colors.black.withValues(alpha: 0.15)),
                         child: Icon(
                           _activeDeckId == null ? Icons.warning_amber_rounded : Icons.style,
-                          color: headerContrastColor,
+                          color: isSoft
+                              ? currentTheme.testSetupColor
+                              : (isNeo ? Colors.white : headerContrastColor),
                           size: 24,
                         ),
                       ),
@@ -236,10 +249,12 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                             Text(
                               _activeDeckId == null 
                                   ? "NEMÁŠ VYBRANÝ ŽIADEN BALÍČEK!" 
-                                  : "AKTÍVNY BALíČEK",
+                                  : "AKTÍVNY BALÍČEK",
                               style: TextStyle(
-                                color: headerContrastColor.withValues(alpha: 0.7),
-                                fontWeight: FontWeight.bold,
+                                color: isNeo 
+                                    ? Colors.black 
+                                    : (isSoft ? const Color(0xFF718096) : headerContrastColor.withValues(alpha: 0.7)),
+                                fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
                                 fontSize: 11,
                                 letterSpacing: 0.5,
                               ),
@@ -251,7 +266,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                                   : "$_activeDeckName ($_availableCardCount kariet)",
                               style: TextStyle(
                                 color: headerContrastColor,
-                                fontWeight: FontWeight.bold,
+                                fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
                                 fontSize: 15,
                               ),
                               overflow: TextOverflow.ellipsis,
@@ -265,13 +280,21 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                           Text(
                             "Zmeniť",
                             style: TextStyle(
-                              color: headerContrastColor.withValues(alpha: 0.9),
-                              fontWeight: FontWeight.bold,
+                              color: isNeo 
+                                  ? Colors.black 
+                                  : (isSoft ? currentTheme.testSetupColor : headerContrastColor.withValues(alpha: 0.9)),
+                              fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
                               fontSize: 13,
                             ),
                           ),
                           const SizedBox(width: 4),
-                          Icon(Icons.arrow_forward_ios_rounded, color: headerContrastColor, size: 14),
+                          Icon(
+                            Icons.arrow_forward_ios_rounded, 
+                            color: isNeo 
+                                ? Colors.black 
+                                : (isSoft ? currentTheme.testSetupColor : headerContrastColor), 
+                            size: 14,
+                          ),
                         ],
                       ),
                     ],
@@ -309,9 +332,11 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                       Text(
                         'ODMENA ZA 1 SPRÁVNU ODPOVEĎ', 
                         style: TextStyle(
-                          color: headerContrastColor.withValues(alpha: 0.8), 
+                          color: isNeo 
+                              ? Colors.black 
+                              : (isSoft ? const Color(0xFF718096) : headerContrastColor.withValues(alpha: 0.8)), 
                           fontSize: 12, 
-                          fontWeight: FontWeight.bold,
+                          fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
                           letterSpacing: 1.1,
                         ),
                       ),
@@ -327,11 +352,32 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                       const SizedBox(height: 16),
                       Container(
                         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.15),
-                          borderRadius: currentTheme.cardBorderRadius,
-                          border: Border.all(color: headerContrastColor.withValues(alpha: 0.3), width: 1.0),
-                        ),
+                        decoration: isSoft
+                            ? BoxDecoration(
+                                color: const Color(0xFFC8D3E6),
+                                borderRadius: currentTheme.cardBorderRadius,
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0xFF97A7C0),
+                                    offset: Offset(3, 3),
+                                    blurRadius: 6,
+                                  ),
+                                  BoxShadow(
+                                    color: Colors.white,
+                                    offset: Offset(-3, -3),
+                                    blurRadius: 6,
+                                  ),
+                                ],
+                              )
+                            : BoxDecoration(
+                                color: isNeo ? Colors.white : Colors.black.withValues(alpha: 0.15),
+                                borderRadius: currentTheme.cardBorderRadius,
+                                border: Border.all(
+                                  color: isNeo ? Colors.black : headerContrastColor.withValues(alpha: 0.3), 
+                                  width: isNeo ? 2.5 : 1.0,
+                                ),
+                                boxShadow: isNeo ? const [BoxShadow(color: Colors.black, offset: Offset(2, 2))] : null,
+                              ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -341,8 +387,11 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                                 Text(
                                   'Celkový násobič', 
                                   style: TextStyle(
-                                    color: headerContrastColor.withValues(alpha: 0.8), 
+                                    color: isNeo 
+                                        ? Colors.black87 
+                                        : (isSoft ? const Color(0xFF718096) : headerContrastColor.withValues(alpha: 0.8)), 
                                     fontSize: 12,
+                                    fontWeight: isNeo ? FontWeight.bold : FontWeight.normal,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
@@ -350,7 +399,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                                   'x${_currentMultiplier.toStringAsFixed(2)}', 
                                   style: TextStyle(
                                     color: headerContrastColor, 
-                                    fontWeight: FontWeight.bold, 
+                                    fontWeight: FontWeight.w900, 
                                     fontSize: 18,
                                   ),
                                 ),
@@ -362,8 +411,11 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                                 Text(
                                   'Max potenciál testu', 
                                   style: TextStyle(
-                                    color: headerContrastColor.withValues(alpha: 0.8), 
+                                    color: isNeo 
+                                        ? Colors.black87 
+                                        : (isSoft ? const Color(0xFF718096) : headerContrastColor.withValues(alpha: 0.8)), 
                                     fontSize: 12,
+                                    fontWeight: isNeo ? FontWeight.bold : FontWeight.normal,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
@@ -371,7 +423,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                                   _formatTime(_totalTimePotential), 
                                   style: TextStyle(
                                     color: headerContrastColor, 
-                                    fontWeight: FontWeight.bold, 
+                                    fontWeight: FontWeight.w900, 
                                     fontSize: 18,
                                   ),
                                 ),
@@ -393,9 +445,11 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     Text(
                       'ZÁKLADNÉ NASTAVENIA KVÍZU', 
                       style: TextStyle(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6), 
+                        color: isNeo 
+                            ? Colors.black 
+                            : (isSoft ? const Color(0xFF718096) : theme.colorScheme.onSurface.withValues(alpha: 0.6)), 
                         fontSize: 13, 
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -449,9 +503,11 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     Text(
                       'MODIFIKÁTORY', 
                       style: TextStyle(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6), 
+                        color: isNeo 
+                            ? Colors.black 
+                            : (isSoft ? const Color(0xFF718096) : theme.colorScheme.onSurface.withValues(alpha: 0.6)), 
                         fontSize: 13, 
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -572,9 +628,11 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     Text(
                       'NASTAVENIA UČENIA', 
                       style: TextStyle(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6), 
+                        color: isNeo 
+                            ? Colors.black 
+                            : (isSoft ? const Color(0xFF718096) : theme.colorScheme.onSurface.withValues(alpha: 0.6)), 
                         fontSize: 13, 
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -639,20 +697,50 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     );
   }
 
-  // --- POMOCNÉ WIDGETY ---
   Widget _buildMultiplierBadge(double mult, AppThemeData currentTheme) {
     if (mult == 1.0) return const SizedBox.shrink();
+    final bool isNeo = currentTheme.id == 2;
+    final bool isSoft = currentTheme.id == 1;
     bool isPositive = mult > 1.0;
     Color badgeColor = isPositive ? currentTheme.successColor : currentTheme.errorColor;
 
+    if (isSoft) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: const Color(0xFFC8D3E6),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: const [
+            BoxShadow(color: Color(0xFF97A7C0), offset: Offset(2, 2), blurRadius: 4),
+            BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
+          ],
+        ),
+        child: Text(
+          'x$mult', 
+          style: TextStyle(
+            color: badgeColor, 
+            fontWeight: FontWeight.w900, 
+            fontSize: 12,
+          ),
+        ),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: currentTheme.getCardDecoration(badgeColor),
+      decoration: isNeo 
+          ? BoxDecoration(
+              color: badgeColor,
+              borderRadius: currentTheme.buttonBorderRadius,
+              border: Border.all(color: Colors.black, width: 2.0),
+              boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(2, 2))],
+            ) 
+          : currentTheme.getCardDecoration(badgeColor),
       child: Text(
         'x$mult', 
         style: TextStyle(
-          color: currentTheme.getContrastTextColor(badgeColor), 
-          fontWeight: FontWeight.bold, 
+          color: isNeo ? Colors.black : currentTheme.getContrastTextColor(badgeColor), 
+          fontWeight: FontWeight.w900, 
           fontSize: 12,
         ),
       ),
@@ -671,7 +759,11 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     required Color accentColor,
     double? multiplier,
   }) {
-    final textColor = currentTheme.getContrastTextColor(accentColor);
+    final bool isNeo = currentTheme.id == 2;
+    final bool isSoft = currentTheme.id == 1;
+    final textColor = isSoft 
+        ? const Color(0xFF2D3748) 
+        : (isNeo ? Colors.black : currentTheme.getContrastTextColor(accentColor));
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
@@ -684,7 +776,11 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
             children: [
               Text(
                 title, 
-                style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 16),
+                style: TextStyle(
+                  color: textColor, 
+                  fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold, 
+                  fontSize: 16,
+                ),
               ),
               if (multiplier != null) _buildMultiplierBadge(multiplier, currentTheme),
             ],
@@ -698,14 +794,25 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
               fontSize: 18,
             ),
           ),
+          // 🟢 KONTRASTNÉ DEAKTIVOVANÉ A AKTÍVNE FARBY POSUVNÍKA
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: textColor, 
-              inactiveTrackColor: textColor.withValues(alpha: 0.3), 
-              thumbColor: textColor, 
-              trackHeight: 6.0,
+              activeTrackColor: isSoft ? accentColor : textColor, 
+              inactiveTrackColor: isSoft ? const Color(0xFFB0C0D6) : textColor.withValues(alpha: 0.3), 
+              thumbColor: isSoft ? accentColor : textColor, 
+              disabledThumbColor: isSoft ? const Color(0xFF97A7C0) : textColor.withValues(alpha: 0.5),
+              disabledActiveTrackColor: isSoft ? accentColor.withValues(alpha: 0.4) : textColor.withValues(alpha: 0.3),
+              disabledInactiveTrackColor: isSoft ? const Color(0xFFC8D3E6) : textColor.withValues(alpha: 0.2),
+              trackHeight: isSoft ? 8.0 : (isNeo ? 8.0 : 6.0),
+              thumbShape: isSoft ? const RoundSliderThumbShape(enabledThumbRadius: 10.0, elevation: 4) : null,
             ),
-            child: Slider(value: value, min: min, max: max, divisions: divisions, onChanged: onChanged),
+            child: Slider(
+              value: value, 
+              min: min, 
+              max: max, 
+              divisions: divisions, 
+              onChanged: min == max ? null : onChanged,
+            ),
           ),
         ],
       ),
@@ -724,7 +831,11 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     bool isGold = false, 
     bool showMultiplier = true,
   }) {
-    final textColor = currentTheme.getContrastTextColor(accentColor);
+    final bool isNeo = currentTheme.id == 2;
+    final bool isSoft = currentTheme.id == 1;
+    final textColor = isSoft 
+        ? const Color(0xFF2D3748) 
+        : (isNeo ? Colors.black : currentTheme.getContrastTextColor(accentColor));
 
     return Opacity(
       opacity: isDisabled ? 0.4 : 1.0,
@@ -743,7 +854,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                         title, 
                         style: TextStyle(
                           color: textColor, 
-                          fontWeight: FontWeight.bold, 
+                          fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold, 
                           fontSize: 16,
                         ),
                       ),
@@ -755,8 +866,11 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                   Text(
                     subtitle, 
                     style: TextStyle(
-                      color: textColor.withValues(alpha: 0.8), 
+                      color: isNeo 
+                          ? Colors.black87 
+                          : (isSoft ? const Color(0xFF718096) : textColor.withValues(alpha: 0.8)), 
                       fontSize: 13,
+                      fontWeight: isNeo ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
                 ],
@@ -765,10 +879,11 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
             Switch(
               value: value, 
               onChanged: isDisabled ? null : onChanged, 
-              activeColor: textColor,
-              activeTrackColor: textColor.withValues(alpha: 0.4),
-              inactiveThumbColor: textColor.withValues(alpha: 0.6),
-              inactiveTrackColor: textColor.withValues(alpha: 0.2),
+              trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+              activeColor: isNeo ? Colors.black : (isSoft ? Colors.white : textColor),
+              activeTrackColor: isNeo ? Colors.white : (isSoft ? accentColor : textColor.withValues(alpha: 0.4)),
+              inactiveThumbColor: isNeo ? Colors.black54 : (isSoft ? const Color(0xFF97A7C0) : textColor.withValues(alpha: 0.6)),
+              inactiveTrackColor: isNeo ? Colors.white54 : (isSoft ? const Color(0xFFC8D3E6) : textColor.withValues(alpha: 0.2)),
             ),
           ],
         ),

@@ -107,7 +107,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
               Text(
                 _isPremium 
                     ? "Užívaj si neobmedzené balíčky, importy z Quizletu a všetky funkcie naplno." 
-                    : "Odomkni si neobmedzené vlastné balíčky, hromadný import a pokročilé funkcie testovania.",
+                    : "Odomkni si neobmedzené vlastné balíčky, hromadný import a pokročilé funkcie.",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16, 

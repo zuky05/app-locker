@@ -151,9 +151,11 @@ class _QuizletPlaygroundScreenState extends State<QuizletPlaygroundScreen> {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
+    final bool isVibrant = currentTheme.id == 5;
 
     final Color accentColor = currentTheme.quickImportColor;
-    final Color buttonFgColor = currentTheme.getContrastTextColor(accentColor);
+    final Color textColor = isVibrant ? Colors.white : theme.colorScheme.onSurface;
+    final Color iconColor = isVibrant ? Colors.white : currentTheme.getIconColor(accentColor);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -187,26 +189,61 @@ class _QuizletPlaygroundScreenState extends State<QuizletPlaygroundScreen> {
         ],
       ),
       floatingActionButton: isExtracting
-          ? FloatingActionButton(
-              onPressed: null,
-              backgroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.3),
-              shape: RoundedRectangleBorder(
-                borderRadius: currentTheme.buttonBorderRadius,
-                side: BorderSide.none,
+          ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              decoration: currentTheme.getCardDecoration(accentColor),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: iconColor,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    "Zbieram...",
+                    style: TextStyle(
+                      color: textColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                ],
               ),
-              child: CircularProgressIndicator(color: accentColor),
             )
-          : FloatingActionButton.extended(
-              onPressed: _extractCards,
-              icon: const Icon(Icons.downloading),
-              label: const Text("Vytiahnuť kartičky", style: TextStyle(fontWeight: FontWeight.bold)),
-              backgroundColor: accentColor,
-              foregroundColor: buttonFgColor,
-              shape: RoundedRectangleBorder(
+          : Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: _extractCards,
                 borderRadius: currentTheme.buttonBorderRadius,
-                side: BorderSide.none,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  decoration: currentTheme.getCardDecoration(accentColor),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.downloading,
+                        color: iconColor,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        "Vytiahnuť kartičky",
+                        style: TextStyle(
+                          color: textColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              elevation: theme.appBarTheme.elevation ?? 0,
             ),
     );
   }

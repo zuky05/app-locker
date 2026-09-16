@@ -42,10 +42,13 @@ class AppBlockerService : AccessibilityService() {
         var currentApp: String = ""
         var instance: AppBlockerService? = null
         var blockedApps: MutableSet<String> = mutableSetOf("com.android.chrome")
+        
+        // 🟢 Vlajka sledujúca, či bola aplikácia odomknutá časovačom
+        var wasUnlocked: Boolean = false
 
         fun requestUnlock(context: Context, seconds: Int, maxCap: Int, themeColor: Int) {
             val now = System.currentTimeMillis()
-            gracePeriodUntil = now + 5000L // 5s ochranná lehota zápisom priamo do pamäte
+            gracePeriodUntil = now + 5000L
 
             if (instance != null) {
                 instance?.processUnlock(seconds, maxCap, themeColor)
@@ -66,7 +69,6 @@ class AppBlockerService : AccessibilityService() {
         instance = this
         createNotificationChannel()
 
-        // 🟢 Odstránené startForeground(), ktoré spôsobovalo sekery a ANR padanie
         val filter = IntentFilter(ACTION_UNLOCK)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(unlockReceiver, filter, RECEIVER_NOT_EXPORTED)
@@ -102,10 +104,10 @@ class AppBlockerService : AccessibilityService() {
         val totalSeconds = Math.min(currentRemaining + addedSeconds, maxCapSeconds)
 
         if (totalSeconds > 0) {
+            wasUnlocked = true // 🟢 Označíme, že aplikácia nabehla na časovač
             unlockedUntil = now + (totalSeconds * 1000L)
             scheduleReblock(totalSeconds * 1000L)
 
-            // Zobrazenie notifikácie okamžite bez čakania na prvú sekundu časovača
             updateNotification(totalSeconds, themeColor)
 
             Handler(Looper.getMainLooper()).post {
@@ -180,7 +182,7 @@ class AppBlockerService : AccessibilityService() {
         }
     }
 
-    fun checkAndBlock(packageName: String, isTimeout: Boolean = false) {
+    fun checkAndBlock(packageName: String, isTimeoutParam: Boolean = false) {
         if (packageName == applicationContext.packageName) return
 
         if (System.currentTimeMillis() < gracePeriodUntil) {
@@ -192,6 +194,12 @@ class AppBlockerService : AccessibilityService() {
                 return 
             }
             
+            // 🟢 Ak vypršal unlockedUntil a appka bola predtým odomknutá, je to 100% TIMEOUT
+            val isTimeout = isTimeoutParam || wasUnlocked
+            if (wasUnlocked) {
+                wasUnlocked = false // Resetujeme vlajku pre ďalšie blokovanie
+            }
+
             countDownTimer?.cancel()
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.cancel(notificationId)

@@ -3,7 +3,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../services/database_helper.dart';
 import '../models/deck_model.dart';
+import '../themes/app_themes.dart';
 import '../themes/theme_provider.dart';
+import '../themes/themed_background.dart';
 
 class DeckDetailScreen extends StatefulWidget {
   final Deck deck;
@@ -98,24 +100,50 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
     final currentTheme = Provider.of<ThemeProvider>(context, listen: false).currentThemeData;
     final theme = currentTheme.theme;
     final Color sectionColor = currentTheme.decksColor;
-    final Color textColor = currentTheme.getContrastTextColor(sectionColor);
+    final bool isVibrant = currentTheme.id == 5;
+    final bool isSoft = currentTheme.id == 1;
 
-    // Neutrálna dekorácia bez žltého gradientu pre všetky témy
-    final BoxDecoration inputDecoration = BoxDecoration(
-      color: theme.cardColor,
-      borderRadius: currentTheme.cardBorderRadius,
-      border: Border.all(
-        color: theme.colorScheme.onSurface.withValues(alpha: 0.12),
-        width: 1.2,
-      ),
-    );
+    final dialogBgColor = isSoft
+        ? const Color(0xFFD1D9E6)
+        : (isVibrant ? const Color(0xFF0F172A) : theme.cardColor);
+
+    final dialogTextColor = isSoft
+        ? const Color(0xFF2D3748)
+        : (isVibrant ? Colors.white : theme.colorScheme.onSurface);
+
+    final BoxDecoration inputDecoration = isSoft
+        ? BoxDecoration(
+            color: const Color(0xFFC8D3E6),
+            borderRadius: currentTheme.cardBorderRadius,
+            boxShadow: const [
+              BoxShadow(color: Color(0xFF97A7C0), offset: Offset(2, 2), blurRadius: 4),
+              BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
+            ],
+          )
+        : (isVibrant
+            ? BoxDecoration(
+                color: const Color(0xFF1E293B).withValues(alpha: 0.8),
+                borderRadius: currentTheme.cardBorderRadius,
+                border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5),
+              )
+            : BoxDecoration(
+                color: theme.cardColor,
+                borderRadius: currentTheme.cardBorderRadius,
+                border: currentTheme.id == 2
+                    ? Border.all(color: Colors.black, width: 3.5)
+                    : Border.all(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.12),
+                        width: 1.2,
+                      ),
+              ));
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: theme.scaffoldBackgroundColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      backgroundColor: dialogBgColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        side: currentTheme.buttonBorder,
       ),
       builder: (bottomSheetContext) {
         return Padding(
@@ -129,14 +157,13 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Horná potiahnuteľná lišta
               Center(
                 child: Container(
                   width: 44,
                   height: 5,
                   margin: const EdgeInsets.only(bottom: 20),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+                    color: dialogTextColor.withValues(alpha: 0.25),
                     borderRadius: BorderRadius.circular(3),
                   ),
                 ),
@@ -146,12 +173,11 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface,
+                  color: dialogTextColor,
                 ),
               ),
               const SizedBox(height: 20),
 
-              // 1. OTÁZKA / POJEM
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: inputDecoration,
@@ -161,14 +187,14 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                   maxLines: 4,
                   textCapitalization: TextCapitalization.sentences,
                   style: TextStyle(
-                    color: theme.colorScheme.onSurface,
+                    color: dialogTextColor,
                     fontWeight: FontWeight.w500,
                   ),
                   decoration: InputDecoration(
                     labelText: "Otázka / Pojem (Predná strana)",
                     alignLabelWithHint: true,
                     labelStyle: TextStyle(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      color: dialogTextColor.withValues(alpha: 0.6),
                     ),
                     border: InputBorder.none,
                   ),
@@ -176,7 +202,6 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
               ),
               const SizedBox(height: 14),
 
-              // 2. SPRÁVNA ODPOVEĎ
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: inputDecoration,
@@ -186,14 +211,14 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                   maxLines: 5,
                   textCapitalization: TextCapitalization.sentences,
                   style: TextStyle(
-                    color: theme.colorScheme.onSurface,
+                    color: dialogTextColor,
                     fontWeight: FontWeight.w500,
                   ),
                   decoration: InputDecoration(
                     labelText: "Správna odpoveď (Zadná strana)",
                     alignLabelWithHint: true,
                     labelStyle: TextStyle(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      color: dialogTextColor.withValues(alpha: 0.6),
                     ),
                     border: InputBorder.none,
                   ),
@@ -201,7 +226,6 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
               ),
               const SizedBox(height: 24),
 
-              // TLAČIDLO ULOŽIŤ (Vlastný InkWell + Container – bez akýchkoľvek systémových okrajov)
               Material(
                 color: Colors.transparent,
                 child: InkWell(
@@ -237,20 +261,25 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                     height: 52,
                     width: double.infinity,
                     alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: sectionColor,
-                      borderRadius: currentTheme.buttonBorderRadius,
-                      border: currentTheme.id == 4 
-                          ? null 
-                          : Border.fromBorderSide(currentTheme.buttonBorder),
-                    ),
-                    child: Text(
-                      "Pridať kartičku",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: textColor,
-                      ),
+                    decoration: currentTheme.getCardDecoration(sectionColor),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.add_circle_outline_rounded, 
+                          color: isVibrant ? Colors.white : currentTheme.getIconColor(sectionColor),
+                          size: 22,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          "Pridať kartičku",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: isVibrant ? Colors.white : currentTheme.getContrastTextColor(sectionColor),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -267,194 +296,221 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
-
     final Color sectionColor = currentTheme.decksColor;
+    final bool isVibrant = currentTheme.id == 5;
+    final bool isSoft = currentTheme.id == 1;
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text(widget.deck.name),
-        backgroundColor: theme.appBarTheme.backgroundColor ?? Colors.transparent,
-        foregroundColor: theme.colorScheme.onSurface,
-        elevation: theme.appBarTheme.elevation ?? 0,
-      ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator(color: sectionColor))
-          : cards.isEmpty
-              ? Center(
-                  child: Text(
-                    "Tento balíček je zatiaľ prázdny.",
-                    style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.7)),
+    return ThemedBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          title: Text(widget.deck.name),
+          backgroundColor: Colors.transparent,
+          foregroundColor: theme.colorScheme.onSurface,
+          elevation: theme.appBarTheme.elevation ?? 0,
+        ),
+        body: isLoading
+            ? Center(child: CircularProgressIndicator(color: sectionColor))
+            : cards.isEmpty
+                ? Center(
+                    child: Text(
+                      "Tento balíček je zatiaľ prázdny.",
+                      style: TextStyle(color: isSoft ? const Color(0xFF718096) : (isVibrant ? Colors.white.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.7))),
+                    ),
+                  )
+                : Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        child: Text(
+                          "${currentIndex + 1} / ${cards.length}",
+                          style: TextStyle(
+                            fontSize: 18, 
+                            fontWeight: FontWeight.bold, 
+                            color: isSoft ? sectionColor : (isVibrant ? Colors.white : sectionColor),
+                          ),
+                        ),
+                      ),
+
+                      Expanded(
+                        child: PageView.builder(
+                          controller: _pageController,
+                          physics: const BouncingScrollPhysics(),
+                          onPageChanged: (index) {
+                            setState(() {
+                              currentIndex = index;
+                              showAnswer = false;
+                            });
+                          },
+                          itemCount: cards.length,
+                          itemBuilder: (context, index) {
+                            final card = cards[index];
+
+                            // 🟢 VŽDY ROVNAKÁ NEUMORFNÁ KARTA PRE OBE STRANY
+                            final cardDecoration = currentTheme.getCardDecoration(sectionColor);
+
+                            final Color cardTextColor = isSoft
+                                ? const Color(0xFF2D3748)
+                                : (isVibrant ? Colors.white : theme.colorScheme.onSurface);
+
+                            return GestureDetector(
+                              key: ValueKey(card['id']),
+                              onTap: _flipCard,
+                              child: Container(
+                                margin: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+                                decoration: cardDecoration,
+                                child: Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(24.0),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          showAnswer ? "ODPOVEĎ" : "OTÁZKA",
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: isSoft ? const Color(0xFF718096) : cardTextColor.withValues(alpha: 0.7),
+                                            letterSpacing: 2,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 20),
+
+                                        if (!showAnswer && card['prompt'].toString().endsWith('.svg')) ...[
+                                          const SizedBox(height: 12),
+                                          ClipRRect(
+                                            borderRadius: BorderRadius.circular(8),
+                                            child: SvgPicture.asset(
+                                              card['prompt'],
+                                              height: 120,
+                                              fit: BoxFit.contain,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 10),
+                                          Text(
+                                            'Komu patrí táto vlajka?',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              fontSize: 22, 
+                                              fontWeight: FontWeight.w600,
+                                              color: cardTextColor,
+                                            ),
+                                          ),
+                                        ] else ...[
+                                          Text(
+                                            showAnswer ? card['correct_answer'] : card['prompt'],
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              fontSize: 24, 
+                                              fontWeight: FontWeight.w600,
+                                              color: cardTextColor,
+                                            ),
+                                          ),
+                                        ],
+
+                                        const SizedBox(height: 30),
+
+                                        Icon(
+                                          Icons.touch_app,
+                                          color: isSoft ? const Color(0xFF97A7C0) : cardTextColor.withValues(alpha: 0.4),
+                                          size: 30,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 40, top: 10),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            IconButton(
+                              onPressed: _prevCard,
+                              icon: const Icon(Icons.arrow_back_ios_rounded),
+                              color: currentIndex > 0 
+                                  ? (isSoft ? sectionColor : (isVibrant ? Colors.white : sectionColor)) 
+                                  : (isSoft ? const Color(0xFF97A7C0) : (isVibrant ? Colors.white24 : theme.colorScheme.onSurface.withValues(alpha: 0.25))),
+                              iconSize: 30,
+                            ),
+                            const SizedBox(width: 40),
+                            IconButton(
+                              onPressed: _nextCard,
+                              icon: const Icon(Icons.arrow_forward_ios_rounded),
+                              color: currentIndex < cards.length - 1 
+                                  ? (isSoft ? sectionColor : (isVibrant ? Colors.white : sectionColor)) 
+                                  : (isSoft ? const Color(0xFF97A7C0) : (isVibrant ? Colors.white24 : theme.colorScheme.onSurface.withValues(alpha: 0.25))),
+                              iconSize: 30,
+                            ),
+                          ],
+                        ),
+                      )
+                    ],
                   ),
-                )
-              : Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 20),
-                      child: Text(
-                        "${currentIndex + 1} / ${cards.length}",
-                        style: TextStyle(
-                          fontSize: 18, 
-                          fontWeight: FontWeight.bold, 
-                          color: sectionColor,
+        floatingActionButton: !widget.isReadOnly
+            ? Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  if (cards.isNotEmpty)
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: _deleteCard,
+                        borderRadius: currentTheme.buttonBorderRadius,
+                        child: Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: currentTheme.getCardDecoration(currentTheme.errorColor),
+                          child: Icon(
+                            Icons.delete, 
+                            color: isSoft ? currentTheme.errorColor : currentTheme.getContrastTextColor(currentTheme.errorColor), 
+                            size: 22,
+                          ),
                         ),
                       ),
                     ),
 
-                    Expanded(
-                      child: PageView.builder(
-                        controller: _pageController,
-                        physics: const BouncingScrollPhysics(),
-                        onPageChanged: (index) {
-                          setState(() {
-                            currentIndex = index;
-                            showAnswer = false;
-                          });
-                        },
-                        itemCount: cards.length,
-                        itemBuilder: (context, index) {
-                          final card = cards[index];
+                  const SizedBox(height: 14),
 
-                          final cardDecoration = showAnswer
-                              ? currentTheme.getCardDecoration(sectionColor, isSelected: true)
-                              : currentTheme.getCardDecoration(sectionColor);
-
-                          final Color cardTextColor = showAnswer
-                              ? currentTheme.getContrastTextColor(sectionColor)
-                              : theme.colorScheme.onSurface;
-
-                          return GestureDetector(
-                            key: ValueKey(card['id']),
-                            onTap: _flipCard,
-                            child: Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
-                              decoration: cardDecoration,
-                              child: Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(24.0),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        showAnswer ? "ODPOVEĎ" : "OTÁZKA",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                          color: cardTextColor.withValues(alpha: 0.7),
-                                          letterSpacing: 2,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 20),
-
-                                      if (!showAnswer && card['prompt'].toString().endsWith('.svg')) ...[
-                                        const SizedBox(height: 12),
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(8),
-                                          child: SvgPicture.asset(
-                                            card['prompt'],
-                                            height: 120,
-                                            fit: BoxFit.contain,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 10),
-                                        Text(
-                                          'Komu patrí táto vlajka?',
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            fontSize: 22, 
-                                            fontWeight: FontWeight.w600,
-                                            color: cardTextColor,
-                                          ),
-                                        ),
-                                      ] else ...[
-                                        Text(
-                                          showAnswer ? card['correct_answer'] : card['prompt'],
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            fontSize: 24, 
-                                            fontWeight: FontWeight.w600,
-                                            color: cardTextColor,
-                                          ),
-                                        ),
-                                      ],
-
-                                      const SizedBox(height: 30),
-
-                                      Icon(
-                                        Icons.touch_app,
-                                        color: cardTextColor.withValues(alpha: 0.4),
-                                        size: 30,
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _showAddCardBottomSheet,
+                      borderRadius: currentTheme.buttonBorderRadius,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        decoration: currentTheme.getCardDecoration(sectionColor),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.add, 
+                              color: isSoft ? sectionColor : (isVibrant ? Colors.white : currentTheme.getContrastTextColor(sectionColor)), 
+                              size: 22,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              "Pridať",
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: isSoft ? const Color(0xFF2D3748) : (isVibrant ? Colors.white : currentTheme.getContrastTextColor(sectionColor)),
                               ),
                             ),
-                          );
-                        },
+                          ],
+                        ),
                       ),
                     ),
-
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 40, top: 10),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          IconButton(
-                            onPressed: _prevCard,
-                            icon: const Icon(Icons.arrow_back_ios),
-                            color: currentIndex > 0 
-                                ? sectionColor 
-                                : theme.colorScheme.onSurface.withValues(alpha: 0.25),
-                            iconSize: 30,
-                          ),
-                          const SizedBox(width: 40),
-                          IconButton(
-                            onPressed: _nextCard,
-                            icon: const Icon(Icons.arrow_forward_ios),
-                            color: currentIndex < cards.length - 1 
-                                ? sectionColor 
-                                : theme.colorScheme.onSurface.withValues(alpha: 0.25),
-                            iconSize: 30,
-                          ),
-                        ],
-                      ),
-                    )
-                  ],
-                ),
-      floatingActionButton: !widget.isReadOnly
-          ? Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                if (cards.isNotEmpty)
-                  FloatingActionButton(
-                    heroTag: 'delete_btn',
-                    onPressed: _deleteCard,
-                    backgroundColor: currentTheme.errorColor,
-                    foregroundColor: currentTheme.getContrastTextColor(currentTheme.errorColor),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: currentTheme.cardBorderRadius,
-                    ),
-                    child: const Icon(Icons.delete),
                   ),
-
-                const SizedBox(height: 16),
-
-                FloatingActionButton.extended(
-                  heroTag: 'add_btn',
-                  onPressed: _showAddCardBottomSheet,
-                  icon: const Icon(Icons.add),
-                  label: const Text("Pridať"),
-                  backgroundColor: sectionColor,
-                  foregroundColor: currentTheme.getContrastTextColor(sectionColor),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: currentTheme.cardBorderRadius,
-                  ),
-                ),
-              ],
-            )
-          : null,
+                ],
+              )
+            : null,
+      ),
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../themes/theme_provider.dart';
@@ -16,7 +17,20 @@ class ThemedBackground extends StatelessWidget {
     return Stack(
       children: [
         // 1. ZÁKLADNÁ FARBA ALEBO GRADIENT POZADIA
-        if (themeId == 5) ...[
+        if (themeId == 2) ...[
+          Positioned.fill(
+            child: Container(
+              color: const Color(0xFFF7EED2),
+            ),
+          ),
+        ] else if (themeId == 1) ...[
+          // 🟢 SOFT NEUMORPHISM: Zladená farba pozadia `#D1D9E6`
+          Positioned.fill(
+            child: Container(
+              color: const Color(0xFFD1D9E6),
+            ),
+          ),
+        ] else if (themeId == 5) ...[
           Positioned.fill(
             child: Container(
               decoration: const BoxDecoration(
@@ -33,15 +47,31 @@ class ThemedBackground extends StatelessWidget {
             ),
           ),
         ] else if (themeId == 0) ...[
-          // CYBERPUNK: Hlboký synthwave gradient pozadia
           Positioned.fill(
             child: Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Color(0xFF05050A), // Hore temná čierna
-                    Color(0xFF09140B), // Stred jemne tónovaný do tmavej zelenej
-                    Color(0xFF0B1F12), // Dole hlboký cyberpunkový nádych
+                    Color(0xFF05050A),
+                    Color(0xFF09140B),
+                    Color(0xFF0B1F12),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+            ),
+          ),
+        ] else if (themeId == 4) ...[
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF050714),
+                    Color(0xFF0C1024),
+                    Color(0xFF140D28),
+                    Color(0xFF070918),
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -64,30 +94,24 @@ class ThemedBackground extends StatelessWidget {
               painter: NeobrutalismGridPainter(),
             ),
           ),
+        ] else if (themeId == 1) ...[
+          Positioned.fill(
+            child: CustomPaint(
+              painter: SoftNeumorphismAmbientPainter(),
+            ),
+          ),
         ] else if (themeId == 0) ...[
-          // 🟢 CYBERPUNK: Perspektívna 3D mriežka v žiarivej neónovo zelenej farbe
           Positioned.fill(
             child: CustomPaint(
               painter: CyberpunkPerspectiveGridPainter(
-                gridColor: const Color(0xFF00FF66), // Neónovo zelená
+                gridColor: const Color(0xFF00FF66),
               ),
             ),
           ),
         ] else if (themeId == 4) ...[
-          // 🟢 STARLIGHT GLASS: Jemná neónovo cyan mriežka (oddelená od neumorfizmu, žiadna žltá farba)
           Positioned.fill(
             child: CustomPaint(
-              painter: CyberGridPainter(
-                gridColor: const Color(0xFF00E5FF).withValues(alpha: 0.18),
-              ),
-            ),
-          ),
-        ] else if (themeId == 1) ...[
-          Positioned.fill(
-            child: CustomPaint(
-              painter: CyberGridPainter(
-                gridColor: currentTheme.quickImportColor.withValues(alpha: 0.22),
-              ),
+              painter: StarlightCosmicPainter(),
             ),
           ),
         ] else if (themeId == 5) ...[
@@ -113,7 +137,80 @@ class ThemedBackground extends StatelessWidget {
   }
 }
 
-// 🟢 CYBERPUNK PERSPECTIVE GRID PAINTER (Neónovo zelená 3D mriežka)
+class SoftNeumorphismAmbientPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final glowPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.55)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 90);
+
+    canvas.drawCircle(Offset(size.width * 0.2, size.height * 0.15), 140, glowPaint);
+    canvas.drawCircle(Offset(size.width * 0.8, size.height * 0.75), 180, glowPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class NeobrutalismGridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.22)
+      ..style = PaintingStyle.fill;
+
+    const double step = 20.0;
+    const double radius = 2.2;
+
+    for (double x = 10; x < size.width; x += step) {
+      for (double y = 10; y < size.height; y += step) {
+        canvas.drawCircle(Offset(x, y), radius, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class StarlightCosmicPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final starPaint = Paint()..style = PaintingStyle.fill;
+    final glowPaint = Paint()..style = PaintingStyle.fill;
+
+    final random = Random(1337);
+
+    for (int i = 0; i < 65; i++) {
+      double x = random.nextDouble() * size.width;
+      double y = random.nextDouble() * size.height;
+      double radius = 0.8 + random.nextDouble() * 1.6;
+      double opacity = 0.25 + random.nextDouble() * 0.65;
+
+      glowPaint.color = (i % 4 == 0 
+          ? const Color(0xFF38BDF8) 
+          : (i % 6 == 0 ? const Color(0xFFC084FC) : Colors.white)).withValues(alpha: opacity * 0.35);
+      canvas.drawCircle(Offset(x, y), radius * 2.5, glowPaint);
+
+      starPaint.color = Colors.white.withValues(alpha: opacity);
+      canvas.drawCircle(Offset(x, y), radius, starPaint);
+
+      if (radius > 1.9) {
+        final flarePaint = Paint()
+          ..color = Colors.white.withValues(alpha: opacity * 0.6)
+          ..strokeWidth = 0.8
+          ..style = PaintingStyle.stroke;
+
+        canvas.drawLine(Offset(x - 5, y), Offset(x + 5, y), flarePaint);
+        canvas.drawLine(Offset(x, y - 5), Offset(x, y + 5), flarePaint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 class CyberpunkPerspectiveGridPainter extends CustomPainter {
   final Color gridColor;
 
@@ -135,18 +232,15 @@ class CyberpunkPerspectiveGridPainter extends CustomPainter {
     final double bottomWidth = size.width * 2.2;
     final double startX = size.width / 2;
 
-    // 1. Zvislé čiary sbiehajúce sa do stredu (perspektíva)
     const int verticalLines = 14;
     for (int i = -verticalLines; i <= verticalLines; i++) {
       double bottomX = startX + (i * (bottomWidth / verticalLines));
-      
-      // Svietivý glow podklad
+
       canvas.drawLine(
         Offset(startX, horizonY),
         Offset(bottomX, size.height + 50),
         glowPaint,
       );
-      // Ostrá neónová čiara
       canvas.drawLine(
         Offset(startX, horizonY),
         Offset(bottomX, size.height + 50),
@@ -154,7 +248,6 @@ class CyberpunkPerspectiveGridPainter extends CustomPainter {
       );
     }
 
-    // 2. Horizontálne čiary s exponenciálnym rozostupom
     const int horizontalLines = 12;
     for (int i = 0; i < horizontalLines; i++) {
       double progress = i / horizontalLines;
@@ -170,51 +263,6 @@ class CyberpunkPerspectiveGridPainter extends CustomPainter {
         Offset(size.width, y),
         linePaint,
       );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class NeobrutalismGridPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.25)
-      ..style = PaintingStyle.fill;
-
-    const double step = 20.0;
-    const double radius = 2.4;
-
-    for (double x = 10; x < size.width; x += step) {
-      for (double y = 10; y < size.height; y += step) {
-        canvas.drawCircle(Offset(x, y), radius, paint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class CyberGridPainter extends CustomPainter {
-  final Color gridColor;
-
-  CyberGridPainter({required this.gridColor});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = gridColor
-      ..strokeWidth = 1.4;
-
-    const double step = 32.0;
-    for (double x = 0; x < size.width; x += step) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    }
-    for (double y = 0; y < size.height; y += size.height) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
     }
   }
 

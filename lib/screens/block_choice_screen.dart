@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/prefs_helper.dart';
 import '../themes/theme_provider.dart';
 import 'quiz_overlay_screen.dart';
@@ -24,6 +25,7 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
   int remainingGrace = 0;
   bool isLoading = true;
   bool isPremium = false;
+  bool isLearningMode = false;
 
   @override
   void initState() {
@@ -35,10 +37,14 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
     int count = await PrefsHelper.getRemainingGraceAttempts();
     bool premiumStatus = await RevenueCatService.isPremium(); 
     
+    final prefs = await SharedPreferences.getInstance();
+    bool learningMode = prefs.getBool('test_isLearningMode') ?? false;
+    
     if (mounted) {
       setState(() {
         remainingGrace = count;
         isPremium = premiumStatus;
+        isLearningMode = learningMode;
         isLoading = false;
       });
     }
@@ -86,157 +92,269 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
 
     final bool isNeo = currentTheme.id == 2;
     final bool isVibrant = currentTheme.id == 5;
+    final bool isGlass = currentTheme.id == 4 || currentTheme.id.toString() == '4';
+    final bool isSoft = currentTheme.id == 1;
 
-    // Dekorácia karty podľa témy
     BoxDecoration cardDecoration;
-    if (isNeo) {
+    if (isSoft) {
       cardDecoration = BoxDecoration(
-        color: currentTheme.testSetupColor,
+        color: const Color(0xFFD1D9E6),
+        borderRadius: currentTheme.cardBorderRadius,
+        // 🟢 ÚPLNE BEZ TIEŇOV A ŽIARE
+        boxShadow: const [],
+      );
+    } else if (isNeo) {
+      cardDecoration = BoxDecoration(
+        color: const Color(0xFFF7EED2),
         borderRadius: currentTheme.cardBorderRadius,
         border: Border.all(color: Colors.black, width: 3.5),
         boxShadow: const [
           BoxShadow(
             color: Colors.black,
-            offset: Offset(5, 5),
+            offset: Offset(4, 4),
             blurRadius: 0,
           ),
         ],
       );
+    } else if (isGlass) {
+      cardDecoration = BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0F172A), Color(0xFF1E1B4B)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: currentTheme.cardBorderRadius,
+        border: Border.all(
+          color: const Color(0xFF38BDF8).withValues(alpha: 0.5), 
+          width: 1.5,
+        ),
+        boxShadow: const [],
+      );
     } else if (isVibrant) {
-      cardDecoration = currentTheme.getCardDecoration(currentTheme.testSetupColor);
+      cardDecoration = currentTheme.getCardDecoration(currentTheme.testSetupColor).copyWith(
+        boxShadow: const [],
+      );
     } else {
       cardDecoration = BoxDecoration(
         color: theme.cardColor, 
         borderRadius: currentTheme.cardBorderRadius,
         border: currentTheme.cardBorder ?? 
             Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.2)),
-        boxShadow: currentTheme.cardShadows ?? [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.25), 
-            blurRadius: 20, 
-            spreadRadius: 5,
-          ),
-        ],
         gradient: currentTheme.cardGradient,
+        boxShadow: const [],
       );
     }
 
+    BoxBorder? primaryButtonBorder;
+    if (isNeo) {
+      primaryButtonBorder = Border.all(color: Colors.black, width: 3.5);
+    } else if (isVibrant || isGlass) {
+      primaryButtonBorder = Border.all(color: Colors.white.withValues(alpha: 0.35), width: 1.5);
+    } else if (!isSoft && currentTheme.buttonBorder != null) {
+      primaryButtonBorder = Border.fromBorderSide(currentTheme.buttonBorder!);
+    }
+
+    BoxBorder? secondaryButtonBorder;
+    if (isNeo) {
+      secondaryButtonBorder = Border.all(color: Colors.black, width: 3.5);
+    } else if (isVibrant || isGlass) {
+      secondaryButtonBorder = Border.all(color: Colors.white.withValues(alpha: 0.35), width: 1.5);
+    } else if (!isSoft && currentTheme.buttonBorder != null) {
+      secondaryButtonBorder = Border.fromBorderSide(currentTheme.buttonBorder!);
+    }
+
     return Scaffold(
-      backgroundColor: Colors.black.withValues(alpha: 0.5),
+      backgroundColor: Colors.black.withValues(alpha: 0.40),
       body: Center(
         child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: MediaQuery.of(context).size.width * 0.85,
-                padding: const EdgeInsets.all(24),
+                width: MediaQuery.of(context).size.width * 0.92,
                 decoration: cardDecoration,
-                child: isLoading
-                    ? SizedBox(
-                        height: 150,
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: isVibrant ? Colors.white : (isNeo ? Colors.black : theme.colorScheme.primary),
-                          ),
-                        ),
-                      )
-                    : Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.warning_amber_rounded, 
-                            size: 50, 
-                            color: isVibrant ? Colors.white : (isNeo ? Colors.black : currentTheme.warningColor),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            "Zablokované!",
-                            style: TextStyle(
-                              fontSize: 22, 
-                              fontWeight: FontWeight.bold,
-                              color: isVibrant ? Colors.white : (isNeo ? Colors.black : theme.colorScheme.onSurface),
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  child: isLoading
+                      ? SizedBox(
+                          height: 180,
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: isNeo ? Colors.black : (isSoft ? const Color(0xFF3B82F6) : (isVibrant || isGlass ? Colors.white : currentTheme.testSetupColor)),
                             ),
                           ),
-                          const SizedBox(height: 20),
-                          
-                          // Hlavné tlačidlo pre spustenie testu
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              minimumSize: const Size(double.infinity, 50),
-                              backgroundColor: isVibrant ? Colors.white : currentTheme.primaryButtonBg,
-                              foregroundColor: isVibrant ? Colors.black : currentTheme.primaryButtonFg,
-                              elevation: isVibrant ? 0 : (currentTheme.cardShadows != null ? 2 : 0),
-                              shape: RoundedRectangleBorder(
+                        )
+                      : Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Neumorfné puzdro varovania
+                            isSoft
+                                ? Container(
+                                    width: 72,
+                                    height: 72,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFFFEF3C7),
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(3, 3), blurRadius: 6),
+                                        BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 6),
+                                      ],
+                                    ),
+                                    child: const Icon(
+                                      Icons.warning_amber_rounded,
+                                      size: 40,
+                                      color: Color(0xFFD97706),
+                                    ),
+                                  )
+                                : Icon(
+                                    Icons.warning_amber_rounded, 
+                                    size: 54, 
+                                    color: isNeo ? Colors.black : (isVibrant || isGlass ? Colors.white : currentTheme.warningColor),
+                                  ),
+                            const SizedBox(height: 16),
+                            Text(
+                              "Zablokované!",
+                              style: TextStyle(
+                                fontSize: 24, 
+                                fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
+                                color: isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : (isVibrant || isGlass ? Colors.white : theme.colorScheme.onSurface)),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            
+                            // Hlavné tlačidlo pre Test / Učenie
+                            Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: _startTest,
                                 borderRadius: currentTheme.buttonBorderRadius,
-                                side: isVibrant 
-                                    ? const BorderSide(color: Colors.white, width: 2.0)
-                                    : (currentTheme.buttonBorder ?? BorderSide.none),
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  alignment: Alignment.center,
+                                  decoration: isSoft
+                                      ? BoxDecoration(
+                                          color: const Color(0xFF3B82F6),
+                                          borderRadius: currentTheme.buttonBorderRadius,
+                                          boxShadow: const [
+                                            BoxShadow(color: Color(0xFF1D4ED8), offset: Offset(3, 3), blurRadius: 6),
+                                            BoxShadow(color: Color(0xFF93C5FD), offset: Offset(-2, -2), blurRadius: 5),
+                                          ],
+                                        )
+                                      : BoxDecoration(
+                                          gradient: isVibrant
+                                              ? const LinearGradient(
+                                                  colors: [
+                                                    Color(0xFFFF0844),
+                                                    Color(0xFFFFB199),
+                                                  ],
+                                                  begin: Alignment.centerLeft,
+                                                  end: Alignment.centerRight,
+                                                )
+                                              : (isGlass
+                                                  ? LinearGradient(
+                                                      colors: [
+                                                        const Color(0xFF38BDF8).withValues(alpha: 0.25),
+                                                        const Color(0xFF818CF8).withValues(alpha: 0.25),
+                                                      ],
+                                                      begin: Alignment.topLeft,
+                                                      end: Alignment.bottomRight,
+                                                    )
+                                                  : null),
+                                          color: isNeo 
+                                              ? currentTheme.successColor 
+                                              : (!isVibrant && !isGlass ? currentTheme.primaryButtonBg : null),
+                                          borderRadius: currentTheme.buttonBorderRadius,
+                                          border: primaryButtonBorder,
+                                          boxShadow: isNeo ? const [BoxShadow(color: Colors.black, offset: Offset(3, 3), blurRadius: 0)] : null,
+                                        ),
+                                  child: Text(
+                                    isLearningMode ? "Spustiť UČENIE" : "Spustiť TEST", 
+                                    style: TextStyle(
+                                      fontSize: 16, 
+                                      fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
+                                      color: isNeo ? Colors.black : Colors.white,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
-                            onPressed: _startTest,
-                            child: const Text(
-                              "Spustiť TEST", 
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
-                          ),
 
-                          if (!widget.isFromNotification) ...[
-                            const SizedBox(height: 12),
+                            if (!widget.isFromNotification) ...[
+                              const SizedBox(height: 14),
 
-                            if (widget.isTimeout)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 10),
-                                child: Text(
-                                  "Čas vypršal! Teraz ťa zachráni už len test.",
-                                  style: TextStyle(
-                                    color: isVibrant ? Colors.white.withValues(alpha: 0.9) : (isNeo ? Colors.black : currentTheme.errorColor), 
-                                    fontWeight: FontWeight.bold,
+                              if (widget.isTimeout)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: Text(
+                                    isLearningMode 
+                                        ? "Čas vypršal! Teraz ťa zachráni už len učenie." 
+                                        : "Čas vypršal! Teraz ťa zachráni už len test.",
+                                    style: TextStyle(
+                                      color: isNeo ? Colors.black : (isSoft ? const Color(0xFFE11D48) : ((isVibrant || isGlass) ? Colors.white.withValues(alpha: 0.9) : currentTheme.errorColor)), 
+                                      fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.center,
                                   ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              )
-                            else if (isPremium || remainingGrace > 0)
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  minimumSize: const Size(double.infinity, 50),
-                                  backgroundColor: isVibrant 
-                                      ? Colors.white.withValues(alpha: 0.2) 
-                                      : currentTheme.circleAvatarBg,
-                                  foregroundColor: isVibrant 
-                                      ? Colors.white 
-                                      : (isNeo ? Colors.black : theme.colorScheme.onSurface),
-                                  elevation: isVibrant ? 0 : (currentTheme.cardShadows != null ? 1 : 0),
-                                  shape: RoundedRectangleBorder(
+                                )
+                              else if (isPremium || remainingGrace > 0)
+                                Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: _useGracePeriod,
                                     borderRadius: currentTheme.buttonBorderRadius,
-                                    side: isVibrant 
-                                        ? BorderSide(color: Colors.white.withValues(alpha: 0.6), width: 1.5)
-                                        : (currentTheme.buttonBorder ?? BorderSide.none),
+                                    child: Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                      alignment: Alignment.center,
+                                      decoration: isSoft
+                                          ? BoxDecoration(
+                                              color: const Color(0xFFC8D3E6),
+                                              borderRadius: currentTheme.buttonBorderRadius,
+                                              boxShadow: const [
+                                                BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(3, 3), blurRadius: 6),
+                                                BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 6),
+                                              ],
+                                            )
+                                          : BoxDecoration(
+                                              color: isNeo 
+                                                  ? Colors.white 
+                                                  : (isVibrant || isGlass ? Colors.white.withValues(alpha: 0.12) : currentTheme.circleAvatarBg),
+                                              borderRadius: currentTheme.buttonBorderRadius,
+                                              border: secondaryButtonBorder,
+                                              boxShadow: isNeo ? const [BoxShadow(color: Colors.black, offset: Offset(3, 3), blurRadius: 0)] : null,
+                                            ),
+                                      child: Text(
+                                        isPremium 
+                                            ? "Odomknúť na 1 minútu"
+                                            : "Odpustok na 1 min. ($remainingGrace/3 dnes)", 
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
+                                          color: isNeo ? Colors.black : (isSoft ? const Color(0xFF334155) : ((isVibrant || isGlass) ? Colors.white : theme.colorScheme.onSurface)),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              else
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: Text(
+                                    "Dnešné odpustky si už vyčerpal!",
+                                    style: TextStyle(
+                                      color: isNeo ? Colors.black : (isSoft ? const Color(0xFFE11D48) : ((isVibrant || isGlass) ? Colors.white.withValues(alpha: 0.9) : currentTheme.errorColor)), 
+                                      fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.center,
                                   ),
                                 ),
-                                onPressed: _useGracePeriod,
-                                child: Text(
-                                  isPremium 
-                                      ? "Odomknúť na 1 minútu"
-                                      : "Odpustok na 1 min. ($remainingGrace/3 dnes)", 
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                              )
-                            else
-                              Padding(
-                                padding: const EdgeInsets.only(top: 10),
-                                child: Text(
-                                  "Dnešné odpustky si už vyčerpal!",
-                                  style: TextStyle(
-                                    color: isVibrant ? Colors.white.withValues(alpha: 0.9) : (isNeo ? Colors.black : currentTheme.errorColor), 
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
+                            ],
                           ],
-                        ],
-                      ),
+                        ),
+                ),
               ),
             ],
           ),

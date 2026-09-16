@@ -73,8 +73,6 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-
-
   Future<void> _checkDeckCount() async {
     final count = await DatabaseHelper.instance.getCustomDeckCount();
     final premiumStatus = await RevenueCatService.isPremium();
@@ -110,30 +108,40 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showPremiumDialog() {
     final currentTheme = Provider.of<ThemeProvider>(context, listen: false).currentThemeData;
     final theme = currentTheme.theme;
+    final bool isNeo = currentTheme.id == 2;
+    final bool isSoft = currentTheme.id == 1;
+
+    final dialogBgColor = isNeo 
+        ? Colors.white 
+        : (isSoft ? const Color(0xFFD1D9E6) : theme.cardColor);
+
+    final dialogTextColor = isNeo 
+        ? Colors.black 
+        : (isSoft ? const Color(0xFF2D3748) : Colors.black);
 
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: theme.cardColor,
+        backgroundColor: dialogBgColor,
         shape: RoundedRectangleBorder(
           borderRadius: currentTheme.cardBorderRadius,
-          side: currentTheme.buttonBorder,
+          side: isNeo ? const BorderSide(color: Colors.black, width: 3.5) : currentTheme.buttonBorder,
         ),
         title: Column(
           children: [
-            Icon(Icons.star_rounded, size: 50, color: currentTheme.warningColor),
+            Icon(Icons.star_rounded, size: 50, color: isNeo ? Colors.black : currentTheme.warningColor),
             const SizedBox(height: 10),
             Text(
               "Odomkni Brainlock Premium!",
               textAlign: TextAlign.center,
-              style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
+              style: TextStyle(fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold, color: dialogTextColor),
             ),
           ],
         ),
         content: Text(
           "Dosiahol si limit 3 vlastných balíčkov zadarmo.\n\nPre import ďalších balíčkov si aktivuj Premium.",
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface.withValues(alpha: 0.8)),
+          style: TextStyle(fontSize: 15, fontWeight: isNeo ? FontWeight.w600 : FontWeight.normal, color: dialogTextColor.withValues(alpha: 0.8)),
         ),
         actionsAlignment: MainAxisAlignment.center,
         actions: [
@@ -142,12 +150,13 @@ class _HomeScreenState extends State<HomeScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: currentTheme.errorColor,
               foregroundColor: currentTheme.getContrastTextColor(currentTheme.errorColor),
+              elevation: isNeo ? 0 : 2,
               shape: RoundedRectangleBorder(
                 borderRadius: currentTheme.buttonBorderRadius,
-                side: currentTheme.buttonBorder,
+                side: isNeo ? const BorderSide(color: Colors.black, width: 3.5) : currentTheme.buttonBorder,
               ),
             ),
-            child: const Text("Zrušiť"),
+            child: Text("Zrušiť", style: TextStyle(color: isNeo ? Colors.black : Colors.white, fontWeight: FontWeight.bold)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -169,15 +178,60 @@ class _HomeScreenState extends State<HomeScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: currentTheme.warningColor,
               foregroundColor: currentTheme.getContrastTextColor(currentTheme.warningColor),
+              elevation: isNeo ? 0 : 2,
               shape: RoundedRectangleBorder(
                 borderRadius: currentTheme.buttonBorderRadius,
-                side: currentTheme.buttonBorder,
+                side: isNeo ? const BorderSide(color: Colors.black, width: 3.5) : currentTheme.buttonBorder,
               ),
             ),
-            child: const Text("Odomknúť Premium", style: TextStyle(fontWeight: FontWeight.bold)),
+            child: Text("Odomknúť Premium", style: TextStyle(fontWeight: FontWeight.w900, color: isNeo ? Colors.black : Colors.white)),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildCarouselCardHeader({
+    required String title,
+    required Color titleColor,
+    required bool isSoft,
+    required bool isNeo,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const SizedBox(width: 26),
+        Text(
+          title,
+          style: TextStyle(
+            color: titleColor,
+            fontSize: 12,
+            letterSpacing: 1.2,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        Container(
+          width: 26,
+          height: 26,
+          decoration: isSoft
+              ? BoxDecoration(
+                  color: const Color(0xFFC8D3E6),
+                  shape: BoxShape.circle,
+                  boxShadow: const [
+                    BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(2, 2), blurRadius: 4),
+                    BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
+                  ],
+                )
+              : null,
+          child: Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 13,
+            color: isNeo 
+                ? Colors.black 
+                : (isSoft ? const Color(0xFF64748B) : titleColor.withValues(alpha: 0.8)),
+          ),
+        ),
+      ],
     );
   }
 
@@ -187,6 +241,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
     
+    final bool isNeo = currentTheme.id == 2;
+    final bool isSoft = currentTheme.id == 1;
     final bool isLimitReached = customDeckCount >= 3 && !isPremium; 
 
     return Scaffold(
@@ -194,19 +250,19 @@ class _HomeScreenState extends State<HomeScreen> {
       extendBody: true,
 
       appBar: AppBar(
-        backgroundColor: theme.appBarTheme.backgroundColor ?? theme.scaffoldBackgroundColor,
+        backgroundColor: Colors.transparent,
         elevation: theme.appBarTheme.elevation ?? 0,
         title: Text(
           'Brainlock Decks',
           style: theme.appBarTheme.titleTextStyle ?? TextStyle(
-            color: theme.colorScheme.onSurface,
-            fontWeight: FontWeight.bold,
+            color: isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : theme.colorScheme.onSurface),
+            fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
             fontSize: 24,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.star_rounded, color: Colors.amber, size: 30),
+            icon: Icon(Icons.star_rounded, color: isNeo ? Colors.black : Colors.amber, size: 30),
             tooltip: 'Premium',
             onPressed: () async {
               if (isPremium) {
@@ -220,7 +276,7 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: Icon(
               Icons.settings_outlined, 
-              color: theme.appBarTheme.iconTheme?.color ?? theme.colorScheme.onSurface, 
+              color: isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : (theme.appBarTheme.iconTheme?.color ?? theme.colorScheme.onSurface)), 
               size: 24,
             ),
             tooltip: 'Settings',
@@ -233,81 +289,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(width: 8),
         ],
-      ),
-      
-      bottomNavigationBar: Container(
-        color: Colors.transparent,
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.only(left: 20.0, right: 20.0, bottom: 16.0, top: 8.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // 🟢 Zlepšená čitateľnosť nápisu QUICK IMPORT na pozadí
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: theme.scaffoldBackgroundColor.withValues(alpha: 0.8),
-                    borderRadius: BorderRadius.circular(6),
-                    border: currentTheme.id == 0 
-                        ? Border.all(color: const Color(0xFF00FF66).withValues(alpha: 0.4), width: 1) 
-                        : null,
-                  ),
-                  child: Text(
-                    'QUICK IMPORT',
-                    style: TextStyle(
-                      color: currentTheme.id == 0 ? const Color(0xFF00FF66) : theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildImportTile(
-                        title: 'Quizlet',
-                        icon: Icons.language,
-                        accentColor: currentTheme.quickImportColor,
-                        isLocked: isLimitReached,
-                        currentTheme: currentTheme,
-                        onTap: () {
-                          if (isLimitReached) {
-                            _showPremiumDialog();
-                          } else {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const QuizletPlaygroundScreen()),
-                            ).then((_) => _refreshAllData());
-                          }
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: _buildImportTile(
-                        title: 'Anki',
-                        icon: Icons.view_carousel_rounded,
-                        accentColor: currentTheme.quickImportColor,
-                        isLocked: isLimitReached,
-                        currentTheme: currentTheme,
-                        onTap: () {
-                          if (isLimitReached) {
-                            _showPremiumDialog();
-                          } else {
-                            _handleAnkiImport();
-                          }
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
       
       body: ThemedBackground(
@@ -328,7 +309,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     physics: const BouncingScrollPhysics(),
                     children: [
                       SizedBox(
-                        height: 215,
+                        height: 235,
                         child: Column(
                           children: [
                             Expanded(
@@ -371,7 +352,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 10),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: List.generate(4, (index) {
@@ -379,7 +360,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 Color dotColor;
                                 switch (index) {
                                   case 0: dotColor = currentTheme.dailyGoalColor; break;
-                                  case 1: dotColor = currentTheme.id == 5 ? const Color(0xFFE50914) : currentTheme.testSetupColor; break;
+                                  case 1: dotColor = currentTheme.id == 5 ? const Color(0xFFFF3344) : currentTheme.testSetupColor; break;
                                   case 2: dotColor = currentTheme.quickImportColor; break;
                                   case 3: dotColor = currentTheme.id == 5 ? currentTheme.decksColor : currentTheme.blockedAppsColor; break;
                                   default: dotColor = currentTheme.dailyGoalColor;
@@ -388,23 +369,45 @@ class _HomeScreenState extends State<HomeScreen> {
                                 return AnimatedContainer(
                                   duration: const Duration(milliseconds: 250),
                                   margin: const EdgeInsets.symmetric(horizontal: 4),
-                                  width: isSelected ? 20 : 8,
+                                  width: isSelected ? 22 : 8,
                                   height: 8,
                                   decoration: BoxDecoration(
                                     color: isSelected 
-                                        ? dotColor
-                                        : theme.colorScheme.onSurface.withValues(alpha: 0.2),
+                                        ? (isNeo ? Colors.black : (isSoft ? const Color(0xFF2563EB) : dotColor))
+                                        : (isNeo ? Colors.black26 : (isSoft ? const Color(0xFFA0AEC0) : theme.colorScheme.onSurface.withValues(alpha: 0.2))),
                                     borderRadius: BorderRadius.circular(4),
+                                    border: isNeo ? Border.all(color: Colors.black, width: 1.5) : null,
                                   ),
                                 );
                               }),
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.touch_app_rounded,
+                                  size: 13,
+                                  color: isSoft ? const Color(0xFF64748B) : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Ťukni na kartu pre detailné štatistiky',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: isSoft ? const Color(0xFF64748B) : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
                       ),
 
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 18),
 
+                      // PREMIUM KARTA
                       InkWell(
                         onTap: () async {
                           if (isPremium) {
@@ -417,24 +420,49 @@ class _HomeScreenState extends State<HomeScreen> {
                         borderRadius: currentTheme.cardBorderRadius,
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                          decoration: currentTheme.id == 5 ? currentTheme.getCardDecoration(currentTheme.quickImportColor) : currentTheme.getCardDecoration(currentTheme.warningColor),
+                          decoration: isSoft
+                              ? BoxDecoration(
+                                  color: const Color(0xFFD1D9E6),
+                                  borderRadius: currentTheme.cardBorderRadius,
+                                  boxShadow: const [
+                                    BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(5, 5), blurRadius: 10),
+                                    BoxShadow(color: Colors.white, offset: Offset(-5, -5), blurRadius: 10),
+                                  ],
+                                )
+                              : (currentTheme.id == 5 
+                                  ? currentTheme.getCardDecoration(currentTheme.quickImportColor) 
+                                  : currentTheme.getCardDecoration(currentTheme.warningColor)),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(
-                                Icons.star_rounded, 
-                                color: currentTheme.id == 5 ? Colors.black : Colors.amber, 
-                                size: 26,
+                              Container(
+                                width: 42,
+                                height: 42,
+                                decoration: isSoft
+                                    ? BoxDecoration(
+                                        color: const Color(0xFFFEF3C7),
+                                        shape: BoxShape.circle,
+                                        boxShadow: const [
+                                          BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(2, 2), blurRadius: 4),
+                                          BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
+                                        ],
+                                      )
+                                    : null,
+                                child: Icon(
+                                  Icons.star_rounded, 
+                                  color: isNeo ? Colors.black : (isSoft ? const Color(0xFFD97706) : (currentTheme.id == 5 ? Colors.white : Colors.amber)), 
+                                  size: 26,
+                                ),
                               ),
-                              const SizedBox(width: 10),
+                              const SizedBox(width: 14),
                               Text(
                                 isPremium ? 'MANAGE PREMIUM' : 'PREMIUM ACCESS',
                                 style: TextStyle(
-                                  color: currentTheme.id == 2 || currentTheme.id == 5 
+                                  color: isNeo 
                                       ? Colors.black 
-                                      : currentTheme.warningColor,
+                                      : (isSoft ? const Color(0xFFB45309) : (currentTheme.id == 5 ? Colors.white : currentTheme.warningColor)),
                                   fontWeight: FontWeight.w900,
-                                  letterSpacing: 1.2,
+                                  letterSpacing: 1.3,
                                   fontSize: 16,
                                 ),
                               ),
@@ -443,8 +471,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
 
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 18),
 
+                      // DECKS KARTA
                       InkWell(
                         onTap: () async {
                           await Navigator.push(
@@ -455,23 +484,56 @@ class _HomeScreenState extends State<HomeScreen> {
                         },
                         borderRadius: currentTheme.cardBorderRadius,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
-                          decoration: currentTheme.getCardDecoration(currentTheme.decksColor),
+                          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+                          decoration: isSoft
+                              ? BoxDecoration(
+                                  color: const Color(0xFFD1D9E6),
+                                  borderRadius: currentTheme.cardBorderRadius,
+                                  boxShadow: const [
+                                    BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(6, 6), blurRadius: 12),
+                                    BoxShadow(color: Colors.white, offset: Offset(-6, -6), blurRadius: 12),
+                                  ],
+                                )
+                              : currentTheme.getCardDecoration(currentTheme.decksColor),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(
-                                Icons.style_rounded, 
-                                size: 52, 
-                                color: currentTheme.getIconColor(currentTheme.decksColor),
+                              Container(
+                                width: 68,
+                                height: 68,
+                                decoration: isSoft
+                                    ? BoxDecoration(
+                                        color: const Color(0xFFCCFBF1),
+                                        shape: BoxShape.circle,
+                                        boxShadow: const [
+                                          BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(3, 3), blurRadius: 6),
+                                          BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 6),
+                                        ],
+                                      )
+                                    : null,
+                                child: Icon(
+                                  Icons.style_rounded, 
+                                  size: 38, 
+                                  color: isNeo ? Colors.black : (isSoft ? const Color(0xFF0D9488) : currentTheme.getIconColor(currentTheme.decksColor)),
+                                ),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 10),
                               Text(
                                 'Decks',
                                 style: TextStyle(
-                                  color: theme.colorScheme.onSurface,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
+                                  color: isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : (currentTheme.id == 5 ? Colors.white : theme.colorScheme.onSurface)),
+                                  fontSize: 22,
+                                  fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                '$customDeckCount balíčkov · Správa & tvorba',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: isNeo ? Colors.black87 : (isSoft ? const Color(0xFF64748B) : (currentTheme.id == 5 ? Colors.white70 : theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ],
@@ -479,15 +541,19 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
 
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 18),
 
+                      // TEST SETUP & BLOCKED APPS
                       Row(
                         children: [
                           Expanded(
                             child: _buildActionTile(
                               icon: Icons.settings_suggest_rounded,
                               title: 'Test Setup',
+                              subtitle: 'Prispôsob si učenie',
                               accentColor: currentTheme.testSetupColor,
+                              socketBgColor: isSoft ? const Color(0xFFEDE9FE) : null,
+                              socketIconColor: isSoft ? const Color(0xFF7C3AED) : null,
                               currentTheme: currentTheme,
                               onTap: () {
                                 Navigator.push(context, MaterialPageRoute(builder: (context) => const TestSetupScreen()))
@@ -500,7 +566,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: _buildActionTile(
                               icon: Icons.smartphone_rounded,
                               title: 'Blocked Apps',
+                              subtitle: 'Výber blokovaných appiek',
                               accentColor: currentTheme.blockedAppsColor,
+                              socketBgColor: isSoft ? const Color(0xFFFFE4E6) : null,
+                              socketIconColor: isSoft ? const Color(0xFFE11D48) : null,
                               currentTheme: currentTheme,
                               onTap: () {
                                 Navigator.push(
@@ -513,7 +582,89 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
 
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 22),
+
+                      // 🟢 QUICK IMPORT PRIAMO V LISTVIEW (BEZ OVERLAPU)
+                      Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                          decoration: isSoft
+                              ? BoxDecoration(
+                                  color: const Color(0xFFC8D3E6),
+                                  borderRadius: BorderRadius.circular(10),
+                                  boxShadow: const [
+                                    BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(3, 3), blurRadius: 5),
+                                    BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 5),
+                                  ],
+                                )
+                              : BoxDecoration(
+                                  color: isNeo ? Colors.white : theme.scaffoldBackgroundColor.withValues(alpha: 0.8),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: isNeo ? Border.all(color: Colors.black, width: 2.0) : (currentTheme.id == 0 
+                                      ? Border.all(color: const Color(0xFF00FF66).withValues(alpha: 0.4), width: 1) 
+                                      : null),
+                                  boxShadow: isNeo ? const [BoxShadow(color: Colors.black, offset: Offset(2, 2))] : null,
+                                ),
+                          child: Text(
+                            'QUICK IMPORT',
+                            style: TextStyle(
+                              color: isNeo 
+                                  ? Colors.black 
+                                  : (isSoft ? const Color(0xFF4A5568) : (currentTheme.id == 0 ? const Color(0xFF00FF66) : theme.colorScheme.onSurface.withValues(alpha: 0.8))),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.4,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildImportTile(
+                              title: 'Quizlet',
+                              icon: Icons.language,
+                              accentColor: currentTheme.quickImportColor,
+                              socketBgColor: isSoft ? const Color(0xFFD6E4FF) : null,
+                              socketIconColor: isSoft ? const Color(0xFF2563EB) : null,
+                              isLocked: isLimitReached,
+                              currentTheme: currentTheme,
+                              onTap: () {
+                                if (isLimitReached) {
+                                  _showPremiumDialog();
+                                } else {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const QuizletPlaygroundScreen()),
+                                  ).then((_) => _refreshAllData());
+                                }
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: _buildImportTile(
+                              title: 'Anki',
+                              icon: Icons.view_carousel_rounded,
+                              accentColor: currentTheme.quickImportColor,
+                              socketBgColor: isSoft ? const Color(0xFFE0F2FE) : null,
+                              socketIconColor: isSoft ? const Color(0xFF0284C7) : null,
+                              isLocked: isLimitReached,
+                              currentTheme: currentTheme,
+                              onTap: () {
+                                if (isLimitReached) {
+                                  _showPremiumDialog();
+                                } else {
+                                  _handleAnkiImport();
+                                }
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 32),
                     ],
                   );
                 },
@@ -521,8 +672,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
-
 
   Widget _buildDailyGoalCard({
     required BuildContext context,
@@ -534,7 +683,35 @@ class _HomeScreenState extends State<HomeScreen> {
     required double progressValue,
   }) {
     final bool isNeobrutalism = currentTheme.id == 2;
-    final String dayWord = streak == 1 ? 'deň' : (streak >= 2 && streak <= 4 ? 'dni' : 'dní');
+    final bool isVibrant = currentTheme.id == 5;
+    final bool isSoft = currentTheme.id == 1;
+    
+    final bool isCompleted = cardsDone >= dailyTarget;
+    final int displayStreak = isCompleted ? streak + 1 : streak;
+    final String dayWord = displayStreak == 1 ? 'Deň' : (displayStreak >= 2 && displayStreak <= 4 ? 'Dni' : 'Dní');
+
+    final String statusText = isCompleted 
+        ? 'Splnené  ' 
+        : '$cardsDone / $dailyTarget Kariet';
+
+    final Color progressFillColor = isNeobrutalism 
+        ? Colors.black 
+        : (isSoft ? const Color(0xFF2563EB) : (isVibrant ? Colors.white : (isCompleted ? currentTheme.successColor : Colors.white)));
+        
+    final Color progressBgColor = isNeobrutalism 
+        ? Colors.white 
+        : (isSoft ? const Color(0xFFC8D3E6) : Colors.black.withValues(alpha: 0.25));
+
+    final BoxDecoration cardDecoration = isSoft
+        ? BoxDecoration(
+            color: const Color(0xFFD1D9E6),
+            borderRadius: currentTheme.cardBorderRadius,
+            boxShadow: const [
+              BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(5, 5), blurRadius: 10),
+              BoxShadow(color: Colors.white, offset: Offset(-5, -5), blurRadius: 10),
+            ],
+          )
+        : currentTheme.getCardDecoration(currentTheme.dailyGoalColor);
 
     return InkWell(
       onTap: () {
@@ -545,54 +722,53 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       borderRadius: currentTheme.cardBorderRadius,
       child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: currentTheme.getCardDecoration(currentTheme.dailyGoalColor),
+        padding: const EdgeInsets.all(18),
+        decoration: cardDecoration,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              'DAILY GOAL',
-              style: TextStyle(
-                color: isNeobrutalism || currentTheme.id == 5 ? Colors.black : currentTheme.dailyGoalColor,
-                fontSize: 13,
-                letterSpacing: 1.2,
-                fontWeight: FontWeight.w800,
-              ),
+            _buildCarouselCardHeader(
+              title: 'DAILY GOAL',
+              titleColor: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFF2563EB) : (isVibrant ? Colors.white.withValues(alpha: 0.9) : currentTheme.dailyGoalColor)),
+              isSoft: isSoft,
+              isNeo: isNeobrutalism,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text('🔥', style: TextStyle(fontSize: 42)),
+                const Text('🔥', style: TextStyle(fontSize: 40)),
                 const SizedBox(width: 14),
                 Text(
-                  '$streak $dayWord streak\n$cardsDone / $dailyTarget Kariet',
+                  '$displayStreak $dayWord Streak\n$statusText',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: theme.colorScheme.onSurface,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
+                    color: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFF1E293B) : (isVibrant ? Colors.white : theme.colorScheme.onSurface)),
+                    fontWeight: isNeobrutalism || isSoft ? FontWeight.w900 : FontWeight.bold,
+                    fontSize: 19,
                     height: 1.1,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             Container(
-              height: 14,
+              height: 12,
               decoration: BoxDecoration(
-                color: isNeobrutalism ? Colors.white : theme.colorScheme.onSurface.withValues(alpha: 0.12),
+                color: progressBgColor,
                 borderRadius: BorderRadius.circular(isNeobrutalism ? 6 : 8),
                 border: isNeobrutalism ? Border.all(color: Colors.black, width: 2.5) : null,
+                boxShadow: isSoft ? const [
+                  BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(2, 2), blurRadius: 4),
+                  BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
+                ] : null,
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(isNeobrutalism ? 3 : 8),
                 child: LinearProgressIndicator(
                   value: progressValue,
                   backgroundColor: Colors.transparent,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    isNeobrutalism ? Colors.black : currentTheme.dailyGoalColor,
-                  ),
+                  valueColor: AlwaysStoppedAnimation<Color>(progressFillColor),
                 ),
               ),
             ),
@@ -609,23 +785,35 @@ class _HomeScreenState extends State<HomeScreen> {
   }) {
     final bool isVibrantGradient = currentTheme.id == 5;
     final bool isNeobrutalism = currentTheme.id == 2;
+    final bool isSoft = currentTheme.id == 1;
     
-    final Color textColor = isVibrantGradient || isNeobrutalism
-        ? Colors.black 
-        : currentTheme.getContrastTextColor(currentTheme.testSetupColor);
+    final Color textColor = isNeobrutalism
+        ? Colors.black
+        : (isSoft ? const Color(0xFF1E293B) : (isVibrantGradient ? Colors.white : currentTheme.getContrastTextColor(currentTheme.testSetupColor)));
 
-    if (_todayChallenge == null) {
-      return Container(
-        decoration: isVibrantGradient 
+    final BoxDecoration cardDecoration = isSoft
+        ? BoxDecoration(
+            color: const Color(0xFFD1D9E6),
+            borderRadius: currentTheme.cardBorderRadius,
+            boxShadow: const [
+              BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(5, 5), blurRadius: 10),
+              BoxShadow(color: Colors.white, offset: Offset(-5, -5), blurRadius: 10),
+            ],
+          )
+        : (isVibrantGradient 
             ? BoxDecoration(
                 borderRadius: currentTheme.cardBorderRadius,
                 gradient: const LinearGradient(
-                  colors: [Color(0xFFE50914), Color(0xFFB70610)],
+                  colors: [Color(0xFFFF3344), Color(0xFF66000E)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
               )
-            : currentTheme.getCardDecoration(currentTheme.testSetupColor),
+            : currentTheme.getCardDecoration(currentTheme.testSetupColor));
+
+    if (_todayChallenge == null) {
+      return Container(
+        decoration: cardDecoration,
         child: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -635,16 +823,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: isVibrantGradient 
-          ? BoxDecoration(
-              borderRadius: currentTheme.cardBorderRadius,
-              gradient: const LinearGradient(
-                colors: [Color(0xFFE50914), Color(0xFFB70610)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            )
-          : currentTheme.getCardDecoration(currentTheme.testSetupColor),
+      decoration: cardDecoration,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -659,9 +838,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text(
                     'DENNÁ VÝZVA',
                     style: TextStyle(
-                      color: textColor.withValues(alpha: 0.8),
+                      color: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFF7C3AED) : textColor.withValues(alpha: 0.8)),
                       fontSize: 12,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w900,
                       letterSpacing: 1.1,
                     ),
                   ),
@@ -671,9 +850,9 @@ class _HomeScreenState extends State<HomeScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: Colors.black,
+                  color: isNeobrutalism ? Colors.white : (isSoft ? const Color(0xFFC8D3E6) : Colors.black),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.orange, width: 1.5),
+                  border: Border.all(color: isNeobrutalism ? Colors.black : Colors.orange, width: 2.0),
                 ),
                 child: Row(
                   children: [
@@ -681,9 +860,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(width: 4),
                     Text(
                       '$_challengeStreak d',
-                      style: const TextStyle(
-                        color: Colors.orange,
-                        fontWeight: FontWeight.bold,
+                      style: TextStyle(
+                        color: isNeobrutalism ? Colors.black : Colors.orange,
+                        fontWeight: FontWeight.w900,
                         fontSize: 12,
                       ),
                     ),
@@ -698,7 +877,7 @@ class _HomeScreenState extends State<HomeScreen> {
             style: TextStyle(
               color: textColor,
               fontSize: 17,
-              fontWeight: FontWeight.bold,
+              fontWeight: isNeobrutalism || isSoft ? FontWeight.w900 : FontWeight.bold,
             ),
           ),
           const SizedBox(height: 2),
@@ -707,8 +886,9 @@ class _HomeScreenState extends State<HomeScreen> {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              color: textColor.withValues(alpha: 0.8),
+              color: isNeobrutalism ? Colors.black87 : (isSoft ? const Color(0xFF64748B) : textColor.withValues(alpha: 0.8)),
               fontSize: 12,
+              fontWeight: isNeobrutalism ? FontWeight.bold : FontWeight.normal,
             ),
           ),
           const SizedBox(height: 12),
@@ -718,7 +898,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Container(
                   height: 12,
                   decoration: BoxDecoration(
-                    color: isNeobrutalism ? Colors.white : Colors.black.withValues(alpha: 0.2),
+                    color: isNeobrutalism ? Colors.white : (isSoft ? const Color(0xFFC8D3E6) : Colors.black.withValues(alpha: 0.25)),
                     borderRadius: BorderRadius.circular(isNeobrutalism ? 6 : 8),
                     border: isNeobrutalism ? Border.all(color: Colors.black, width: 2.0) : null,
                   ),
@@ -729,7 +909,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       backgroundColor: Colors.transparent,
                       color: isNeobrutalism 
                           ? Colors.black 
-                          : (_isChallengeCompleted ? currentTheme.successColor : theme.colorScheme.primary),
+                          : (isSoft ? const Color(0xFF7C3AED) : (_isChallengeCompleted ? currentTheme.successColor : (isVibrantGradient ? Colors.white : theme.colorScheme.primary))),
                     ),
                   ),
                 ),
@@ -739,7 +919,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 '$_challengeProgress / ${_todayChallenge!.target}',
                 style: TextStyle(
                   color: textColor,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w900,
                   fontSize: 12,
                 ),
               ),
@@ -750,17 +930,26 @@ class _HomeScreenState extends State<HomeScreen> {
             alignment: Alignment.centerRight,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: isNeobrutalism ? Colors.white : Colors.amber.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(8),
-                border: isNeobrutalism ? Border.all(color: Colors.black, width: 2.0) : null,
-              ),
+              decoration: isSoft
+                  ? BoxDecoration(
+                      color: const Color(0xFFC8D3E6),
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: const [
+                        BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(2, 2), blurRadius: 4),
+                        BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
+                      ],
+                    )
+                  : BoxDecoration(
+                      color: isNeobrutalism ? Colors.white : Colors.amber.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(8),
+                      border: isNeobrutalism ? Border.all(color: Colors.black, width: 2.0) : null,
+                    ),
               child: Text(
                 'Odmena: +$bonusMin min',
                 style: TextStyle(
-                  color: textColor,
+                  color: isSoft ? const Color(0xFF7C3AED) : textColor,
                   fontSize: 11,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
             ),
@@ -778,6 +967,20 @@ class _HomeScreenState extends State<HomeScreen> {
   }) {
     int minutes = earnedSeconds ~/ 60;
     int seconds = earnedSeconds % 60;
+    final bool isNeobrutalism = currentTheme.id == 2;
+    final bool isVibrant = currentTheme.id == 5;
+    final bool isSoft = currentTheme.id == 1;
+
+    final BoxDecoration cardDecoration = isSoft
+        ? BoxDecoration(
+            color: const Color(0xFFD1D9E6),
+            borderRadius: currentTheme.cardBorderRadius,
+            boxShadow: const [
+              BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(5, 5), blurRadius: 10),
+              BoxShadow(color: Colors.white, offset: Offset(-5, -5), blurRadius: 10),
+            ],
+          )
+        : currentTheme.getCardDecoration(currentTheme.quickImportColor);
 
     return InkWell(
       onTap: () {
@@ -788,44 +991,41 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       borderRadius: currentTheme.cardBorderRadius,
       child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: currentTheme.getCardDecoration(currentTheme.quickImportColor),
+        padding: const EdgeInsets.all(18),
+        decoration: cardDecoration,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              'ZÍSKANÝ ČAS DNES',
-              style: TextStyle(
-                color: currentTheme.id == 2 || currentTheme.id == 5 ? Colors.black : currentTheme.quickImportColor,
-                fontSize: 13,
-                letterSpacing: 1.2,
-                fontWeight: FontWeight.w800,
-              ),
+            _buildCarouselCardHeader(
+              title: 'ZÍSKANÝ ČAS DNES',
+              titleColor: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFF2563EB) : (isVibrant ? Colors.white.withValues(alpha: 0.9) : currentTheme.quickImportColor)),
+              isSoft: isSoft,
+              isNeo: isNeobrutalism,
             ),
             const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text('⚡', style: TextStyle(fontSize: 40)),
+                const Text('⚡', style: TextStyle(fontSize: 38)),
                 const SizedBox(width: 12),
                 Text(
                   '${minutes}m ${seconds}s',
                   style: TextStyle(
-                    color: theme.colorScheme.onSurface,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 28,
+                    color: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFF1E293B) : (isVibrant ? Colors.white : theme.colorScheme.onSurface)),
+                    fontWeight: isNeobrutalism || isSoft ? FontWeight.w900 : FontWeight.bold,
+                    fontSize: 26,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               'Vybojovaný čas na odomknutie aplikácií',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                color: isNeobrutalism ? Colors.black87 : (isSoft ? const Color(0xFF64748B) : (isVibrant ? Colors.white.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.7))),
                 fontSize: 12,
-                fontWeight: FontWeight.w600,
+                fontWeight: isNeobrutalism || isSoft ? FontWeight.bold : FontWeight.w600,
               ),
             ),
           ],
@@ -845,10 +1045,25 @@ class _HomeScreenState extends State<HomeScreen> {
 
     double accuracyPct = val > 1.0 ? val : val * 100;
     int masteredCount = (statsProvider.todayStats['mastered'] as num?)?.toInt() ?? 0;
+    
+    final bool isNeobrutalism = currentTheme.id == 2;
+    final bool isVibrant = currentTheme.id == 5;
+    final bool isSoft = currentTheme.id == 1;
 
-    final Color accuracyCardColor = currentTheme.id == 5 
+    final Color accuracyCardColor = isVibrant 
         ? currentTheme.decksColor 
         : currentTheme.blockedAppsColor;
+
+    final BoxDecoration cardDecoration = isSoft
+        ? BoxDecoration(
+            color: const Color(0xFFD1D9E6),
+            borderRadius: currentTheme.cardBorderRadius,
+            boxShadow: const [
+              BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(5, 5), blurRadius: 10),
+              BoxShadow(color: Colors.white, offset: Offset(-5, -5), blurRadius: 10),
+            ],
+          )
+        : currentTheme.getCardDecoration(accuracyCardColor);
 
     return InkWell(
       onTap: () {
@@ -859,67 +1074,66 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       borderRadius: currentTheme.cardBorderRadius,
       child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: currentTheme.getCardDecoration(accuracyCardColor),
+        padding: const EdgeInsets.all(18),
+        decoration: cardDecoration,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              'ÚSPEŠNOSŤ & ZVLÁDNUTIE',
-              style: TextStyle(
-                color: currentTheme.id == 2 || currentTheme.id == 5 ? Colors.black : accuracyCardColor,
-                fontSize: 13,
-                letterSpacing: 1.2,
-                fontWeight: FontWeight.w800,
-              ),
+            _buildCarouselCardHeader(
+              title: 'ÚSPEŠNOSŤ & ZVLÁDNUTIE',
+              titleColor: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFFE11D48) : (isVibrant ? Colors.white.withValues(alpha: 0.9) : accuracyCardColor)),
+              isSoft: isSoft,
+              isNeo: isNeobrutalism,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 Column(
                   children: [
-                    const Text('🎯', style: TextStyle(fontSize: 28)),
-                    const SizedBox(height: 4),
+                    const Text('🎯', style: TextStyle(fontSize: 26)),
+                    const SizedBox(height: 2),
                     Text(
                       '${accuracyPct.toStringAsFixed(0)} %',
                       style: TextStyle(
-                        color: theme.colorScheme.onSurface,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 22,
+                        color: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFF1E293B) : (isVibrant ? Colors.white : theme.colorScheme.onSurface)),
+                        fontWeight: isNeobrutalism || isSoft ? FontWeight.w900 : FontWeight.bold,
+                        fontSize: 20,
                       ),
                     ),
                     Text(
                       'Úspešnosť',
                       style: TextStyle(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        color: isNeobrutalism ? Colors.black87 : (isSoft ? const Color(0xFF64748B) : (isVibrant ? Colors.white.withValues(alpha: 0.7) : theme.colorScheme.onSurface.withValues(alpha: 0.6))),
                         fontSize: 11,
+                        fontWeight: isNeobrutalism || isSoft ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
                   ],
                 ),
                 Container(
-                  height: 45,
-                  width: 1,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+                  height: 40,
+                  width: isNeobrutalism ? 2 : 1,
+                  color: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFF9EAEC6) : (isVibrant ? Colors.white.withValues(alpha: 0.3) : theme.colorScheme.onSurface.withValues(alpha: 0.2))),
                 ),
                 Column(
                   children: [
-                    const Text('🧠', style: TextStyle(fontSize: 28)),
-                    const SizedBox(height: 4),
+                    const Text('🧠', style: TextStyle(fontSize: 26)),
+                    const SizedBox(height: 2),
                     Text(
                       '$masteredCount',
                       style: TextStyle(
-                        color: theme.colorScheme.onSurface,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 22,
+                        color: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFF1E293B) : (isVibrant ? Colors.white : theme.colorScheme.onSurface)),
+                        fontWeight: isNeobrutalism || isSoft ? FontWeight.w900 : FontWeight.bold,
+                        fontSize: 20,
                       ),
                     ),
                     Text(
                       'Mastered kariet',
                       style: TextStyle(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        color: isNeobrutalism ? Colors.black87 : (isSoft ? const Color(0xFF64748B) : (isVibrant ? Colors.white.withValues(alpha: 0.7) : theme.colorScheme.onSurface.withValues(alpha: 0.6))),
                         fontSize: 11,
+                        fontWeight: isNeobrutalism || isSoft ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
                   ],
@@ -935,35 +1149,81 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildActionTile({
     required IconData icon,
     required String title,
+    String? subtitle,
     required Color accentColor,
     required AppThemeData currentTheme,
     required VoidCallback onTap,
+    Color? socketBgColor,
+    Color? socketIconColor,
   }) {
     final theme = currentTheme.theme;
+    final bool isNeobrutalism = currentTheme.id == 2;
+    final bool isVibrant = currentTheme.id == 5;
+    final bool isSoft = currentTheme.id == 1;
+
+    final BoxDecoration tileDecoration = isSoft
+        ? BoxDecoration(
+            color: const Color(0xFFD1D9E6),
+            borderRadius: currentTheme.cardBorderRadius,
+            boxShadow: const [
+              BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(5, 5), blurRadius: 10),
+              BoxShadow(color: Colors.white, offset: Offset(-5, -5), blurRadius: 10),
+            ],
+          )
+        : currentTheme.getCardDecoration(accentColor);
+
     return InkWell(
       onTap: onTap,
       borderRadius: currentTheme.cardBorderRadius,
       child: Container(
-        height: 120,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: currentTheme.getCardDecoration(accentColor),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 10),
+        decoration: tileDecoration,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon, 
-              size: 38, 
-              color: currentTheme.getIconColor(accentColor),
+            Container(
+              width: 50,
+              height: 50,
+              decoration: isSoft
+                  ? BoxDecoration(
+                      color: socketBgColor ?? const Color(0xFFC8D3E6),
+                      shape: BoxShape.circle,
+                      boxShadow: const [
+                        BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(3, 3), blurRadius: 6),
+                        BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 6),
+                      ],
+                    )
+                  : null,
+              child: Icon(
+                icon, 
+                size: 26, 
+                color: isNeobrutalism ? Colors.black : (isSoft ? (socketIconColor ?? accentColor) : currentTheme.getIconColor(accentColor)),
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               title,
+              textAlign: TextAlign.center,
               style: TextStyle(
-                color: theme.colorScheme.onSurface,
-                fontWeight: FontWeight.bold,
+                color: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFF1E293B) : (isVibrant ? Colors.white : theme.colorScheme.onSurface)),
+                fontWeight: isNeobrutalism || isSoft ? FontWeight.w900 : FontWeight.bold,
                 fontSize: 15,
               ),
             ),
+            if (subtitle != null) ...[
+              const SizedBox(height: 3),
+              Text(
+                subtitle,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: isNeobrutalism ? Colors.black87 : (isSoft ? const Color(0xFF64748B) : (isVibrant ? Colors.white70 : theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -977,8 +1237,24 @@ class _HomeScreenState extends State<HomeScreen> {
     required AppThemeData currentTheme,
     required VoidCallback onTap,
     bool isLocked = false,
+    Color? socketBgColor,
+    Color? socketIconColor,
   }) {
     final theme = currentTheme.theme;
+    final bool isNeobrutalism = currentTheme.id == 2;
+    final bool isVibrant = currentTheme.id == 5;
+    final bool isSoft = currentTheme.id == 1;
+
+    final BoxDecoration tileDecoration = isSoft
+        ? BoxDecoration(
+            color: const Color(0xFFD1D9E6),
+            borderRadius: currentTheme.buttonBorderRadius,
+            boxShadow: const [
+              BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(4, 4), blurRadius: 8),
+              BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 8),
+            ],
+          )
+        : currentTheme.getCardDecoration(accentColor);
 
     return InkWell(
       onTap: onTap,
@@ -986,25 +1262,39 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Opacity(
         opacity: isLocked ? 0.65 : 1.0,
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: currentTheme.getCardDecoration(accentColor),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+          decoration: tileDecoration,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                isLocked ? Icons.lock : icon,
-                color: isLocked 
-                    ? currentTheme.warningColor 
-                    : currentTheme.getIconColor(accentColor),
-                size: 20,
+              Container(
+                width: 34,
+                height: 34,
+                decoration: isSoft
+                    ? BoxDecoration(
+                        color: socketBgColor ?? const Color(0xFFC8D3E6),
+                        shape: BoxShape.circle,
+                        boxShadow: const [
+                          BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(2, 2), blurRadius: 4),
+                          BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
+                        ],
+                      )
+                    : null,
+                child: Icon(
+                  isLocked ? Icons.lock : icon,
+                  color: isNeobrutalism
+                      ? Colors.black 
+                      : (isSoft ? (socketIconColor ?? accentColor) : (isLocked ? currentTheme.warningColor : currentTheme.getIconColor(accentColor))),
+                  size: 18,
+                ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Text(
                 title,
                 style: TextStyle(
-                  color: theme.colorScheme.onSurface,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
+                  color: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFF1E293B) : (isVibrant ? Colors.white : theme.colorScheme.onSurface)),
+                  fontWeight: isNeobrutalism || isSoft ? FontWeight.w900 : FontWeight.bold,
+                  fontSize: 14,
                 ),
               ),
             ],

@@ -37,6 +37,8 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isChallengeCompleted = false;
   int _challengeStreak = 0;
 
+  static const Color _softCardBg = Color(0xFFF8FAFC);
+
   @override
   void initState() {
     super.initState();
@@ -113,7 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final dialogBgColor = isNeo 
         ? Colors.white 
-        : (isSoft ? const Color(0xFFD1D9E6) : theme.cardColor);
+        : (isSoft ? _softCardBg : theme.cardColor);
 
     final dialogTextColor = isNeo 
         ? Colors.black 
@@ -230,10 +232,10 @@ class _HomeScreenState extends State<HomeScreen> {
           height: 26,
           decoration: isSoft
               ? BoxDecoration(
-                  color: const Color(0xFFC8D3E6),
+                  color: const Color(0xFFEBF0F5),
                   shape: BoxShape.circle,
                   boxShadow: const [
-                    BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(2, 2), blurRadius: 4),
+                    BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(2, 2), blurRadius: 4),
                     BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
                   ],
                 )
@@ -464,11 +466,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                           decoration: isSoft
                               ? BoxDecoration(
-                                  color: const Color(0xFFD1D9E6),
+                                  color: _softCardBg,
                                   borderRadius: currentTheme.cardBorderRadius,
                                   boxShadow: const [
-                                    BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(5, 5), blurRadius: 10),
-                                    BoxShadow(color: Colors.white, offset: Offset(-5, -5), blurRadius: 10),
+                                    BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(5, 5), blurRadius: 14),
+                                    BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 10),
                                   ],
                                 )
                               : (currentTheme.id == 5 
@@ -485,7 +487,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         color: const Color(0xFFFEF3C7),
                                         shape: BoxShape.circle,
                                         boxShadow: const [
-                                          BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(2, 2), blurRadius: 4),
+                                          BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(2, 2), blurRadius: 4),
                                           BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
                                         ],
                                       )
@@ -523,7 +525,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         onTap: () async {
                           await Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const DeckManagerScreen()),
+                            MaterialPageRoute(builder: (context) => DeckManagerScreen()),
                           );
                           _refreshAllData();
                         },
@@ -532,11 +534,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
                           decoration: isSoft
                               ? BoxDecoration(
-                                  color: const Color(0xFFD1D9E6),
+                                  color: _softCardBg,
                                   borderRadius: currentTheme.cardBorderRadius,
                                   boxShadow: const [
-                                    BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(6, 6), blurRadius: 12),
-                                    BoxShadow(color: Colors.white, offset: Offset(-6, -6), blurRadius: 12),
+                                    BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(5, 5), blurRadius: 14),
+                                    BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 10),
                                   ],
                                 )
                               : currentTheme.getCardDecoration(currentTheme.testSetupColor),
@@ -565,7 +567,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         color: const Color(0xFFCCFBF1),
                                         shape: BoxShape.circle,
                                         boxShadow: const [
-                                          BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(3, 3), blurRadius: 6),
+                                          BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(3, 3), blurRadius: 6),
                                           BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 6),
                                         ],
                                       )
@@ -655,10 +657,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
                           decoration: isSoft
                               ? BoxDecoration(
-                                  color: const Color(0xFFC8D3E6),
+                                  color: _softCardBg,
                                   borderRadius: BorderRadius.circular(10),
                                   boxShadow: const [
-                                    BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(3, 3), blurRadius: 5),
+                                    BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(3, 3), blurRadius: 5),
                                     BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 5),
                                   ],
                                 )
@@ -771,15 +773,15 @@ class _HomeScreenState extends State<HomeScreen> {
         
     final Color progressBgColor = isNeobrutalism 
         ? Colors.white 
-        : (isSoft ? const Color(0xFFC8D3E6) : Colors.black.withValues(alpha: 0.35));
+        : (isSoft ? const Color(0xFFE2E8F0) : Colors.black.withValues(alpha: 0.35));
 
     final BoxDecoration cardDecoration = isSoft
         ? BoxDecoration(
-            color: const Color(0xFFD1D9E6),
+            color: _softCardBg,
             borderRadius: currentTheme.cardBorderRadius,
             boxShadow: const [
-              BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(5, 5), blurRadius: 10),
-              BoxShadow(color: Colors.white, offset: Offset(-5, -5), blurRadius: 10),
+              BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(5, 5), blurRadius: 14),
+              BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 10),
             ],
           )
         : currentTheme.getCardDecoration(currentTheme.dailyGoalColor);
@@ -866,11 +868,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final BoxDecoration cardDecoration = isSoft
         ? BoxDecoration(
-            color: const Color(0xFFD1D9E6),
+            color: _softCardBg,
             borderRadius: currentTheme.cardBorderRadius,
             boxShadow: const [
-              BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(5, 5), blurRadius: 10),
-              BoxShadow(color: Colors.white, offset: Offset(-5, -5), blurRadius: 10),
+              BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(5, 5), blurRadius: 14),
+              BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 10),
             ],
           )
         : (isVibrantGradient 
@@ -924,7 +926,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: isNeobrutalism ? Colors.white : (isSoft ? const Color(0xFFC8D3E6) : Colors.black),
+                  color: isNeobrutalism ? Colors.white : (isSoft ? const Color(0xFFE2E8F0) : Colors.black),
                   borderRadius: BorderRadius.circular(isCyber ? 3 : 10),
                   border: Border.all(color: isNeobrutalism ? Colors.black : Colors.orange, width: isCyber ? 1.0 : 2.0),
                 ),
@@ -974,7 +976,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Container(
                   height: 12,
                   decoration: BoxDecoration(
-                    color: isNeobrutalism ? Colors.white : (isSoft ? const Color(0xFFC8D3E6) : Colors.black.withValues(alpha: 0.35)),
+                    color: isNeobrutalism ? Colors.white : (isSoft ? const Color(0xFFE2E8F0) : Colors.black.withValues(alpha: 0.35)),
                     borderRadius: BorderRadius.circular(isNeobrutalism ? 6 : (isCyber ? 2 : 8)),
                     border: isNeobrutalism ? Border.all(color: Colors.black, width: 2.0) : (isCyber ? Border.all(color: currentTheme.decksColor.withValues(alpha: 0.5), width: 1) : null),
                   ),
@@ -1009,10 +1011,10 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: isSoft
                   ? BoxDecoration(
-                      color: const Color(0xFFC8D3E6),
+                      color: const Color(0xFFEBF0F5),
                       borderRadius: BorderRadius.circular(8),
                       boxShadow: const [
-                        BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(2, 2), blurRadius: 4),
+                        BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(2, 2), blurRadius: 4),
                         BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
                       ],
                     )
@@ -1052,11 +1054,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final BoxDecoration cardDecoration = isSoft
         ? BoxDecoration(
-            color: const Color(0xFFD1D9E6),
+            color: _softCardBg,
             borderRadius: currentTheme.cardBorderRadius,
             boxShadow: const [
-              BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(5, 5), blurRadius: 10),
-              BoxShadow(color: Colors.white, offset: Offset(-5, -5), blurRadius: 10),
+              BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(5, 5), blurRadius: 14),
+              BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 10),
             ],
           )
         : currentTheme.getCardDecoration(currentTheme.quickImportColor);
@@ -1140,11 +1142,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final BoxDecoration cardDecoration = isSoft
         ? BoxDecoration(
-            color: const Color(0xFFD1D9E6),
+            color: _softCardBg,
             borderRadius: currentTheme.cardBorderRadius,
             boxShadow: const [
-              BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(5, 5), blurRadius: 10),
-              BoxShadow(color: Colors.white, offset: Offset(-5, -5), blurRadius: 10),
+              BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(5, 5), blurRadius: 14),
+              BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 10),
             ],
           )
         : currentTheme.getCardDecoration(accuracyCardColor);
@@ -1202,7 +1204,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Container(
                   height: 40,
                   width: isNeobrutalism ? 2 : 1,
-                  color: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFF9EAEC6) : (isVibrant ? Colors.white.withValues(alpha: 0.3) : theme.colorScheme.onSurface.withValues(alpha: 0.2))),
+                  color: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFFCBD5E1) : (isVibrant ? Colors.white.withValues(alpha: 0.3) : theme.colorScheme.onSurface.withValues(alpha: 0.2))),
                 ),
                 Column(
                   children: [
@@ -1254,11 +1256,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final BoxDecoration tileDecoration = isSoft
         ? BoxDecoration(
-            color: const Color(0xFFD1D9E6),
+            color: _softCardBg,
             borderRadius: currentTheme.cardBorderRadius,
             boxShadow: const [
-              BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(5, 5), blurRadius: 10),
-              BoxShadow(color: Colors.white, offset: Offset(-5, -5), blurRadius: 10),
+              BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(5, 5), blurRadius: 14),
+              BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 10),
             ],
           )
         : currentTheme.getCardDecoration(accentColor);
@@ -1277,11 +1279,11 @@ class _HomeScreenState extends State<HomeScreen> {
               height: 50,
               decoration: isSoft
                   ? BoxDecoration(
-                      color: socketBgColor ?? const Color(0xFFC8D3E6),
+                      color: socketBgColor ?? const Color(0xFFEBF0F5),
                       shape: BoxShape.circle,
                       boxShadow: const [
-                        BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(3, 3), blurRadius: 6),
-                        BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 6),
+                        BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(2, 2), blurRadius: 4),
+                        BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
                       ],
                     )
                   : null,
@@ -1341,11 +1343,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final BoxDecoration tileDecoration = isSoft
         ? BoxDecoration(
-            color: const Color(0xFFD1D9E6),
+            color: _softCardBg,
             borderRadius: currentTheme.buttonBorderRadius,
             boxShadow: const [
-              BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(4, 4), blurRadius: 8),
-              BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 8),
+              BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(4, 4), blurRadius: 10),
+              BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 8),
             ],
           )
         : currentTheme.getCardDecoration(accentColor);
@@ -1366,10 +1368,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 34,
                 decoration: isSoft
                     ? BoxDecoration(
-                        color: socketBgColor ?? const Color(0xFFC8D3E6),
+                        color: socketBgColor ?? const Color(0xFFEBF0F5),
                         shape: BoxShape.circle,
                         boxShadow: const [
-                          BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(2, 2), blurRadius: 4),
+                          BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(2, 2), blurRadius: 4),
                           BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
                         ],
                       )

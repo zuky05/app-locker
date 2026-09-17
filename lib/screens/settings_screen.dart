@@ -89,12 +89,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
     } else if (cleanName.contains('neumorphism')) {
       return BoxDecoration(
-        color: const Color(0xFFD1D9E6),
+        color: const Color(0xFFE5ECF4),
         borderRadius: BorderRadius.circular(16),
-        border: isSelected ? Border.all(color: const Color(0xFF6C5CE7), width: 2.5) : null,
-        boxShadow: const [
-          BoxShadow(color: Color(0xFF97A7C0), offset: Offset(4, 4), blurRadius: 8),
-          BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 8),
+        border: isSelected ? Border.all(color: const Color(0xFF2563EB), width: 2.5) : null,
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF9EAEC6).withValues(alpha: 0.7), 
+            offset: const Offset(4, 4), 
+            blurRadius: 8,
+          ),
+          const BoxShadow(
+            color: Colors.white, 
+            offset: Offset(-4, -4), 
+            blurRadius: 8,
+          ),
         ],
       );
     } else if (appTheme.id == 2 || cleanName.contains('brutalism') || cleanName.contains('neo')) {
@@ -115,14 +123,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isSelected ? Colors.black : Colors.grey.shade300,
-          width: isSelected ? 3.0 : 1.0,
+          color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFE2E8F0),
+          width: isSelected ? 2.5 : 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
+            color: const Color(0xFF0F172A).withValues(alpha: 0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           )
         ],
       );
@@ -192,9 +200,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       };
     } else if (cleanName.contains('neumorphism')) {
       return {
-        'text': const Color(0xFF2D3748),
-        'subtext': const Color(0xFF718096),
-        'accent': const Color(0xFF6C5CE7),
+        'text': const Color(0xFF1E293B),
+        'subtext': const Color(0xFF64748B),
+        'accent': const Color(0xFF2563EB),
       };
     } else if (appTheme.id == 2 || cleanName.contains('brutalism') || cleanName.contains('neo')) {
       return {
@@ -204,9 +212,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       };
     } else if (cleanName.contains('minimal')) {
       return {
-        'text': Colors.black87,
-        'subtext': Colors.black54,
-        'accent': Colors.black,
+        'text': const Color(0xFF0F172A),
+        'subtext': const Color(0xFF64748B),
+        'accent': const Color(0xFF2563EB),
       };
     } else if (cleanName.contains('starlight')) {
       return {
@@ -285,7 +293,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                       ),
                       subtitle: Text(
-                        "Zavibruje pri nesprávnej odpovedi v kvíze",
+                        "Zavibruje pri nesprávnej odpovedi v kvíze a pri otočení kartičky",
                         style: TextStyle(
                           fontWeight: isNeo ? FontWeight.bold : FontWeight.normal,
                           color: isNeo 
@@ -352,18 +360,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       final bool isBrutalism = appTheme.id == 2 || cleanName.contains('brutalism') || cleanName.contains('neo');
                       final bool isCyberpunk = cleanName.contains('cyberpunk');
                       final bool isStarlight = cleanName.contains('starlight');
+                      final bool isClean = cleanName.contains('minimal');
+                      final bool isNeumorphism = cleanName.contains('neumorphism');
 
-                      final Color dot1Color = isBrutalism 
-                          ? Colors.black 
-                          : (isCyberpunk ? const Color(0xFF00F0FF) : itemTheme.colorScheme.primary);
-                      
-                      final Color dot2Color = isBrutalism 
-                          ? const Color(0xFFFF007F) 
-                          : (isCyberpunk ? const Color(0xFFFF007F) : appTheme.decksColor);
-                      
-                      final Color dot3Color = isBrutalism 
-                          ? const Color(0xFF00E5FF) 
-                          : (isCyberpunk ? const Color(0xFF00FF66) : appTheme.testSetupColor);
+                      Color dot1Color;
+                      Color dot2Color;
+                      Color dot3Color;
+
+                      if (isBrutalism) {
+                        dot1Color = Colors.black;
+                        dot2Color = const Color(0xFFFF007F);
+                        dot3Color = const Color(0xFF00E5FF);
+                      } else if (isCyberpunk) {
+                        dot1Color = const Color(0xFF00F0FF);
+                        dot2Color = const Color(0xFFFF007F);
+                        dot3Color = const Color(0xFF00FF66);
+                      } else if (isClean) {
+                        dot1Color = const Color(0xFF2563EB);
+                        dot2Color = const Color(0xFF059669);
+                        dot3Color = const Color(0xFFDC2626);
+                      } else if (isNeumorphism) {
+                        dot1Color = const Color(0xFF2563EB);
+                        dot2Color = const Color(0xFF0D9488);
+                        dot3Color = const Color(0xFFE11D48);
+                      } else {
+                        dot1Color = itemTheme.colorScheme.primary;
+                        dot2Color = appTheme.decksColor;
+                        dot3Color = appTheme.testSetupColor;
+                      }
 
                       return InkWell(
                         onTap: () => _onThemeTap(appTheme, themeProvider),
@@ -502,13 +526,13 @@ class MiniBrutalismDotsPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final Paint dotPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.22) // Presný stred medzi 0.12 a 0.35
+      ..color = Colors.black.withValues(alpha: 0.22)
       ..style = PaintingStyle.fill;
 
     const double spacing = 14.0;
     for (double x = 10; x < size.width; x += spacing) {
       for (double y = 10; y < size.height; y += spacing) {
-        canvas.drawCircle(Offset(x, y), 1.2, dotPaint); // Veľkosť upravená na stred
+        canvas.drawCircle(Offset(x, y), 1.2, dotPaint);
       }
     }
   }

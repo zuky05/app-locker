@@ -263,7 +263,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                 onTap: () async {
                   await Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const DeckManagerScreen()),
+                    MaterialPageRoute(builder: (context) => DeckManagerScreen()),
                   );
                   _loadSettings();
                 },

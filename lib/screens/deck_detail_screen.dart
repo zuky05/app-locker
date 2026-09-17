@@ -99,10 +99,11 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
     final answerController = TextEditingController();
     final currentTheme = Provider.of<ThemeProvider>(context, listen: false).currentThemeData;
     final theme = currentTheme.theme;
-    final Color sectionColor = currentTheme.testSetupColor; // Tyrkysová
+    final Color sectionColor = currentTheme.testSetupColor; // Tyrkysová / Čierna podla témy
     final bool isVibrant = currentTheme.id == 5;
     final bool isSoft = currentTheme.id == 1;
     final bool isCyber = currentTheme.id == 0;
+    final bool isClean = currentTheme.id == 3;
 
     final dialogBgColor = isSoft
         ? const Color(0xFFD1D9E6)
@@ -141,8 +142,8 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                     border: currentTheme.id == 2
                         ? Border.all(color: Colors.black, width: 3.5)
                         : Border.all(
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.12),
-                            width: 1.2,
+                            color: isClean ? const Color(0xFF94A3B8) : theme.colorScheme.onSurface.withValues(alpha: 0.12),
+                            width: isClean ? 1.2 : 1.0,
                           ),
                   )));
 
@@ -329,10 +330,11 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
-    final Color sectionColor = currentTheme.testSetupColor; // Tyrkysová
+    final Color sectionColor = currentTheme.testSetupColor; // Tyrkysová / Čierna
     final bool isVibrant = currentTheme.id == 5;
     final bool isSoft = currentTheme.id == 1;
     final bool isCyber = currentTheme.id == 0;
+    final bool isClean = currentTheme.id == 3;
 
     return ThemedBackground(
       child: Scaffold(
@@ -530,22 +532,37 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                         borderRadius: isCyber ? BorderRadius.circular(4) : currentTheme.buttonBorderRadius,
                         child: Container(
                           padding: const EdgeInsets.all(14),
-                          decoration: isCyber
+                          decoration: isClean
                               ? BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.85),
-                                  borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(color: currentTheme.errorColor, width: 1.2),
+                                  color: const Color(0xFFDC2626), // 🟢 Červené pozadie pre kôš
+                                  borderRadius: currentTheme.buttonBorderRadius,
+                                  border: Border.all(color: const Color(0xFFB91C1C), width: 1.2),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: currentTheme.errorColor.withValues(alpha: 0.35),
-                                      blurRadius: 8,
+                                      color: const Color(0xFFDC2626).withValues(alpha: 0.35),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
                                     ),
                                   ],
                                 )
-                              : currentTheme.getCardDecoration(currentTheme.errorColor),
+                              : (isCyber
+                                  ? BoxDecoration(
+                                      color: Colors.black.withValues(alpha: 0.85),
+                                      borderRadius: BorderRadius.circular(4),
+                                      border: Border.all(color: currentTheme.errorColor, width: 1.2),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: currentTheme.errorColor.withValues(alpha: 0.35),
+                                          blurRadius: 8,
+                                        ),
+                                      ],
+                                    )
+                                  : currentTheme.getCardDecoration(currentTheme.errorColor)),
                           child: Icon(
-                            Icons.delete, 
-                            color: isSoft ? currentTheme.errorColor : (isCyber ? currentTheme.errorColor : currentTheme.getContrastTextColor(currentTheme.errorColor)), 
+                            Icons.delete_rounded, 
+                            color: isClean 
+                                ? Colors.white // 🟢 Biela ikona koša
+                                : (isSoft ? currentTheme.errorColor : (isCyber ? currentTheme.errorColor : currentTheme.getContrastTextColor(currentTheme.errorColor))), 
                             size: 22,
                           ),
                         ),

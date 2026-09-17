@@ -400,6 +400,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
     final bool isCyber = currentTheme.id == 0;
+    final bool isClean = currentTheme.id == 3;
 
     final headerDecoration = isNeo
         ? BoxDecoration(
@@ -440,7 +441,8 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
                 border: Border.all(
                   color: isCyber 
                       ? accentColor.withValues(alpha: 0.4) 
-                      : theme.colorScheme.onSurface.withValues(alpha: 0.12),
+                      : (isClean ? const Color(0xFF94A3B8) : theme.colorScheme.onSurface.withValues(alpha: 0.12)),
+                  width: isClean ? 1.2 : 1.0,
                 ),
                 boxShadow: currentTheme.cardShadows,
               ));
@@ -513,10 +515,14 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
                                         ],
                                       )
                                     : BoxDecoration(
-                                        color: isNeo ? accentColor : (isCyber ? Colors.black.withValues(alpha: 0.4) : accentColor.withValues(alpha: 0.18)),
+                                        color: isNeo 
+                                            ? accentColor 
+                                            : (isClean 
+                                                ? const Color(0xFF0F172A).withValues(alpha: 0.08)
+                                                : (isCyber ? Colors.black.withValues(alpha: 0.4) : accentColor.withValues(alpha: 0.18))),
                                         borderRadius: BorderRadius.circular(isCyber ? 3 : 10),
                                         border: Border.all(
-                                          color: isNeo ? Colors.black : accentColor, 
+                                          color: isNeo ? Colors.black : (isClean ? const Color(0xFF0F172A) : accentColor), 
                                           width: isNeo ? 2.5 : 1,
                                         ),
                                         boxShadow: isNeo ? const [BoxShadow(color: Colors.black, offset: Offset(2, 2))] : null,
@@ -526,7 +532,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
                                       ? "${blockedPackages.length} / ∞" 
                                       : "${blockedPackages.length} / 3",
                                   style: TextStyle(
-                                    color: isNeo ? Colors.black : (isSoft ? accentColor : accentColor),
+                                    color: isNeo ? Colors.black : (isSoft ? accentColor : (isClean ? const Color(0xFF0F172A) : accentColor)),
                                     fontWeight: FontWeight.bold,
                                     fontFamily: isCyber ? 'monospace' : null,
                                     fontSize: 13,
@@ -636,14 +642,18 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
                                     style: TextStyle(
                                       fontWeight: isNeo ? FontWeight.w900 : (isBlocked ? FontWeight.bold : FontWeight.w600),
                                       fontSize: 15,
-                                      color: textColor,
+                                      color: isClean ? const Color(0xFF0F172A) : textColor,
                                     ),
                                   ),
                                   trailing: Switch(
                                     value: isBlocked,
                                     trackOutlineColor: WidgetStateProperty.all(isCyber ? accentColor.withValues(alpha: 0.4) : Colors.transparent),
-                                    activeColor: isCyber ? accentColor : (isNeo ? Colors.black : (isSoft ? Colors.white : textColor)),
-                                    activeTrackColor: isCyber ? accentColor.withValues(alpha: 0.35) : (isNeo ? Colors.white : accentColor.withValues(alpha: 0.4)),
+                                    activeColor: isClean 
+                                        ? const Color(0xFF0F172A)
+                                        : (isCyber ? accentColor : (isNeo ? Colors.black : (isSoft ? Colors.white : textColor))),
+                                    activeTrackColor: isClean
+                                        ? const Color(0xFF94A3B8)
+                                        : (isCyber ? accentColor.withValues(alpha: 0.35) : (isNeo ? Colors.white : accentColor.withValues(alpha: 0.4))),
                                     inactiveThumbColor: isNeo ? Colors.black54 : (isSoft ? const Color(0xFF97A7C0) : theme.colorScheme.onSurface.withValues(alpha: 0.5)),
                                     inactiveTrackColor: isNeo ? Colors.white54 : (isSoft ? const Color(0xFFC8D3E6) : theme.colorScheme.onSurface.withValues(alpha: 0.2)),
                                     onChanged: (_) => _toggleApp(app.packageName),

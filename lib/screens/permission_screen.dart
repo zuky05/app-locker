@@ -108,7 +108,6 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
     
-    // Spoľahlivá detekcia Cyberpunk témy cez názov
     final String cleanName = currentTheme.name.toLowerCase();
     final bool isCyberpunk = cleanName.contains('cyberpunk');
 
@@ -187,7 +186,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
               children: [
                 const Spacer(),
                 
-                // 🟢 Ikona štítu hore
+                // Ikona štítu
                 Container(
                   padding: const EdgeInsets.all(22),
                   decoration: isCyberpunk
@@ -271,7 +270,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
                 ),
                 const SizedBox(height: 24),
 
-                // 🟢 Box pre názov a popis
+                // Box pre názov a popis
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
@@ -347,7 +346,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
                 ),
                 const SizedBox(height: 20),
 
-                // 🟢 Zoznam povolení
+                // Zoznam povolení
                 _buildPermissionTile(
                   title: "Prekrytie aplikácií (Overlay)",
                   isGranted: isOverlayGranted,
@@ -374,7 +373,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
 
                 const Spacer(),
 
-                // 🟢 Spodné hlavné tlačidlo
+                // Spodné hlavné tlačidlo
                 _buildCtaButton(
                   allGranted: allGranted,
                   onTap: allGranted ? _navigateToMain : _openSettingsOrRequest,
@@ -400,8 +399,8 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
     
     final String cleanName = currentTheme.name.toLowerCase();
     final bool isCyberpunk = cleanName.contains('cyberpunk');
+    final bool isCleanMinimal = currentTheme.id == 3 || cleanName.contains('clean');
 
-    // Skrátené texty, aby sa zaručene zmestili do šírky tlačidla bez overflow
     String buttonText = allGranted
         ? "Pokračovať"
         : (!isOverlayGranted
@@ -657,7 +656,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
 
     final Color primaryAccent = currentTheme.decksColor;
     final Color buttonBgColor = allGranted ? currentTheme.successColor : primaryAccent;
-    final Color buttonFgColor = currentTheme.getContrastTextColor(buttonBgColor);
+    final Color buttonFgColor = isCleanMinimal ? Colors.white : currentTheme.getContrastTextColor(buttonBgColor);
 
     return ElevatedButton.icon(
       onPressed: onTap,

@@ -33,6 +33,8 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
 
   late TabController _tabController;
 
+  static const Color _softCardBg = Color(0xFFF8FAFC);
+
   @override
   void initState() {
     super.initState();
@@ -159,10 +161,10 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     if (isSoft) {
       if (isSecondary) {
         decoration = BoxDecoration(
-          color: const Color(0xFFD1D9E6),
+          color: _softCardBg,
           borderRadius: currentTheme.buttonBorderRadius,
           boxShadow: const [
-            BoxShadow(color: Color(0xFF97A7C0), offset: Offset(3, 3), blurRadius: 6),
+            BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(3, 3), blurRadius: 6),
             BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 6),
           ],
         );
@@ -261,7 +263,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     final dialogBgColor = isNeo 
         ? Colors.white 
         : (isSoft 
-            ? const Color(0xFFD1D9E6) 
+            ? _softCardBg 
             : (isCyber 
                 ? Colors.black.withValues(alpha: 0.92) 
                 : (isVibrant ? const Color(0xFF0F172A) : theme.cardColor)));
@@ -346,11 +348,11 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
 
       if (isSoft) {
         decoration = BoxDecoration(
-          color: const Color(0xFFD1D9E6),
+          color: _softCardBg,
           borderRadius: currentTheme.buttonBorderRadius,
           boxShadow: const [
-            BoxShadow(color: Color(0xFF97A7C0), offset: Offset(3, 3), blurRadius: 6),
-            BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 6),
+            BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(4, 4), blurRadius: 10),
+            BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 8),
           ],
         );
         textColor = const Color(0xFF2D3748);
@@ -474,7 +476,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     final dialogBgColor = isNeo 
         ? Colors.white 
         : (isSoft 
-            ? const Color(0xFFD1D9E6) 
+            ? _softCardBg 
             : (isCyber 
                 ? Colors.black.withValues(alpha: 0.92) 
                 : (isVibrant ? const Color(0xFF0F172A) : theme.cardColor)));
@@ -559,7 +561,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     final dialogBgColor = isNeo 
         ? Colors.white 
         : (isSoft 
-            ? const Color(0xFFD1D9E6) 
+            ? _softCardBg 
             : (isCyber 
                 ? Colors.black.withValues(alpha: 0.92) 
                 : (isVibrant ? const Color(0xFF0F172A) : theme.cardColor)));
@@ -630,11 +632,11 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     BoxDecoration? btnDecoration;
     if (isSoft) {
       btnDecoration = BoxDecoration(
-        color: const Color(0xFFD1D9E6),
+        color: _softCardBg,
         borderRadius: BorderRadius.circular(12),
         boxShadow: const [
           BoxShadow(
-            color: Color(0xFF97A7C0),
+            color: Color(0xFFCBD5E1),
             offset: Offset(2, 2),
             blurRadius: 4,
           ),
@@ -746,10 +748,10 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                     height: 40,
                     decoration: isSoft
                         ? BoxDecoration(
-                            color: const Color(0xFFC8D3E6),
+                            color: const Color(0xFFEBF0F5),
                             shape: BoxShape.circle,
                             boxShadow: const [
-                              BoxShadow(color: Color(0xFF97A7C0), offset: Offset(2, 2), blurRadius: 4),
+                              BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(2, 2), blurRadius: 4),
                               BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
                             ],
                           )
@@ -778,10 +780,10 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: isSoft
                               ? BoxDecoration(
-                                  color: const Color(0xFFC8D3E6),
+                                  color: const Color(0xFFEBF0F5),
                                   borderRadius: BorderRadius.circular(6),
                                   boxShadow: const [
-                                    BoxShadow(color: Color(0xFF97A7C0), offset: Offset(2, 2), blurRadius: 4),
+                                    BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(2, 2), blurRadius: 4),
                                     BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
                                   ],
                                 )
@@ -1046,10 +1048,10 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                 height: 36,
                 decoration: isSoft
                     ? BoxDecoration(
-                        color: const Color(0xFFC8D3E6),
+                        color: const Color(0xFFEBF0F5),
                         shape: BoxShape.circle,
                         boxShadow: const [
-                          BoxShadow(color: Color(0xFF97A7C0), offset: Offset(2, 2), blurRadius: 4),
+                          BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(2, 2), blurRadius: 4),
                           BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
                         ],
                       )
@@ -1115,10 +1117,10 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
 
     final tabDecoration = isSoft
         ? BoxDecoration(
-            color: const Color(0xFFC8D3E6),
+            color: const Color(0xFFEBF0F5),
             borderRadius: currentTheme.buttonBorderRadius,
             boxShadow: const [
-              BoxShadow(color: Color(0xFF97A7C0), offset: Offset(3, 3), blurRadius: 6),
+              BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(3, 3), blurRadius: 6),
               BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 6),
             ],
           )
@@ -1143,10 +1145,10 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
 
     final tabIndicator = isSoft
         ? BoxDecoration(
-            color: const Color(0xFFD1D9E6),
+            color: _softCardBg,
             borderRadius: currentTheme.buttonBorderRadius,
             boxShadow: const [
-              BoxShadow(color: Color(0xFF97A7C0), offset: Offset(3, 3), blurRadius: 6),
+              BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(3, 3), blurRadius: 6),
               BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 6),
             ],
           )
@@ -1246,10 +1248,10 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                     height: 52,
                     decoration: isSoft
                         ? BoxDecoration(
-                            color: const Color(0xFFD1D9E6),
+                            color: _softCardBg,
                             borderRadius: currentTheme.buttonBorderRadius,
                             boxShadow: const [
-                              BoxShadow(color: Color(0xFF97A7C0), offset: Offset(4, 4), blurRadius: 8),
+                              BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(4, 4), blurRadius: 8),
                               BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 8),
                             ],
                           )

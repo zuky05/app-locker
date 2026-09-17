@@ -150,6 +150,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     final bool isVibrant = currentTheme.id == 5;
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
+    final bool isCyber = currentTheme.id == 0;
     final theme = currentTheme.theme;
 
     BoxDecoration decoration;
@@ -187,24 +188,13 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
           ),
           borderRadius: currentTheme.buttonBorderRadius,
           border: Border.all(color: Colors.white.withValues(alpha: 0.45), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
         );
         textColor = Colors.white;
-      } else if (currentTheme.id == 0) {
+      } else if (isCyber) {
         decoration = BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF334155), Color(0xFF0F172A)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: currentTheme.buttonBorderRadius,
-          border: Border.all(color: const Color(0xFF00F5FF).withValues(alpha: 0.5), width: 1.5),
+          color: Colors.black.withValues(alpha: 0.8),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: const Color(0xFF00F5FF).withValues(alpha: 0.5), width: 1.0),
         );
         textColor = Colors.white;
       } else if (isNeo) {
@@ -212,26 +202,17 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
           color: Colors.white,
           borderRadius: currentTheme.buttonBorderRadius,
           border: Border.all(color: Colors.black, width: 3.5),
-          boxShadow: const [
-            BoxShadow(color: Colors.black, offset: Offset(3, 3), blurRadius: 0),
-          ],
         );
         textColor = Colors.black;
       } else {
         decoration = BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              theme.cardColor,
-              theme.scaffoldBackgroundColor,
-            ],
+            colors: [theme.cardColor, theme.scaffoldBackgroundColor],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: currentTheme.buttonBorderRadius,
-          border: Border.all(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
-            width: 1.5,
-          ),
+          border: Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.2), width: 1.5),
         );
         textColor = theme.colorScheme.onSurface;
       }
@@ -241,7 +222,6 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
               color: accentColor,
               borderRadius: currentTheme.buttonBorderRadius,
               border: Border.all(color: Colors.black, width: 3.5),
-              boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(3, 3), blurRadius: 0)],
             )
           : currentTheme.getCardDecoration(accentColor);
       textColor = isNeo ? Colors.black : currentTheme.getContrastTextColor(accentColor);
@@ -275,18 +255,22 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     final bool isVibrant = currentTheme.id == 5;
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
+    final bool isCyber = currentTheme.id == 0;
+    final Color sectionColor = currentTheme.testSetupColor;
 
     final dialogBgColor = isNeo 
         ? Colors.white 
         : (isSoft 
             ? const Color(0xFFD1D9E6) 
-            : (isVibrant ? const Color(0xFF0F172A) : theme.cardColor));
+            : (isCyber 
+                ? Colors.black.withValues(alpha: 0.92) 
+                : (isVibrant ? const Color(0xFF0F172A) : theme.cardColor)));
 
     final dialogTextColor = isNeo 
         ? Colors.black 
         : (isSoft 
             ? const Color(0xFF2D3748) 
-            : (isVibrant ? Colors.white : theme.colorScheme.onSurface));
+            : (isVibrant || isCyber ? Colors.white : theme.colorScheme.onSurface));
 
     if (customCount >= 3 && !isPremium) {
       if (!mounted) return;
@@ -296,7 +280,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
           backgroundColor: dialogBgColor,
           shape: RoundedRectangleBorder(
             borderRadius: currentTheme.cardBorderRadius,
-            side: isNeo ? const BorderSide(color: Colors.black, width: 3.5) : currentTheme.buttonBorder,
+            side: isNeo ? const BorderSide(color: Colors.black, width: 3.5) : (isCyber ? const BorderSide(color: Color(0xFF00F5FF), width: 1.5) : currentTheme.buttonBorder),
           ),
           title: Column(
             children: [
@@ -351,7 +335,6 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
 
     if (!mounted) return;
 
-    // 🟢 SOFT NEUMORPHISM MOŽNOSTI DIALÓGU
     Widget buildOptionButton({
       required IconData icon,
       required String label,
@@ -371,20 +354,27 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
           ],
         );
         textColor = const Color(0xFF2D3748);
-        iconColor = currentTheme.decksColor;
+        iconColor = sectionColor;
       } else if (isNeo) {
         decoration = BoxDecoration(
-          color: currentTheme.decksColor,
+          color: sectionColor,
           borderRadius: currentTheme.buttonBorderRadius,
           border: Border.all(color: Colors.black, width: 3.5),
-          boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(3, 3), blurRadius: 0)],
         );
         textColor = Colors.black;
         iconColor = Colors.black;
+      } else if (isCyber) {
+        decoration = BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: const Color(0xFF00F5FF).withValues(alpha: 0.6), width: 1.0),
+        );
+        textColor = const Color(0xFF00F5FF);
+        iconColor = const Color(0xFF00F5FF);
       } else {
-        decoration = currentTheme.getCardDecoration(currentTheme.decksColor);
-        textColor = isVibrant ? Colors.white : currentTheme.getContrastTextColor(currentTheme.decksColor);
-        iconColor = isVibrant ? Colors.white : currentTheme.getIconColor(currentTheme.decksColor);
+        decoration = currentTheme.getCardDecoration(sectionColor);
+        textColor = isVibrant ? Colors.white : currentTheme.getContrastTextColor(sectionColor);
+        iconColor = isVibrant ? Colors.white : currentTheme.getIconColor(sectionColor);
       }
 
       return Material(
@@ -399,13 +389,13 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, color: iconColor, size: 22),
+                Icon(icon, color: iconColor, size: 20),
                 const SizedBox(width: 10),
                 Text(
                   label,
                   style: TextStyle(
                     color: textColor,
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
                   ),
                 ),
@@ -422,12 +412,12 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
         backgroundColor: dialogBgColor,
         shape: RoundedRectangleBorder(
           borderRadius: currentTheme.cardBorderRadius,
-          side: isNeo ? const BorderSide(color: Colors.black, width: 3.5) : currentTheme.buttonBorder,
+          side: isNeo ? const BorderSide(color: Colors.black, width: 3.5) : (isCyber ? const BorderSide(color: Color(0xFF00F5FF), width: 1.5) : currentTheme.buttonBorder),
         ),
         title: Text(
           'Pridať nový balíček', 
           textAlign: TextAlign.center, 
-          style: TextStyle(fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold, color: dialogTextColor),
+          style: TextStyle(fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold, color: dialogTextColor, fontSize: 18),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -443,7 +433,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                 ).then((_) => _loadDecks());
               },
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             buildOptionButton(
               icon: Icons.school,
               label: "Import z Quizletu",
@@ -455,7 +445,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                 ).then((_) => _loadDecks());
               },
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             buildOptionButton(
               icon: Icons.upload_file,
               label: "Import z Anki",
@@ -475,22 +465,25 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     final categoryController = TextEditingController(text: deck.category);
     final currentTheme = Provider.of<ThemeProvider>(context, listen: false).currentThemeData;
     final theme = currentTheme.theme;
-    final Color sectionColor = currentTheme.decksColor;
+    final Color sectionColor = currentTheme.testSetupColor;
     final bool isVibrant = currentTheme.id == 5;
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
+    final bool isCyber = currentTheme.id == 0;
 
     final dialogBgColor = isNeo 
         ? Colors.white 
         : (isSoft 
             ? const Color(0xFFD1D9E6) 
-            : (isVibrant ? const Color(0xFF0F172A) : theme.cardColor));
+            : (isCyber 
+                ? Colors.black.withValues(alpha: 0.92) 
+                : (isVibrant ? const Color(0xFF0F172A) : theme.cardColor)));
 
     final dialogTextColor = isNeo 
         ? Colors.black 
         : (isSoft 
             ? const Color(0xFF2D3748) 
-            : (isVibrant ? Colors.white : theme.colorScheme.onSurface));
+            : (isVibrant || isCyber ? Colors.white : theme.colorScheme.onSurface));
 
     showDialog(
       context: context,
@@ -498,7 +491,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
         backgroundColor: dialogBgColor,
         shape: RoundedRectangleBorder(
           borderRadius: currentTheme.cardBorderRadius,
-          side: isNeo ? const BorderSide(color: Colors.black, width: 3.5) : currentTheme.buttonBorder,
+          side: isNeo ? const BorderSide(color: Colors.black, width: 3.5) : (isCyber ? const BorderSide(color: Color(0xFF00F5FF), width: 1.5) : currentTheme.buttonBorder),
         ),
         title: Text(
           'Upraviť balíček', 
@@ -513,7 +506,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
               decoration: InputDecoration(
                 labelText: 'Názov balíčka',
                 labelStyle: TextStyle(color: dialogTextColor.withValues(alpha: 0.6)),
-                focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: sectionColor, width: 2)),
+                focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: isCyber ? const Color(0xFF00F5FF) : sectionColor, width: 2)),
               ),
             ),
             const SizedBox(height: 10),
@@ -523,7 +516,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
               decoration: InputDecoration(
                 labelText: 'Kategória',
                 labelStyle: TextStyle(color: dialogTextColor.withValues(alpha: 0.6)),
-                focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: sectionColor, width: 2)),
+                focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: isCyber ? const Color(0xFF00F5FF) : sectionColor, width: 2)),
               ),
             ),
           ],
@@ -561,18 +554,21 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     final bool isVibrant = currentTheme.id == 5;
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
+    final bool isCyber = currentTheme.id == 0;
 
     final dialogBgColor = isNeo 
         ? Colors.white 
         : (isSoft 
             ? const Color(0xFFD1D9E6) 
-            : (isVibrant ? const Color(0xFF0F172A) : theme.cardColor));
+            : (isCyber 
+                ? Colors.black.withValues(alpha: 0.92) 
+                : (isVibrant ? const Color(0xFF0F172A) : theme.cardColor)));
 
     final dialogTextColor = isNeo 
         ? Colors.black 
         : (isSoft 
             ? const Color(0xFF2D3748) 
-            : (isVibrant ? Colors.white : theme.colorScheme.onSurface));
+            : (isVibrant || isCyber ? Colors.white : theme.colorScheme.onSurface));
 
     showDialog(
       context: context,
@@ -580,7 +576,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
         backgroundColor: dialogBgColor,
         shape: RoundedRectangleBorder(
           borderRadius: currentTheme.cardBorderRadius,
-          side: isNeo ? const BorderSide(color: Colors.black, width: 3.5) : currentTheme.buttonBorder,
+          side: isNeo ? const BorderSide(color: Colors.black, width: 3.5) : (isCyber ? const BorderSide(color: Color(0xFF00F5FF), width: 1.5) : currentTheme.buttonBorder),
         ),
         title: Text('Vymazať balíček?', style: TextStyle(color: dialogTextColor, fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold)),
         content: Text(
@@ -617,7 +613,6 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     );
   }
 
-  // 🟢 SOFT NEUMORPHISM: VYSTÚPENÉ 3D AKČNÉ TLAČIDLÁ
   Widget _buildActionButton({
     required IconData icon,
     required String label,
@@ -630,6 +625,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     final bool isVibrant = currentTheme.id == 5;
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
+    final bool isCyber = currentTheme.id == 0;
 
     BoxDecoration? btnDecoration;
     if (isSoft) {
@@ -651,6 +647,10 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
       );
     }
 
+    final Color effectiveColor = isCyber 
+        ? (color == currentTheme.errorColor ? const Color(0xFFFF3344) : const Color(0xFF00F5FF))
+        : color;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -666,8 +666,8 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                 icon, 
                 color: isNeo 
                     ? Colors.black 
-                    : (isSoft ? color : (isVibrant && color == theme.colorScheme.onSurface ? Colors.white : color)), 
-                size: 22,
+                    : (isSoft ? effectiveColor : (isCyber ? effectiveColor : (isVibrant && color == theme.colorScheme.onSurface ? Colors.white : effectiveColor))), 
+                size: 20,
               ),
               const SizedBox(height: 4),
               Text(
@@ -677,7 +677,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                   fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold, 
                   color: isNeo 
                       ? Colors.black 
-                      : (isSoft ? const Color(0xFF2D3748) : (isVibrant ? Colors.white : theme.colorScheme.onSurface.withValues(alpha: 0.9))),
+                      : (isSoft ? const Color(0xFF2D3748) : (isCyber ? Colors.white.withValues(alpha: 0.9) : (isVibrant ? Colors.white : theme.colorScheme.onSurface.withValues(alpha: 0.9)))),
                 ),
               ),
             ],
@@ -693,10 +693,11 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     final themeProvider = Provider.of<ThemeProvider>(context);
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
-    final Color sectionColor = currentTheme.decksColor;
+    final Color sectionColor = currentTheme.testSetupColor;
     final bool isVibrant = currentTheme.id == 5;
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
+    final bool isCyber = currentTheme.id == 0;
 
     return FutureBuilder<int>(
       future: DatabaseHelper.instance.getCardCountForDeck(deck.id!),
@@ -705,30 +706,44 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
         final bool hasEnoughCards = cardCount >= 5;
         final bool isActive = (activeBlockerDeckId == deck.id) && hasEnoughCards;
 
-        final cardDecoration = currentTheme.getCardDecoration(sectionColor, isSelected: isActive);
+        final cardDecoration = isCyber
+            ? BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.75),
+                borderRadius: currentTheme.cardBorderRadius,
+                border: Border.all(
+                  color: isActive 
+                      ? const Color(0xFF00FF66) 
+                      : const Color(0xFF00F5FF).withValues(alpha: 0.35),
+                  width: isActive ? 1.5 : 1.0,
+                ),
+              )
+            : currentTheme.getCardDecoration(sectionColor, isSelected: isActive);
 
         final Color tileBgColor = currentTheme.getTileBg(isGranted: false, accentColor: sectionColor);
         final Color avatarBg = isNeo 
             ? Colors.white 
-            : (isVibrant ? Colors.white.withValues(alpha: 0.2) : tileBgColor);
+            : (isCyber 
+                ? Colors.black.withValues(alpha: 0.5) 
+                : (isVibrant ? Colors.white.withValues(alpha: 0.2) : tileBgColor));
         
         final Color avatarIconColor = isNeo 
             ? Colors.black 
-            : (isVibrant ? Colors.white : currentTheme.getContrastTextColor(tileBgColor));
+            : (isCyber 
+                ? const Color(0xFF00F5FF) 
+                : (isVibrant ? Colors.white : currentTheme.getContrastTextColor(tileBgColor)));
 
         return Container(
-          margin: const EdgeInsets.only(bottom: 12),
+          margin: const EdgeInsets.only(bottom: 10),
           decoration: cardDecoration,
           child: ClipRRect(
             borderRadius: currentTheme.cardBorderRadius,
             child: Column(
               children: [
                 ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  // 🟢 SOFT NEUMORPHISM: Zapustená ikona (Concave socket)
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   leading: Container(
-                    width: 42,
-                    height: 42,
+                    width: 40,
+                    height: 40,
                     decoration: isSoft
                         ? BoxDecoration(
                             color: const Color(0xFFC8D3E6),
@@ -741,7 +756,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                         : null,
                     child: CircleAvatar(
                       backgroundColor: isSoft ? Colors.transparent : avatarBg,
-                      child: Icon(_getCategoryIcon(deck.category), color: isSoft ? sectionColor : avatarIconColor),
+                      child: Icon(_getCategoryIcon(deck.category), size: 20, color: isSoft ? sectionColor : avatarIconColor),
                     ),
                   ),
                   title: Row(
@@ -751,7 +766,8 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                           deck.name, 
                           style: TextStyle(
                             fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
-                            color: isNeo ? Colors.black : (isSoft ? const Color(0xFF2D3748) : (isVibrant ? Colors.white : theme.colorScheme.onSurface)),
+                            fontSize: 16,
+                            color: isNeo ? Colors.black : (isSoft ? const Color(0xFF2D3748) : (isCyber || isVibrant ? Colors.white : theme.colorScheme.onSurface)),
                           ), 
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -759,7 +775,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                       if (isActive) ...[
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: isSoft
                               ? BoxDecoration(
                                   color: const Color(0xFFC8D3E6),
@@ -769,16 +785,21 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                                     BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
                                   ],
                                 )
-                              : BoxDecoration(
-                                  color: currentTheme.successColor, 
-                                  borderRadius: BorderRadius.circular(4),
-                                  border: isNeo ? Border.all(color: Colors.black, width: 2.0) : Border.fromBorderSide(currentTheme.buttonBorder),
-                                  boxShadow: isNeo ? const [BoxShadow(color: Colors.black, offset: Offset(2, 2))] : null,
-                                ),
+                              : (isCyber 
+                                  ? BoxDecoration(
+                                      color: const Color(0xFF00FF66).withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(2),
+                                      border: Border.all(color: const Color(0xFF00FF66), width: 1.0),
+                                    )
+                                  : BoxDecoration(
+                                      color: currentTheme.successColor, 
+                                      borderRadius: BorderRadius.circular(4),
+                                      border: isNeo ? Border.all(color: Colors.black, width: 2.0) : Border.fromBorderSide(currentTheme.buttonBorder),
+                                    )),
                           child: Text(
                             'AKTÍVNY', 
                             style: TextStyle(
-                              color: isSoft ? currentTheme.successColor : (isNeo ? Colors.black : currentTheme.getContrastTextColor(currentTheme.successColor)), 
+                              color: isSoft ? currentTheme.successColor : (isCyber ? const Color(0xFF00FF66) : (isNeo ? Colors.black : currentTheme.getContrastTextColor(currentTheme.successColor))), 
                               fontSize: 10, 
                               fontWeight: FontWeight.w900,
                             ),
@@ -791,19 +812,20 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                     "${deck.category} • Karty: $cardCount",
                     style: TextStyle(
                       fontWeight: isNeo ? FontWeight.bold : FontWeight.normal,
-                      color: isNeo ? Colors.black87 : (isSoft ? const Color(0xFF718096) : (isVibrant ? Colors.white.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.7))),
+                      fontSize: 12,
+                      color: isNeo ? Colors.black87 : (isSoft ? const Color(0xFF718096) : (isCyber ? Colors.white60 : (isVibrant ? Colors.white.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.7)))),
                     ),
                   ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (!hasEnoughCards) ...[
-                        Icon(Icons.warning_amber_rounded, color: isNeo ? Colors.black : currentTheme.warningColor, size: 22),
+                        Icon(Icons.warning_amber_rounded, color: isNeo ? Colors.black : currentTheme.warningColor, size: 20),
                         const SizedBox(width: 8),
                       ],
                       Icon(
                         isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                        color: isNeo ? Colors.black : (isSoft ? const Color(0xFF718096) : (isVibrant ? Colors.white : currentTheme.getIconColor(sectionColor))),
+                        color: isNeo ? Colors.black : (isSoft ? const Color(0xFF718096) : (isCyber ? const Color(0xFF00F5FF) : (isVibrant ? Colors.white : currentTheme.getIconColor(sectionColor)))),
                       ),
                     ],
                   ),
@@ -818,16 +840,16 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                   secondChild: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: isNeo ? Colors.black.withValues(alpha: 0.05) : (isVibrant ? Colors.white.withValues(alpha: 0.15) : Colors.transparent),
+                      color: isNeo ? Colors.black.withValues(alpha: 0.05) : (isVibrant ? Colors.white.withValues(alpha: 0.15) : (isCyber ? Colors.black.withValues(alpha: 0.4) : Colors.transparent)),
                       borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
-                      border: isNeo || isVibrant ? Border(top: BorderSide(color: isNeo ? Colors.black : (isVibrant ? Colors.white.withValues(alpha: 0.3) : currentTheme.buttonBorder.color), width: isNeo ? 3.5 : 2.0)) : null,
+                      border: isNeo || isVibrant ? Border(top: BorderSide(color: isNeo ? Colors.black : (isVibrant ? Colors.white.withValues(alpha: 0.3) : currentTheme.buttonBorder.color), width: isNeo ? 3.5 : 2.0)) : (isCyber ? Border(top: BorderSide(color: const Color(0xFF00F5FF).withValues(alpha: 0.2), width: 1.0)) : null),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
                     child: Column(
                       children: [
-                        if (!isNeo && !isVibrant && !isSoft) ...[
+                        if (!isNeo && !isVibrant && !isSoft && !isCyber) ...[
                           Divider(height: 1, color: theme.colorScheme.onSurface.withValues(alpha: 0.2)),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 8),
                         ],
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -862,7 +884,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                               child: _buildActionButton(
                                 icon: Icons.quiz,
                                 label: "Test",
-                                color: isNeo ? Colors.black : currentTheme.testSetupColor,
+                                color: isNeo ? Colors.black : currentTheme.decksColor,
                                 onTap: hasEnoughCards ? () => Navigator.push(
                                   context,
                                   MaterialPageRoute(builder: (context) => QuizOverlayScreen(practiceDeckId: deck.id)),
@@ -876,7 +898,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                             _buildActionButton(
                               icon: Icons.share,
                               label: "Zdieľať",
-                              color: isNeo ? Colors.black : currentTheme.testSetupColor,
+                              color: isNeo ? Colors.black : currentTheme.decksColor,
                               onTap: () async {
                                 final cards = await DatabaseHelper.instance.getCardsForDeck(deck.id!);
 
@@ -901,7 +923,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                           ],
                         ),
                         if (isCustom) ...[
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 8),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
@@ -962,7 +984,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     }
     return ListView.builder(
       itemCount: deckList.length,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       itemBuilder: (context, index) => _buildDeckCard(deckList[index]),
     );
   }
@@ -971,10 +993,11 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     final themeProvider = Provider.of<ThemeProvider>(context);
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
-    final Color sectionColor = currentTheme.decksColor;
+    final Color sectionColor = currentTheme.testSetupColor;
     final bool isVibrant = currentTheme.id == 5;
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
+    final bool isCyber = currentTheme.id == 0;
 
     if (deckList.isEmpty) {
       return Center(
@@ -994,14 +1017,25 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     }
 
     return ListView(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
       children: groupedDecks.entries.map((entry) {
         final categoryName = entry.key;
         final categoryDecks = entry.value;
 
+        final cardDeco = isCyber
+            ? BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.75),
+                borderRadius: currentTheme.cardBorderRadius,
+                border: Border.all(
+                  color: const Color(0xFF00F5FF).withValues(alpha: 0.4),
+                  width: 1.0,
+                ),
+              )
+            : currentTheme.getCardDecoration(sectionColor);
+
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
-          decoration: currentTheme.getCardDecoration(sectionColor),
+          decoration: cardDeco,
           child: ClipRRect(
             borderRadius: currentTheme.cardBorderRadius,
             child: ExpansionTile(
@@ -1023,30 +1057,30 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                 child: Center(
                   child: Icon(
                     _getCategoryIcon(categoryName), 
-                    color: isNeo ? Colors.black : (isSoft ? sectionColor : (isVibrant ? Colors.white : currentTheme.getIconColor(sectionColor))), 
-                    size: 24,
+                    color: isNeo ? Colors.black : (isSoft ? sectionColor : (isCyber ? const Color(0xFF00F5FF) : (isVibrant ? Colors.white : currentTheme.getIconColor(sectionColor)))), 
+                    size: 22,
                   ),
                 ),
               ),
-              iconColor: isNeo ? Colors.black : (isSoft ? const Color(0xFF718096) : (isVibrant ? Colors.white : sectionColor)),
-              collapsedIconColor: isNeo ? Colors.black : (isSoft ? const Color(0xFF718096) : (isVibrant ? Colors.white : sectionColor)),
-              tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              iconColor: isNeo ? Colors.black : (isSoft ? const Color(0xFF718096) : (isCyber ? const Color(0xFF00F5FF) : (isVibrant ? Colors.white : sectionColor))),
+              collapsedIconColor: isNeo ? Colors.black : (isSoft ? const Color(0xFF718096) : (isCyber ? const Color(0xFF00F5FF) : (isVibrant ? Colors.white : sectionColor))),
+              tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               title: Text(
                 categoryName,
                 style: TextStyle(
-                  fontSize: 20, 
-                  fontWeight: FontWeight.w900, 
-                  color: isNeo ? Colors.black : (isSoft ? const Color(0xFF2D3748) : (isVibrant ? Colors.white : sectionColor)),
+                  fontSize: 18, 
+                  fontWeight: FontWeight.bold, 
+                  color: isNeo ? Colors.black : (isSoft ? const Color(0xFF2D3748) : (isCyber ? Colors.white : (isVibrant ? Colors.white : sectionColor))),
                 ),
               ),
               subtitle: Padding(
-                padding: const EdgeInsets.only(top: 4),
+                padding: const EdgeInsets.only(top: 2),
                 child: Text(
                   _getCategoryDescription(categoryName),
                   style: TextStyle(
-                    fontSize: 13, 
+                    fontSize: 12, 
                     fontWeight: isNeo ? FontWeight.bold : FontWeight.normal,
-                    color: isNeo ? Colors.black87 : (isSoft ? const Color(0xFF718096) : (isVibrant ? Colors.white.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.7))),
+                    color: isNeo ? Colors.black87 : (isSoft ? const Color(0xFF718096) : (isCyber ? Colors.white70 : (isVibrant ? Colors.white.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.7)))),
                   ),
                 ),
               ),
@@ -1070,15 +1104,15 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     final themeProvider = Provider.of<ThemeProvider>(context);
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
-    final Color sectionColor = currentTheme.decksColor;
+    final Color sectionColor = currentTheme.testSetupColor;
     final bool isVibrant = currentTheme.id == 5;
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
+    final bool isCyber = currentTheme.id == 0;
 
     final bool isLimitReached = (myDecks.length >= 3 && !isPremium);
     final Color fabBgColor = isLimitReached ? currentTheme.warningColor : sectionColor;
 
-    // 🟢 SOFT NEUMORPHISM ZÁLOŽKOVÝ CONTAINER
     final tabDecoration = isSoft
         ? BoxDecoration(
             color: const Color(0xFFC8D3E6),
@@ -1093,14 +1127,19 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                 color: Colors.white,
                 borderRadius: currentTheme.buttonBorderRadius,
                 border: Border.all(color: Colors.black, width: 3.5),
-                boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(4, 4), blurRadius: 0)],
               )
-            : BoxDecoration(
-                color: isVibrant 
-                    ? Colors.black.withValues(alpha: 0.06) 
-                    : theme.colorScheme.onSurface.withValues(alpha: 0.05),
-                borderRadius: currentTheme.buttonBorderRadius,
-              ));
+            : (isCyber 
+                ? BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.7),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFF00F5FF).withValues(alpha: 0.3), width: 1.0),
+                  )
+                : BoxDecoration(
+                    color: isVibrant 
+                        ? Colors.black.withValues(alpha: 0.06) 
+                        : theme.colorScheme.onSurface.withValues(alpha: 0.05),
+                    borderRadius: currentTheme.buttonBorderRadius,
+                  )));
 
     final tabIndicator = isSoft
         ? BoxDecoration(
@@ -1117,7 +1156,13 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                 borderRadius: currentTheme.buttonBorderRadius,
                 border: Border.all(color: Colors.black, width: 2.5),
               )
-            : currentTheme.getCardDecoration(sectionColor));
+            : (isCyber 
+                ? BoxDecoration(
+                    color: const Color(0xFF00F5FF).withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFF00F5FF), width: 1.0),
+                  )
+                : currentTheme.getCardDecoration(sectionColor)));
 
     return ThemedBackground(
       child: Scaffold(
@@ -1134,11 +1179,11 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
           foregroundColor: isNeo ? Colors.black : theme.colorScheme.onSurface,
           elevation: theme.appBarTheme.elevation ?? 0,
           bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(56),
+            preferredSize: const Size.fromHeight(52),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
               child: Container(
-                height: 46,
+                height: 44,
                 padding: const EdgeInsets.all(4),
                 decoration: tabDecoration,
                 child: TabBar(
@@ -1147,10 +1192,10 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                   indicator: tabIndicator,
                   labelColor: isSoft 
                       ? sectionColor 
-                      : (isNeo ? Colors.black : (isVibrant ? Colors.white : currentTheme.getContrastTextColor(sectionColor))),
+                      : (isCyber ? const Color(0xFF00F5FF) : (isNeo ? Colors.black : (isVibrant ? Colors.white : currentTheme.getContrastTextColor(sectionColor)))),
                   unselectedLabelColor: isSoft 
                       ? const Color(0xFF718096) 
-                      : (isNeo ? Colors.black54 : (isVibrant ? const Color(0xFF334155) : theme.colorScheme.onSurface.withValues(alpha: 0.7))),
+                      : (isCyber ? Colors.white60 : (isNeo ? Colors.black54 : (isVibrant ? const Color(0xFF334155) : theme.colorScheme.onSurface.withValues(alpha: 0.7)))),
                   labelStyle: TextStyle(fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold, fontSize: 13),
                   unselectedLabelStyle: TextStyle(fontWeight: isNeo ? FontWeight.bold : FontWeight.w600, fontSize: 13),
                   dividerColor: Colors.transparent,
@@ -1159,8 +1204,8 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.person_rounded, size: 18),
-                          SizedBox(width: 8),
+                          Icon(Icons.person_rounded, size: 16),
+                          SizedBox(width: 6),
                           Text('Moje balíčky'),
                         ],
                       ),
@@ -1169,8 +1214,8 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.library_books_rounded, size: 18),
-                          SizedBox(width: 8),
+                          Icon(Icons.library_books_rounded, size: 16),
+                          SizedBox(width: 6),
                           Text('Pripravené'),
                         ],
                       ),
@@ -1182,7 +1227,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
           ),
         ),
         body: isLoading
-            ? Center(child: CircularProgressIndicator(color: currentTheme.decksColor))
+            ? Center(child: CircularProgressIndicator(color: sectionColor))
             : TabBarView(
                 controller: _tabController,
                 children: [
@@ -1197,8 +1242,8 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                   onTap: _showAddDeckDialog,
                   borderRadius: currentTheme.buttonBorderRadius,
                   child: Container(
-                    width: 56,
-                    height: 56,
+                    width: 52,
+                    height: 52,
                     decoration: isSoft
                         ? BoxDecoration(
                             color: const Color(0xFFD1D9E6),
@@ -1213,13 +1258,24 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                                 color: fabBgColor,
                                 borderRadius: currentTheme.buttonBorderRadius,
                                 border: Border.all(color: Colors.black, width: 3.5),
-                                boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(4, 4), blurRadius: 0)],
                               )
-                            : currentTheme.getCardDecoration(fabBgColor)),
+                            : (isCyber 
+                                ? BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.85),
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(color: const Color(0xFF00F5FF), width: 1.5),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Color(0x5900F5FF),
+                                        blurRadius: 8,
+                                      ),
+                                    ],
+                                  )
+                                : currentTheme.getCardDecoration(fabBgColor))),
                     child: Icon(
                       isLimitReached ? Icons.block : Icons.add,
-                      color: isSoft ? sectionColor : (isNeo ? Colors.black : (isVibrant ? Colors.white : currentTheme.getContrastTextColor(fabBgColor))),
-                      size: 28,
+                      color: isSoft ? sectionColor : (isCyber ? const Color(0xFF00F5FF) : (isNeo ? Colors.black : (isVibrant ? Colors.white : currentTheme.getContrastTextColor(fabBgColor)))),
+                      size: 26,
                     ),
                   ),
                 ),

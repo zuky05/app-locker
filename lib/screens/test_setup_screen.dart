@@ -148,20 +148,64 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     return "${s}s";
   }
 
+  Widget _buildSectionHeader(String title, bool isNeo, bool isSoft, bool isCyber, ThemeData theme, Color accentColor) {
+    if (isCyber) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 16, bottom: 8),
+        child: UnconstrainedBox(
+          alignment: Alignment.centerLeft,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.85),
+              border: Border.all(color: accentColor.withValues(alpha: 0.5), width: 1.0),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              '// $title',
+              style: TextStyle(
+                color: accentColor,
+                fontSize: 11,
+                fontFamily: 'monospace',
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.1,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 14, bottom: 8),
+      child: Text(
+        title,
+        style: TextStyle(
+          color: isNeo ? Colors.black : (isSoft ? const Color(0xFF718096) : theme.colorScheme.onSurface.withValues(alpha: 0.85)), 
+          fontSize: 12, 
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.1,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
+    final Color accentColor = currentTheme.decksColor; // Ružová farba
 
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
+    final bool isCyber = currentTheme.id == 0;
 
     if (_isLoading) {
       return ThemedBackground(
         child: Scaffold(
           backgroundColor: Colors.transparent, 
-          body: Center(child: CircularProgressIndicator(color: currentTheme.testSetupColor)),
+          body: Center(child: CircularProgressIndicator(color: accentColor)),
         ),
       );
     }
@@ -189,7 +233,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
 
     final Color headerContrastColor = isNeo 
         ? Colors.black 
-        : (isSoft ? const Color(0xFF2D3748) : currentTheme.getContrastTextColor(currentTheme.testSetupColor));
+        : (isSoft ? const Color(0xFF2D3748) : currentTheme.getContrastTextColor(accentColor));
 
     return ThemedBackground(
       child: Scaffold(
@@ -205,6 +249,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
             style: TextStyle(
               color: isNeo ? Colors.black : theme.colorScheme.onSurface, 
               fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
+              fontFamily: isCyber ? 'monospace' : null,
+              fontSize: 20,
             ),
           ),
         ),
@@ -212,7 +258,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
           children: [
             // KARTA AKTÍVNEHO BALÍČKA
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
               child: InkWell(
                 onTap: () async {
                   await Navigator.push(
@@ -225,7 +271,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(14),
                   decoration: currentTheme.getCardDecoration(
-                    _activeDeckId == null ? currentTheme.errorColor : currentTheme.testSetupColor,
+                    _activeDeckId == null ? currentTheme.errorColor : accentColor,
                   ),
                   child: Row(
                     children: [
@@ -236,9 +282,9 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                         child: Icon(
                           _activeDeckId == null ? Icons.warning_amber_rounded : Icons.style,
                           color: isSoft
-                              ? currentTheme.testSetupColor
+                              ? accentColor
                               : (isNeo ? Colors.white : headerContrastColor),
-                          size: 24,
+                          size: 22,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -254,7 +300,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                                 color: isNeo 
                                     ? Colors.black 
                                     : (isSoft ? const Color(0xFF718096) : headerContrastColor.withValues(alpha: 0.7)),
-                                fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: isCyber ? 'monospace' : null,
                                 fontSize: 11,
                                 letterSpacing: 0.5,
                               ),
@@ -266,7 +313,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                                   : "$_activeDeckName ($_availableCardCount kariet)",
                               style: TextStyle(
                                 color: headerContrastColor,
-                                fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: isCyber ? 'monospace' : null,
                                 fontSize: 15,
                               ),
                               overflow: TextOverflow.ellipsis,
@@ -282,8 +330,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                             style: TextStyle(
                               color: isNeo 
                                   ? Colors.black 
-                                  : (isSoft ? currentTheme.testSetupColor : headerContrastColor.withValues(alpha: 0.9)),
-                              fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
+                                  : (isSoft ? accentColor : headerContrastColor.withValues(alpha: 0.9)),
+                              fontWeight: FontWeight.bold,
                               fontSize: 13,
                             ),
                           ),
@@ -292,8 +340,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                             Icons.arrow_forward_ios_rounded, 
                             color: isNeo 
                                 ? Colors.black 
-                                : (isSoft ? currentTheme.testSetupColor : headerContrastColor), 
-                            size: 14,
+                                : (isSoft ? accentColor : headerContrastColor), 
+                            size: 13,
                           ),
                         ],
                       ),
@@ -304,7 +352,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
             ),
 
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
               child: _buildSwitchCard(
                 title: 'Learning Mode',
                 subtitle: _isLearningMode ? 'Zamerané na opakovanie a učenie sa.' : 'Zamerané na výkon a získavanie času.',
@@ -313,7 +361,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                 isGold: false,
                 showMultiplier: false,
                 currentTheme: currentTheme,
-                accentColor: currentTheme.testSetupColor,
+                accentColor: accentColor,
+                isCyber: isCyber,
                 onChanged: (val) {
                   setState(() => _isLearningMode = val);
                   _saveBool('test_isLearningMode', val);
@@ -323,10 +372,10 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
 
             if (!_isLearningMode) ...[
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
                 child: Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: currentTheme.getCardDecoration(currentTheme.testSetupColor),
+                  padding: const EdgeInsets.all(20),
+                  decoration: currentTheme.getCardDecoration(accentColor),
                   child: Column(
                     children: [
                       Text(
@@ -336,22 +385,24 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                               ? Colors.black 
                               : (isSoft ? const Color(0xFF718096) : headerContrastColor.withValues(alpha: 0.8)), 
                           fontSize: 12, 
-                          fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: isCyber ? 'monospace' : null,
                           letterSpacing: 1.1,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       Text(
                         _formatTime(_timePerQuestion), 
                         style: TextStyle(
                           color: headerContrastColor, 
-                          fontSize: 44, 
+                          fontSize: 42, 
+                          fontFamily: isCyber ? 'monospace' : null,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
                         decoration: isSoft
                             ? BoxDecoration(
                                 color: const Color(0xFFC8D3E6),
@@ -370,10 +421,10 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                                 ],
                               )
                             : BoxDecoration(
-                                color: isNeo ? Colors.white : Colors.black.withValues(alpha: 0.15),
+                                color: isNeo ? Colors.white : Colors.black.withValues(alpha: 0.2),
                                 borderRadius: currentTheme.cardBorderRadius,
                                 border: Border.all(
-                                  color: isNeo ? Colors.black : headerContrastColor.withValues(alpha: 0.3), 
+                                  color: isNeo ? Colors.black : (isCyber ? accentColor.withValues(alpha: 0.3) : headerContrastColor.withValues(alpha: 0.3)), 
                                   width: isNeo ? 2.5 : 1.0,
                                 ),
                                 boxShadow: isNeo ? const [BoxShadow(color: Colors.black, offset: Offset(2, 2))] : null,
@@ -390,8 +441,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                                     color: isNeo 
                                         ? Colors.black87 
                                         : (isSoft ? const Color(0xFF718096) : headerContrastColor.withValues(alpha: 0.8)), 
-                                    fontSize: 12,
-                                    fontWeight: isNeo ? FontWeight.bold : FontWeight.normal,
+                                    fontSize: 11,
+                                    fontFamily: isCyber ? 'monospace' : null,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
@@ -400,7 +451,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                                   style: TextStyle(
                                     color: headerContrastColor, 
                                     fontWeight: FontWeight.w900, 
-                                    fontSize: 18,
+                                    fontFamily: isCyber ? 'monospace' : null,
+                                    fontSize: 17,
                                   ),
                                 ),
                               ],
@@ -414,8 +466,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                                     color: isNeo 
                                         ? Colors.black87 
                                         : (isSoft ? const Color(0xFF718096) : headerContrastColor.withValues(alpha: 0.8)), 
-                                    fontSize: 12,
-                                    fontWeight: isNeo ? FontWeight.bold : FontWeight.normal,
+                                    fontSize: 11,
+                                    fontFamily: isCyber ? 'monospace' : null,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
@@ -424,7 +476,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                                   style: TextStyle(
                                     color: headerContrastColor, 
                                     fontWeight: FontWeight.w900, 
-                                    fontSize: 18,
+                                    fontFamily: isCyber ? 'monospace' : null,
+                                    fontSize: 17,
                                   ),
                                 ),
                               ],
@@ -439,20 +492,10 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
               
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   physics: const BouncingScrollPhysics(),
                   children: [
-                    Text(
-                      'ZÁKLADNÉ NASTAVENIA KVÍZU', 
-                      style: TextStyle(
-                        color: isNeo 
-                            ? Colors.black 
-                            : (isSoft ? const Color(0xFF718096) : theme.colorScheme.onSurface.withValues(alpha: 0.6)), 
-                        fontSize: 13, 
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
+                    _buildSectionHeader('ZÁKLADNÉ NASTAVENIA KVÍZU', isNeo, isSoft, isCyber, theme, accentColor),
                     _buildSliderCard(
                       title: 'Počet otázok', 
                       valueLabel: '${_questionCount.toInt()} otázok', 
@@ -461,13 +504,14 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                       max: maxQuestions, 
                       divisions: questionDivisions, 
                       currentTheme: currentTheme,
-                      accentColor: currentTheme.testSetupColor,
+                      accentColor: accentColor,
+                      isCyber: isCyber,
                       onChanged: (val) { 
                         setState(() => _questionCount = val); 
                         _saveDouble('test_questionCount', val); 
                       },
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     _buildSliderCard(
                       title: 'Časový limit na otázku', 
                       valueLabel: _timeLabels[_timeLimitIndex.toInt()], 
@@ -477,13 +521,14 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                       max: 5, 
                       divisions: 5, 
                       currentTheme: currentTheme,
-                      accentColor: currentTheme.testSetupColor,
+                      accentColor: accentColor,
+                      isCyber: isCyber,
                       onChanged: (val) { 
                         setState(() => _timeLimitIndex = val); 
                         _saveDouble('test_timeLimitIndex', val); 
                       },
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     _buildSliderCard(
                       title: 'Lockout Prah (Min. úspešnosť)', 
                       valueLabel: lockoutLabel, 
@@ -493,24 +538,14 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                       max: 7, 
                       divisions: 7, 
                       currentTheme: currentTheme,
-                      accentColor: currentTheme.testSetupColor,
+                      accentColor: accentColor,
+                      isCyber: isCyber,
                       onChanged: (val) { 
                         setState(() => _lockoutIndex = val); 
                         _saveDouble('test_lockoutIndex', val); 
                       },
                     ),
-                    const SizedBox(height: 24),
-                    Text(
-                      'MODIFIKÁTORY', 
-                      style: TextStyle(
-                        color: isNeo 
-                            ? Colors.black 
-                            : (isSoft ? const Color(0xFF718096) : theme.colorScheme.onSurface.withValues(alpha: 0.6)), 
-                        fontSize: 13, 
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
+                    _buildSectionHeader('MODIFIKÁTORY', isNeo, isSoft, isCyber, theme, accentColor),
                     _buildSwitchCard(
                       title: '3 Možnosti', 
                       subtitle: 'O jednu nesprávnu odpoveď menej.', 
@@ -518,39 +553,42 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                       value: _is3Options, 
                       isDisabled: _isHardcore, 
                       currentTheme: currentTheme,
-                      accentColor: currentTheme.testSetupColor,
+                      accentColor: accentColor,
+                      isCyber: isCyber,
                       onChanged: (val) { 
                         setState(() => _is3Options = val); 
                         _saveBool('test_is3Options', val); 
                       },
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     _buildSwitchCard(
                       title: 'Vymeň kartu', 
                       subtitle: '1-krát za test môžeš vymeniť ťažkú otázku za novú.', 
                       multiplier: 0.85, 
                       value: _isSwapQuestion, 
                       currentTheme: currentTheme,
-                      accentColor: currentTheme.testSetupColor,
+                      accentColor: accentColor,
+                      isCyber: isCyber,
                       onChanged: (val) { 
                         setState(() => _isSwapQuestion = val); 
                         _saveBool('test_isSwapQuestion', val); 
                       },
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     _buildSwitchCard(
                       title: 'Druhá šanca', 
                       subtitle: 'Jedna nesprávna odpoveď za celý test sa ti odpustí.', 
                       multiplier: 0.8, 
                       value: _isSecondChance, 
                       currentTheme: currentTheme,
-                      accentColor: currentTheme.testSetupColor,
+                      accentColor: accentColor,
+                      isCyber: isCyber,
                       onChanged: (val) { 
                         setState(() => _isSecondChance = val); 
                         _saveBool('test_isSecondChance', val); 
                       },
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     _buildSwitchCard(
                       title: 'Confusion', 
                       subtitle: 'Pridaná možnosť "Žiadna z odpovedí".', 
@@ -558,26 +596,28 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                       value: _isConfusion, 
                       isDisabled: _isHardcore, 
                       currentTheme: currentTheme,
-                      accentColor: currentTheme.testSetupColor,
+                      accentColor: accentColor,
+                      isCyber: isCyber,
                       onChanged: (val) { 
                         setState(() => _isConfusion = val); 
                         _saveBool('test_isConfusion', val); 
                       },
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     _buildSwitchCard(
                       title: 'Slepý test', 
                       subtitle: 'Správnosť odpovedí sa dozvieš až na záver testu.', 
                       multiplier: 1.25, 
                       value: _isBlindTest, 
                       currentTheme: currentTheme,
-                      accentColor: currentTheme.testSetupColor,
+                      accentColor: accentColor,
+                      isCyber: isCyber,
                       onChanged: (val) { 
                         setState(() => _isBlindTest = val); 
                         _saveBool('test_isBlindTest', val); 
                       },
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     _buildSwitchCard(
                       title: 'Double Test', 
                       subtitle: 'Musíš zvládnuť 2 testy po sebe. Odmenu dostaneš až po druhom.', 
@@ -585,7 +625,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                       value: _isDoubleTest, 
                       isGold: false,
                       currentTheme: currentTheme,
-                      accentColor: currentTheme.testSetupColor,
+                      accentColor: accentColor,
+                      isCyber: isCyber,
                       onChanged: (val) { 
                         setState(() {
                           _isDoubleTest = val;
@@ -593,7 +634,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                         });
                       },
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     _buildSwitchCard(
                       title: 'Hardcore (Write-in)', 
                       subtitle: 'Bez možností. Odpoveď musíš ručne napísať.', 
@@ -601,7 +642,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                       value: _isHardcore, 
                       isGold: false, 
                       currentTheme: currentTheme,
-                      accentColor: currentTheme.testSetupColor,
+                      accentColor: accentColor,
+                      isCyber: isCyber,
                       onChanged: (val) {
                         setState(() {
                           _isHardcore = val;
@@ -622,20 +664,10 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
             else ...[
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   physics: const BouncingScrollPhysics(),
                   children: [
-                    Text(
-                      'NASTAVENIA UČENIA', 
-                      style: TextStyle(
-                        color: isNeo 
-                            ? Colors.black 
-                            : (isSoft ? const Color(0xFF718096) : theme.colorScheme.onSurface.withValues(alpha: 0.6)), 
-                        fontSize: 13, 
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
+                    _buildSectionHeader('NASTAVENIA UČENIA', isNeo, isSoft, isCyber, theme, accentColor),
                     _buildSliderCard(
                       title: 'Počet kartičiek v dávke',
                       valueLabel: '${currentLearnValue.toInt()} kartičiek',
@@ -644,13 +676,14 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                       max: maxLearnCards, 
                       divisions: learnDivisions,
                       currentTheme: currentTheme,
-                      accentColor: currentTheme.testSetupColor,
+                      accentColor: accentColor,
+                      isCyber: isCyber,
                       onChanged: (val) { 
                         setState(() => _learnCardCount = val); 
                         _saveDouble('test_learnCardCount', val); 
                       },
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     _buildSliderCard(
                       title: 'Frekvencia uzamknutia (Pop-up)',
                       valueLabel: () {
@@ -667,13 +700,14 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                       value: _learnInterval,
                       min: 1, max: 5, divisions: 8,
                       currentTheme: currentTheme,
-                      accentColor: currentTheme.testSetupColor,
+                      accentColor: accentColor,
+                      isCyber: isCyber,
                       onChanged: (val) { 
                         setState(() => _learnInterval = val); 
                         _saveDouble('test_learnInterval', val); 
                       },
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     _buildSwitchCard(
                       title: 'Opakovanie nevedomostí',
                       subtitle: 'Karty, ktoré si nevedel, sa ukážu znovu na konci.',
@@ -681,7 +715,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                       showMultiplier: false,
                       value: _learnRepeat,
                       currentTheme: currentTheme,
-                      accentColor: currentTheme.testSetupColor,
+                      accentColor: accentColor,
+                      isCyber: isCyber,
                       onChanged: (val) { 
                         setState(() => _learnRepeat = val); 
                         _saveBool('test_learnRepeat', val); 
@@ -697,12 +732,32 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     );
   }
 
-  Widget _buildMultiplierBadge(double mult, AppThemeData currentTheme) {
+  Widget _buildMultiplierBadge(double mult, AppThemeData currentTheme, bool isCyber) {
     if (mult == 1.0) return const SizedBox.shrink();
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
     bool isPositive = mult > 1.0;
     Color badgeColor = isPositive ? currentTheme.successColor : currentTheme.errorColor;
+
+    if (isCyber) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: badgeColor.withValues(alpha: 0.18),
+          border: Border.all(color: badgeColor, width: 1.0),
+          borderRadius: BorderRadius.circular(2),
+        ),
+        child: Text(
+          'x$mult', 
+          style: TextStyle(
+            color: badgeColor, 
+            fontWeight: FontWeight.bold, 
+            fontFamily: 'monospace',
+            fontSize: 11,
+          ),
+        ),
+      );
+    }
 
     if (isSoft) {
       return Container(
@@ -757,6 +812,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     required ValueChanged<double> onChanged, 
     required AppThemeData currentTheme,
     required Color accentColor,
+    required bool isCyber,
     double? multiplier,
   }) {
     final bool isNeo = currentTheme.id == 2;
@@ -765,8 +821,11 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
         ? const Color(0xFF2D3748) 
         : (isNeo ? Colors.black : currentTheme.getContrastTextColor(accentColor));
 
+    final Color activeTrack = isCyber ? const Color(0xFF00FF66) : (isSoft ? accentColor : textColor);
+    final Color inactiveTrack = isCyber ? accentColor.withValues(alpha: 0.25) : (isSoft ? const Color(0xFFB0C0D6) : textColor.withValues(alpha: 0.3));
+
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
       decoration: currentTheme.getCardDecoration(accentColor),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -778,33 +837,33 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                 title, 
                 style: TextStyle(
                   color: textColor, 
-                  fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold, 
-                  fontSize: 16,
+                  fontWeight: FontWeight.bold, 
+                  fontSize: 15,
                 ),
               ),
-              if (multiplier != null) _buildMultiplierBadge(multiplier, currentTheme),
+              if (multiplier != null) _buildMultiplierBadge(multiplier, currentTheme, isCyber),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 6),
           Text(
             valueLabel, 
             style: TextStyle(
               color: textColor, 
-              fontWeight: FontWeight.w900, 
-              fontSize: 18,
+              fontWeight: FontWeight.bold, 
+              fontFamily: isCyber ? 'monospace' : null,
+              fontSize: 16,
             ),
           ),
-          // 🟢 KONTRASTNÉ DEAKTIVOVANÉ A AKTÍVNE FARBY POSUVNÍKA
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: isSoft ? accentColor : textColor, 
-              inactiveTrackColor: isSoft ? const Color(0xFFB0C0D6) : textColor.withValues(alpha: 0.3), 
-              thumbColor: isSoft ? accentColor : textColor, 
+              activeTrackColor: activeTrack, 
+              inactiveTrackColor: inactiveTrack, 
+              thumbColor: activeTrack, 
               disabledThumbColor: isSoft ? const Color(0xFF97A7C0) : textColor.withValues(alpha: 0.5),
               disabledActiveTrackColor: isSoft ? accentColor.withValues(alpha: 0.4) : textColor.withValues(alpha: 0.3),
               disabledInactiveTrackColor: isSoft ? const Color(0xFFC8D3E6) : textColor.withValues(alpha: 0.2),
-              trackHeight: isSoft ? 8.0 : (isNeo ? 8.0 : 6.0),
-              thumbShape: isSoft ? const RoundSliderThumbShape(enabledThumbRadius: 10.0, elevation: 4) : null,
+              trackHeight: isCyber ? 4.0 : (isSoft ? 8.0 : (isNeo ? 8.0 : 6.0)),
+              thumbShape: isSoft ? const RoundSliderThumbShape(enabledThumbRadius: 10.0, elevation: 4) : (isCyber ? const RoundSliderThumbShape(enabledThumbRadius: 8.0) : null),
             ),
             child: Slider(
               value: value, 
@@ -827,6 +886,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     required ValueChanged<bool> onChanged, 
     required AppThemeData currentTheme,
     required Color accentColor,
+    required bool isCyber,
     bool isDisabled = false, 
     bool isGold = false, 
     bool showMultiplier = true,
@@ -838,9 +898,9 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
         : (isNeo ? Colors.black : currentTheme.getContrastTextColor(accentColor));
 
     return Opacity(
-      opacity: isDisabled ? 0.4 : 1.0,
+      opacity: isDisabled ? 0.75 : 1.0,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: currentTheme.getCardDecoration(accentColor),
         child: Row(
           children: [
@@ -854,23 +914,42 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                         title, 
                         style: TextStyle(
                           color: textColor, 
-                          fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold, 
-                          fontSize: 16,
+                          fontWeight: FontWeight.bold, 
+                          fontSize: 15,
                         ),
                       ),
                       const SizedBox(width: 8),
-                      if (showMultiplier) _buildMultiplierBadge(multiplier, currentTheme),
+                      if (showMultiplier) _buildMultiplierBadge(multiplier, currentTheme, isCyber),
+                      if (isDisabled && isCyber) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                          decoration: BoxDecoration(
+                            color: Colors.redAccent.withValues(alpha: 0.2),
+                            border: Border.all(color: Colors.redAccent, width: 0.8),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                          child: const Text(
+                            'LOCKED',
+                            style: TextStyle(
+                              color: Colors.redAccent,
+                              fontSize: 9,
+                              fontFamily: 'monospace',
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   Text(
                     subtitle, 
                     style: TextStyle(
                       color: isNeo 
                           ? Colors.black87 
                           : (isSoft ? const Color(0xFF718096) : textColor.withValues(alpha: 0.8)), 
-                      fontSize: 13,
-                      fontWeight: isNeo ? FontWeight.bold : FontWeight.normal,
+                      fontSize: 12,
                     ),
                   ),
                 ],
@@ -879,11 +958,11 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
             Switch(
               value: value, 
               onChanged: isDisabled ? null : onChanged, 
-              trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
-              activeColor: isNeo ? Colors.black : (isSoft ? Colors.white : textColor),
-              activeTrackColor: isNeo ? Colors.white : (isSoft ? accentColor : textColor.withValues(alpha: 0.4)),
-              inactiveThumbColor: isNeo ? Colors.black54 : (isSoft ? const Color(0xFF97A7C0) : textColor.withValues(alpha: 0.6)),
-              inactiveTrackColor: isNeo ? Colors.white54 : (isSoft ? const Color(0xFFC8D3E6) : textColor.withValues(alpha: 0.2)),
+              trackOutlineColor: WidgetStateProperty.all(isCyber ? accentColor.withValues(alpha: isDisabled ? 0.25 : 0.5) : Colors.transparent),
+              activeColor: isCyber ? const Color(0xFF00FF66) : (isNeo ? Colors.black : (isSoft ? Colors.white : textColor)),
+              activeTrackColor: isCyber ? accentColor.withValues(alpha: 0.35) : (isNeo ? Colors.white : (isSoft ? accentColor : textColor.withValues(alpha: 0.4))),
+              inactiveThumbColor: isCyber ? (isDisabled ? Colors.grey.shade400 : Colors.grey.shade600) : (isNeo ? Colors.black54 : (isSoft ? const Color(0xFF97A7C0) : textColor.withValues(alpha: 0.6))),
+              inactiveTrackColor: isCyber ? (isDisabled ? Colors.black87 : Colors.black54) : (isNeo ? Colors.white54 : (isSoft ? const Color(0xFFC8D3E6) : textColor.withValues(alpha: 0.2))),
             ),
           ],
         ),

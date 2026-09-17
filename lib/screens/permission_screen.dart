@@ -107,21 +107,73 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
     final bool isGlass = currentTheme.id == 4;
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
+    
+    // Spoľahlivá detekcia Cyberpunk témy cez názov
+    final String cleanName = currentTheme.name.toLowerCase();
+    final bool isCyberpunk = cleanName.contains('cyberpunk');
+
+    Color spinnerColor;
+    if (isCyberpunk) {
+      spinnerColor = const Color(0xFF00F0FF);
+    } else if (isSoft) {
+      spinnerColor = const Color(0xFF2563EB);
+    } else if (isVibrant) {
+      spinnerColor = currentTheme.decksColor;
+    } else {
+      spinnerColor = currentTheme.theme.primaryColor;
+    }
 
     if (isLoading) {
       return ThemedBackground(
         child: Scaffold(
           backgroundColor: Colors.transparent,
           body: Center(
-            child: CircularProgressIndicator(
-              color: isSoft ? const Color(0xFF2563EB) : (isVibrant ? currentTheme.decksColor : currentTheme.theme.primaryColor),
-            ),
+            child: CircularProgressIndicator(color: spinnerColor),
           ),
         ),
       );
     }
 
     final bool allGranted = isOverlayGranted && isAccessibilityGranted && isNotificationGranted && isBatteryOptimizationGranted;
+
+    Color shieldIconColor;
+    if (isCyberpunk) {
+      shieldIconColor = const Color(0xFF00F0FF);
+    } else if (isSoft) {
+      shieldIconColor = const Color(0xFF2563EB);
+    } else if (isVibrant) {
+      shieldIconColor = const Color(0xFF00F5FF);
+    } else if (isGlass) {
+      shieldIconColor = const Color(0xFF38BDF8);
+    } else if (isNeo) {
+      shieldIconColor = Colors.black;
+    } else {
+      shieldIconColor = currentTheme.getIconColor(currentTheme.buttonBorder.color);
+    }
+
+    Color titleTextColor;
+    if (isCyberpunk) {
+      titleTextColor = Colors.white;
+    } else if (isSoft) {
+      titleTextColor = const Color(0xFF1E293B);
+    } else if (isVibrant || isGlass) {
+      titleTextColor = Colors.white;
+    } else {
+      titleTextColor = Colors.black;
+    }
+
+    Color subtitleTextColor;
+    if (isCyberpunk) {
+      subtitleTextColor = Colors.white70;
+    } else if (isSoft) {
+      subtitleTextColor = const Color(0xFF64748B);
+    } else if (isVibrant || isGlass) {
+      subtitleTextColor = Colors.white.withValues(alpha: 0.85);
+    } else if (isNeo) {
+      subtitleTextColor = Colors.black87;
+    } else {
+      subtitleTextColor = theme.colorScheme.onSurface.withValues(alpha: 0.75);
+    }
 
     return ThemedBackground(
       child: Scaffold(
@@ -135,137 +187,137 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
               children: [
                 const Spacer(),
                 
-                // 🟢 Ikona štítu hore (Soft Neumorphic 3D krúžok)
+                // 🟢 Ikona štítu hore
                 Container(
                   padding: const EdgeInsets.all(22),
-                  decoration: isSoft
-                      ? const BoxDecoration(
-                          color: Color(0xFFD1D9E6),
+                  decoration: isCyberpunk
+                      ? BoxDecoration(
+                          color: const Color(0xFF050014),
                           shape: BoxShape.circle,
+                          border: Border.all(color: const Color(0xFF00F0FF), width: 2.5),
                           boxShadow: [
-                            BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(5, 5), blurRadius: 10),
-                            BoxShadow(color: Colors.white, offset: Offset(-5, -5), blurRadius: 10),
+                            BoxShadow(
+                              color: const Color(0xFF00F0FF).withValues(alpha: 0.5),
+                              blurRadius: 20,
+                              spreadRadius: 2,
+                            ),
                           ],
                         )
-                      : (isVibrant
-                          ? BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
+                      : (isSoft
+                          ? const BoxDecoration(
+                              color: Color(0xFFD1D9E6),
                               shape: BoxShape.circle,
-                              border: Border.all(color: const Color(0xFF00F5FF).withValues(alpha: 0.6), width: 2.0),
                               boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFF00F5FF).withValues(alpha: 0.35),
-                                  blurRadius: 20,
-                                  spreadRadius: 2,
-                                ),
+                                BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(5, 5), blurRadius: 10),
+                                BoxShadow(color: Colors.white, offset: Offset(-5, -5), blurRadius: 10),
                               ],
                             )
-                          : (isGlass
+                          : (isVibrant
                               ? BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      const Color(0xFF0F172A).withValues(alpha: 0.75),
-                                      const Color(0xFF1E1B4B).withValues(alpha: 0.75),
-                                    ],
+                                  gradient: const LinearGradient(
+                                    colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
                                   ),
                                   shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: const Color(0xFF38BDF8).withValues(alpha: 0.7),
-                                    width: 1.8,
-                                  ),
+                                  border: Border.all(color: const Color(0xFF00F5FF).withValues(alpha: 0.6), width: 2.0),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(0xFF38BDF8).withValues(alpha: 0.35),
-                                      blurRadius: 24,
+                                      color: const Color(0xFF00F5FF).withValues(alpha: 0.35),
+                                      blurRadius: 20,
                                       spreadRadius: 2,
-                                    ),
-                                    BoxShadow(
-                                      color: const Color(0xFFC084FC).withValues(alpha: 0.25),
-                                      blurRadius: 16,
-                                      offset: const Offset(0, 4),
                                     ),
                                   ],
                                 )
-                              : BoxDecoration(
-                                  color: isNeo ? Colors.white : currentTheme.getTileBg(isGranted: false, accentColor: currentTheme.buttonBorder.color),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: isNeo ? Colors.black : currentTheme.buttonBorder.color, 
-                                    width: isNeo ? 3.5 : 2.0,
-                                  ),
-                                  boxShadow: isNeo 
-                                      ? const [BoxShadow(color: Colors.black, offset: Offset(4, 4), blurRadius: 0)]
-                                      : currentTheme.cardShadows,
-                                ))),
+                              : (isGlass
+                                  ? BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          const Color(0xFF0F172A).withValues(alpha: 0.75),
+                                          const Color(0xFF1E1B4B).withValues(alpha: 0.75),
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: const Color(0xFF38BDF8).withValues(alpha: 0.7),
+                                        width: 1.8,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0xFF38BDF8).withValues(alpha: 0.35),
+                                          blurRadius: 24,
+                                          spreadRadius: 2,
+                                        ),
+                                      ],
+                                    )
+                                  : BoxDecoration(
+                                      color: isNeo ? Colors.white : currentTheme.getTileBg(isGranted: false, accentColor: currentTheme.buttonBorder.color),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: isNeo ? Colors.black : currentTheme.buttonBorder.color, 
+                                        width: isNeo ? 3.5 : 2.0,
+                                      ),
+                                      boxShadow: isNeo 
+                                          ? const [BoxShadow(color: Colors.black, offset: Offset(4, 4), blurRadius: 0)]
+                                          : currentTheme.cardShadows,
+                                    )))),
                   child: Icon(
                     Icons.security_rounded,
                     size: 58,
-                    color: isSoft 
-                        ? const Color(0xFF2563EB) 
-                        : (isVibrant 
-                            ? const Color(0xFF00F5FF) 
-                            : (isGlass 
-                                ? const Color(0xFF38BDF8) 
-                                : (isNeo ? Colors.black : currentTheme.getIconColor(currentTheme.buttonBorder.color)))),
+                    color: shieldIconColor,
                   ),
                 ),
                 const SizedBox(height: 24),
 
-                // 🟢 Neumorfný box pre názov a popis
+                // 🟢 Box pre názov a popis
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                  decoration: isSoft
+                  decoration: isCyberpunk
                       ? BoxDecoration(
-                          color: const Color(0xFFD1D9E6),
-                          borderRadius: currentTheme.cardBorderRadius,
-                          boxShadow: const [
-                            BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(6, 6), blurRadius: 12),
-                            BoxShadow(color: Colors.white, offset: Offset(-6, -6), blurRadius: 12),
+                          color: const Color(0xFF050014),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFF00F0FF), width: 2.0),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF00F0FF).withValues(alpha: 0.3),
+                              blurRadius: 16,
+                            ),
                           ],
                         )
-                      : (isVibrant
+                      : (isSoft
                           ? BoxDecoration(
-                              color: const Color(0xFF0F172A).withValues(alpha: 0.82),
+                              color: const Color(0xFFD1D9E6),
                               borderRadius: currentTheme.cardBorderRadius,
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 1.2),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.3),
-                                  blurRadius: 14,
-                                  offset: const Offset(0, 4),
-                                ),
+                              boxShadow: const [
+                                BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(6, 6), blurRadius: 12),
+                                BoxShadow(color: Colors.white, offset: Offset(-6, -6), blurRadius: 12),
                               ],
                             )
-                          : (isGlass
+                          : (isVibrant
                               ? BoxDecoration(
-                                  color: const Color(0xFF0F172A).withValues(alpha: 0.55),
+                                  color: const Color(0xFF0F172A).withValues(alpha: 0.82),
                                   borderRadius: currentTheme.cardBorderRadius,
-                                  border: Border.all(color: Colors.white.withValues(alpha: 0.28), width: 1.2),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: const Color(0xFF38BDF8).withValues(alpha: 0.15),
-                                      blurRadius: 16,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
+                                  border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 1.2),
                                 )
-                              : BoxDecoration(
-                                  color: theme.cardColor,
-                                  borderRadius: currentTheme.cardBorderRadius,
-                                  border: isNeo
-                                      ? Border.all(color: Colors.black, width: 3.5)
-                                      : Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.15)),
-                                  boxShadow: isNeo
-                                      ? const [BoxShadow(color: Colors.black, offset: Offset(4, 4), blurRadius: 0)]
-                                      : currentTheme.cardShadows,
-                                ))),
+                              : (isGlass
+                                  ? BoxDecoration(
+                                      color: const Color(0xFF0F172A).withValues(alpha: 0.55),
+                                      borderRadius: currentTheme.cardBorderRadius,
+                                      border: Border.all(color: Colors.white.withValues(alpha: 0.28), width: 1.2),
+                                    )
+                                  : BoxDecoration(
+                                      color: theme.cardColor,
+                                      borderRadius: currentTheme.cardBorderRadius,
+                                      border: isNeo
+                                          ? Border.all(color: Colors.black, width: 3.5)
+                                          : Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.15)),
+                                      boxShadow: isNeo
+                                          ? const [BoxShadow(color: Colors.black, offset: Offset(4, 4), blurRadius: 0)]
+                                          : currentTheme.cardShadows,
+                                    )))),
                   child: Column(
                     children: [
                       Text(
@@ -273,8 +325,9 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 22,
-                          fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
-                          color: isSoft ? const Color(0xFF1E293B) : ((isVibrant || isGlass) ? Colors.white : Colors.black),
+                          fontWeight: isCyberpunk || isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
+                          fontFamily: isCyberpunk ? 'monospace' : null,
+                          color: titleTextColor,
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -283,12 +336,9 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 14,
-                          fontWeight: isNeo || isSoft ? FontWeight.bold : FontWeight.normal,
-                          color: isSoft 
-                              ? const Color(0xFF64748B) 
-                              : ((isVibrant || isGlass)
-                                  ? Colors.white.withValues(alpha: 0.85)
-                                  : (isNeo ? Colors.black87 : theme.colorScheme.onSurface.withValues(alpha: 0.75))),
+                          fontWeight: isCyberpunk || isNeo || isSoft ? FontWeight.bold : FontWeight.normal,
+                          fontFamily: isCyberpunk ? 'monospace' : null,
+                          color: subtitleTextColor,
                           height: 1.4,
                         ),
                       ),
@@ -324,7 +374,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
 
                 const Spacer(),
 
-                // 🟢 Spodné hlavné tlačidlo (Neumorfný 3D štýl)
+                // 🟢 Spodné hlavné tlačidlo
                 _buildCtaButton(
                   allGranted: allGranted,
                   onTap: allGranted ? _navigateToMain : _openSettingsOrRequest,
@@ -347,20 +397,72 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
     final bool isGlass = currentTheme.id == 4;
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
+    
+    final String cleanName = currentTheme.name.toLowerCase();
+    final bool isCyberpunk = cleanName.contains('cyberpunk');
 
+    // Skrátené texty, aby sa zaručene zmestili do šírky tlačidla bez overflow
     String buttonText = allGranted
         ? "Pokračovať"
         : (!isOverlayGranted
             ? "Povoliť prekrytie"
             : (!isAccessibilityGranted
-                ? "Povoliť Zjednodušenie prístupu"
+                ? "Povoliť Zjednodušenie"
                 : (!isNotificationGranted
                     ? "Povoliť Upozornenia"
-                    : "Vypnúť šetrenie batérie")));
+                    : "Vypnúť šetrenie")));
 
     IconData buttonIcon = allGranted ? Icons.arrow_forward : Icons.settings;
 
-    if (isSoft) {
+    if (isCyberpunk) {
+      return Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF00F0FF),
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF00F0FF).withValues(alpha: 0.6),
+              blurRadius: 16,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              height: 56,
+              width: double.infinity,
+              alignment: Alignment.center,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(buttonIcon, color: Colors.black, size: 22),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      buttonText,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 15,
+                        color: Colors.black,
+                        fontFamily: 'monospace',
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    } else if (isSoft) {
       final Color softBtnColor = allGranted ? const Color(0xFF0D9488) : const Color(0xFF2563EB);
 
       return Container(
@@ -381,18 +483,22 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
               height: 56,
               width: double.infinity,
               alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(buttonIcon, color: Colors.white, size: 22),
-                  const SizedBox(width: 10),
-                  Text(
-                    buttonText,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 16,
-                      color: Colors.white,
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      buttonText,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 15,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ],
@@ -406,10 +512,6 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
           ? [const Color(0xFF10B981), const Color(0xFF047857)]
           : [const Color(0xFF00F5FF), const Color(0xFF7C3AED)];
 
-      final Color shadowColor = allGranted 
-          ? const Color(0xFF10B981) 
-          : const Color(0xFF7C3AED);
-
       return Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -419,13 +521,6 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
           ),
           borderRadius: currentTheme.buttonBorderRadius,
           border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: shadowColor.withValues(alpha: 0.45),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
         ),
         child: Material(
           color: Colors.transparent,
@@ -436,18 +531,22 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
               height: 56,
               width: double.infinity,
               alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(buttonIcon, color: Colors.white, size: 22),
-                  const SizedBox(width: 10),
-                  Text(
-                    buttonText,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 16,
-                      color: Colors.white,
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      buttonText,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 15,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ],
@@ -461,37 +560,16 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
 
       return Container(
         decoration: BoxDecoration(
-          color: Color.alphaBlend(
-            accent.withValues(alpha: 0.22),
-            const Color(0xFF0F172A).withValues(alpha: 0.55),
-          ),
           gradient: LinearGradient(
             colors: [
               accent.withValues(alpha: 0.35),
               accent.withValues(alpha: 0.12),
-              const Color(0xFF090D1A).withValues(alpha: 0.50),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: currentTheme.buttonBorderRadius,
-          border: Border.all(
-            color: Color.alphaBlend(accent.withValues(alpha: 0.6), Colors.white.withValues(alpha: 0.4)),
-            width: 1.4,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: accent.withValues(alpha: 0.28),
-              blurRadius: 18,
-              spreadRadius: 0,
-              offset: const Offset(0, 4),
-            ),
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.4),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.4),
         ),
         child: Material(
           color: Colors.transparent,
@@ -502,19 +580,22 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
               height: 56,
               width: double.infinity,
               alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(buttonIcon, color: Colors.white, size: 22),
-                  const SizedBox(width: 10),
-                  Text(
-                    buttonText,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 16,
-                      color: Colors.white,
-                      letterSpacing: 0.5,
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      buttonText,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 15,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ],
@@ -548,18 +629,22 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
               height: 56,
               width: double.infinity,
               alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(buttonIcon, color: Colors.black, size: 22),
-                  const SizedBox(width: 10),
-                  Text(
-                    buttonText,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 16,
-                      color: Colors.black,
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      buttonText,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 15,
+                        color: Colors.black,
+                      ),
                     ),
                   ),
                 ],
@@ -579,9 +664,11 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
       icon: Icon(buttonIcon, color: buttonFgColor),
       label: Text(
         buttonText,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(
           fontWeight: FontWeight.w900,
-          fontSize: 16,
+          fontSize: 15,
           color: buttonFgColor,
         ),
       ),
@@ -607,13 +694,32 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
     final bool isVibrant = currentTheme.id == 5;
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
-    final Color accentColor = isGranted ? currentTheme.successColor : currentTheme.warningColor;
+    
+    final String cleanName = currentTheme.name.toLowerCase();
+    final bool isCyberpunk = cleanName.contains('cyberpunk');
 
     BoxDecoration decoration;
     Color textColor;
     Color iconColor;
 
-    if (isSoft) {
+    if (isCyberpunk) {
+      decoration = BoxDecoration(
+        color: const Color(0xFF050014),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isGranted ? const Color(0xFF00F0FF) : const Color(0xFFFF007F),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: (isGranted ? const Color(0xFF00F0FF) : const Color(0xFFFF007F)).withValues(alpha: 0.25),
+            blurRadius: 8,
+          ),
+        ],
+      );
+      textColor = Colors.white;
+      iconColor = isGranted ? const Color(0xFF00F0FF) : const Color(0xFFFF007F);
+    } else if (isSoft) {
       if (isGranted) {
         decoration = BoxDecoration(
           color: const Color(0xFFCCFBF1),
@@ -650,13 +756,6 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
           ),
           borderRadius: currentTheme.cardBorderRadius,
           border: Border.all(color: const Color(0xFF34D399).withValues(alpha: 0.7), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF059669).withValues(alpha: 0.25),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
         );
         textColor = Colors.white;
         iconColor = const Color(0xFF6EE7B7);
@@ -672,18 +771,12 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
           ),
           borderRadius: currentTheme.cardBorderRadius,
           border: Border.all(color: const Color(0xFFFBBF24).withValues(alpha: 0.7), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFFD97706).withValues(alpha: 0.25),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
         );
         textColor = Colors.white;
         iconColor = const Color(0xFFFDE68A);
       }
     } else if (isNeo) {
+      final Color accentColor = isGranted ? currentTheme.successColor : currentTheme.warningColor;
       decoration = BoxDecoration(
         color: accentColor,
         borderRadius: currentTheme.cardBorderRadius,
@@ -699,6 +792,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
       textColor = Colors.black;
       iconColor = Colors.black;
     } else {
+      final Color accentColor = isGranted ? currentTheme.successColor : currentTheme.warningColor;
       decoration = currentTheme.getCardDecoration(accentColor, isSelected: isGranted);
       textColor = theme.colorScheme.onSurface;
       iconColor = currentTheme.getIconColor(accentColor);
@@ -719,10 +813,13 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
             Expanded(
               child: Text(
                 title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
+                  fontWeight: isCyberpunk || isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
+                  fontFamily: isCyberpunk ? 'monospace' : null,
                   color: textColor,
-                  fontSize: 14,
+                  fontSize: 13,
                 ),
               ),
             ),

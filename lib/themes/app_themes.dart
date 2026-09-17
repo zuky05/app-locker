@@ -65,11 +65,13 @@ class AppThemeData {
     if (id == 2) {
       return const BorderSide(color: Colors.black, width: 3.5);
     } else if (id == 0) {
-      return BorderSide(color: activeAccent, width: 1.5);
+      return BorderSide(color: activeAccent, width: 1.8);
     } else if (id == 4) {
       return BorderSide(color: Colors.white.withValues(alpha: 0.35), width: 1.2);
     } else if (id == 1) {
       return BorderSide.none;
+    } else if (id == 3) {
+      return BorderSide.none; // 🟢 Clean Minimal nemá žiadne rámiky tlačidiel
     } else if (id == 5) {
       return BorderSide(color: Colors.white.withValues(alpha: 0.75), width: 1.5);
     }
@@ -91,23 +93,55 @@ class AppThemeData {
           ),
         ],
       );
-    } else if (id == 0) {
+    } else if (id == 3) {
+      // 🟢 ULTRA-LUXUSNÝ CLEAN MINIMAL: Žiadne ostré rámiky, len plávajúce karty s hlbokým jemným tieňom (Apple / Linear style)
       return BoxDecoration(
-        color: theme.cardColor,
+        color: Colors.white,
         borderRadius: cardBorderRadius,
-        border: Border.all(color: accentColor, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: accentColor.withValues(alpha: 0.35),
-            blurRadius: 10,
-            spreadRadius: 1,
+            color: const Color(0xFF0F172A).withValues(alpha: 0.07),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      );
+    } else if (id == 0) {
+      return BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            accentColor.withValues(alpha: isSelected ? 0.25 : 0.12),
+            const Color(0xFF090D18),
+            const Color(0xFF04060C),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: cardBorderRadius,
+        border: Border.all(
+          color: isSelected ? Colors.white : accentColor, 
+          width: isSelected ? 2.0 : 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: accentColor.withValues(alpha: isSelected ? 0.70 : 0.40),
+            blurRadius: isSelected ? 12 : 8,
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.90),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
           ),
         ],
       );
     } else if (id == 1) {
-      // 🟢 SOFT NEUMORPHISM (Vyvážený 3D kontrast)
       if (isSelected) {
-        // Zapustený / stlačený stav (Inset Concave)
         return BoxDecoration(
           color: const Color(0xFFC8D3E6),
           borderRadius: cardBorderRadius,
@@ -126,19 +160,16 @@ class AppThemeData {
         );
       }
 
-      // Vystúpený 3D stav (Raised Convex UI)
       return BoxDecoration(
         color: theme.cardColor,
         borderRadius: cardBorderRadius,
         boxShadow: const [
-          // Sýty spodný pravý tieň
           BoxShadow(
             color: Color(0xFF97A7C0),
             offset: Offset(7, 7),
             blurRadius: 14,
             spreadRadius: 1,
           ),
-          // Čistý horný ľavý biely odlesk
           BoxShadow(
             color: Colors.white,
             offset: Offset(-7, -7),
@@ -278,6 +309,9 @@ class AppThemeData {
     if (id == 1) {
       return BorderSide.none;
     }
+    if (id == 3) {
+      return BorderSide.none; // 🟢 Clean Minimal bez okrajov tlačidiel
+    }
     return BorderSide(
       color: customColor ?? testSetupColor.withValues(alpha: isChecked ? 1.0 : 0.6),
       width: isChecked ? 2.0 : 1.5,
@@ -295,12 +329,17 @@ class AppThemeData {
         preferredSize: Size.fromHeight(0),
         child: SizedBox.shrink(),
       );
+    } else if (id == 3) {
+      return const PreferredSize(
+        preferredSize: Size.fromHeight(0),
+        child: SizedBox.shrink(), // 🟢 Žiadna čiara pod appbarom v Clean Minimal (čistý priestor)
+      );
     } else if (id == 0) {
       return PreferredSize(
         preferredSize: const Size.fromHeight(1.5),
         child: Container(
           height: 1.5,
-          color: testSetupColor.withValues(alpha: 0.6),
+          color: testSetupColor.withValues(alpha: 0.8),
         ),
       );
     } else if (id == 4) {
@@ -322,7 +361,7 @@ class AppThemeData {
     }
 
     return PreferredSize(
-      preferredSize: const Size.fromHeight(1.0),
+      preferredSize: Size.fromHeight(1.0),
       child: Divider(height: 1.0, thickness: 1.0, color: theme.colorScheme.onSurface.withValues(alpha: 0.15)),
     );
   }
@@ -342,59 +381,58 @@ class AppThemes {
     id: 0,
     name: 'Cyberpunk Dark',
     isPremium: true,
-    cardBorderRadius: BorderRadius.circular(12),
-    buttonBorderRadius: BorderRadius.circular(10),
+    cardBorderRadius: BorderRadius.circular(3),
+    buttonBorderRadius: BorderRadius.circular(3),
     cardBorder: Border.all(color: const Color(0xFF00F5FF), width: 1.5),
     cardShadows: [
       BoxShadow(
-        color: const Color(0xFF00F5FF).withValues(alpha: 0.25),
-        blurRadius: 12,
-        spreadRadius: 1,
+        color: const Color(0xFF00F5FF).withValues(alpha: 0.40),
+        blurRadius: 10,
+        spreadRadius: 0,
       ),
     ],
     cardGradient: const LinearGradient(
-      colors: [Color(0xFF101625), Color(0xFF0A0D16)],
+      colors: [Color(0xFF0A0E1A), Color(0xFF04060C)],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     ),
-    dailyGoalColor: const Color(0xFF00E676),
-    decksColor: const Color(0xFFFF007F),
+    dailyGoalColor: const Color(0xFF00FF66),
+    decksColor: const Color(0xFFFF0055),
     testSetupColor: const Color(0xFF00F5FF),
-    blockedAppsColor: const Color(0xFFFF3D00),
+    blockedAppsColor: const Color(0xFFFF3300),
     quickImportColor: const Color(0xFFFFE600),
-    successColor: const Color(0xFF00E676),
+    successColor: const Color(0xFF00FF66),
     warningColor: const Color(0xFFFFE600),
-    errorColor: const Color(0xFFFF3D00),
+    errorColor: const Color(0xFFFF3300),
     primaryButtonBg: const Color(0xFF00F5FF),
     primaryButtonFg: Colors.black,
     buttonBorder: const BorderSide(color: Color(0xFF00F5FF), width: 1.5),
-    circleAvatarBg: const Color(0xFF101625),
+    circleAvatarBg: const Color(0xFF0A0E1A),
     circleAvatarBorder: Border.all(color: const Color(0xFF00F5FF), width: 2.0),
     theme: ThemeData(
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: const Color(0xFF06080C),
-      cardColor: const Color(0xFF101625),
+      scaffoldBackgroundColor: const Color(0xFF030407),
+      cardColor: const Color(0xFF0A0E1A),
       primaryColor: const Color(0xFF00F5FF),
       colorScheme: const ColorScheme.dark(
         primary: Color(0xFF00F5FF),
         onPrimary: Colors.black,
         secondary: Color(0xFFFFE600),
         onSecondary: Colors.black,
-        tertiary: Color(0xFFFF007F),
-        surface: Color(0xFF101625),
+        tertiary: Color(0xFFFF0055),
+        surface: Color(0xFF0A0E1A),
         onSurface: Colors.white,
-        error: Color(0xFFFF3D00),
+        error: Color(0xFFFF3300),
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: IconThemeData(color: Colors.white),
-        titleTextStyle: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+        titleTextStyle: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: 1.1),
       ),
     ),
   );
 
-  // 🟢 SOFT NEUMORPHISM (Perfektný odtieň `#D1D9E6`)
   static final AppThemeData _softNeumorphismTheme = AppThemeData(
     id: 1,
     name: 'Soft Neumorphism',
@@ -430,8 +468,8 @@ class AppThemes {
     circleAvatarBorder: Border.all(color: Colors.white, width: 2.0),
     theme: ThemeData(
       brightness: Brightness.light,
-      scaffoldBackgroundColor: const Color(0xFFD1D9E6), // 🟢 Klasický sýty Neumorphism podklad
-      cardColor: const Color(0xFFD1D9E6),               // 🟢 Identická farba karty
+      scaffoldBackgroundColor: const Color(0xFFD1D9E6),
+      cardColor: const Color(0xFFD1D9E6),
       primaryColor: const Color(0xFF6C5CE7),
       colorScheme: const ColorScheme.light(
         primary: Color(0xFF6C5CE7),
@@ -507,47 +545,59 @@ class AppThemes {
     ),
   );
 
+  // 🟢 ULTRA-HIGH-END CLEAN MINIMAL (Linear / Apple UI štýl bez okrajov, s plávajúcimi kartami a jemným prechodom)
   static final AppThemeData _cleanMinimalTheme = AppThemeData(
     id: 3,
     name: 'Clean Minimal',
     isPremium: false,
-    cardBorderRadius: BorderRadius.circular(12),
-    buttonBorderRadius: BorderRadius.circular(8),
-    cardBorder: Border.all(color: Colors.black, width: 1.0),
-    cardShadows: const [],
-    dailyGoalColor: const Color(0xFF212121),
-    decksColor: const Color(0xFF9E9E9E),
-    testSetupColor: const Color(0xFF616161),
-    blockedAppsColor: const Color(0xFF757575),
-    quickImportColor: const Color(0xFF9E9E9E),
-    successColor: const Color(0xFF2E7D32),
-    warningColor: const Color(0xFFED6C02),
-    errorColor: const Color(0xFFD32F2F),
-    primaryButtonBg: const Color(0xFF212121),
+    cardBorderRadius: BorderRadius.circular(20),
+    buttonBorderRadius: BorderRadius.circular(14),
+    cardBorder: null, // Žiadne hardcoded ohraničenia
+    cardShadows: [
+      BoxShadow(
+        color: const Color(0xFF0F172A).withValues(alpha: 0.07),
+        blurRadius: 24,
+        offset: const Offset(0, 8),
+      ),
+    ],
+    dailyGoalColor: const Color(0xFF0F172A),
+    decksColor: const Color(0xFF334155),
+    testSetupColor: const Color(0xFF0F172A),
+    blockedAppsColor: const Color(0xFFE11D48),
+    quickImportColor: const Color(0xFF475569),
+    successColor: const Color(0xFF059669),
+    warningColor: const Color(0xFFD97706),
+    errorColor: const Color(0xFFE11D48),
+    primaryButtonBg: const Color(0xFF0F172A),
     primaryButtonFg: Colors.white,
     buttonBorder: BorderSide.none,
-    circleAvatarBg: const Color(0xFFF5F5F5),
-    circleAvatarBorder: Border.all(color: const Color(0xFFE0E0E0), width: 1.0),
+    circleAvatarBg: const Color(0xFFF1F5F9),
+    circleAvatarBorder: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
     theme: ThemeData(
       brightness: Brightness.light,
-      scaffoldBackgroundColor: Colors.white,
+      scaffoldBackgroundColor: const Color(0xFFF8FAFC),
       cardColor: Colors.white,
-      primaryColor: const Color(0xFF212121),
+      primaryColor: const Color(0xFF0F172A),
       colorScheme: const ColorScheme.light(
-        primary: Color(0xFF212121),
+        primary: Color(0xFF0F172A),
         onPrimary: Colors.white,
-        secondary: Color(0xFF757575),
+        secondary: Color(0xFF475569),
         onSecondary: Colors.white,
-        tertiary: Color(0xFF212121),
+        tertiary: Color(0xFF0F172A),
         surface: Colors.white,
-        onSurface: Color(0xFF212121),
-        onSecondaryContainer: Color(0xFF9E9E9E),
+        onSurface: Color(0xFF0F172A),
+        onSecondaryContainer: Color(0xFF64748B),
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: IconThemeData(color: Color(0xFF212121)),
-        titleTextStyle: TextStyle(color: Color(0xFF212121), fontSize: 22, fontWeight: FontWeight.bold),
+        iconTheme: IconThemeData(color: Color(0xFF0F172A)),
+        titleTextStyle: TextStyle(
+          color: Color(0xFF0F172A),
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.6,
+        ),
       ),
     ),
   );

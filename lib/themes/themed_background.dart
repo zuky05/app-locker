@@ -24,10 +24,25 @@ class ThemedBackground extends StatelessWidget {
             ),
           ),
         ] else if (themeId == 1) ...[
-          // 🟢 SOFT NEUMORPHISM: Zladená farba pozadia `#D1D9E6`
           Positioned.fill(
             child: Container(
               color: const Color(0xFFD1D9E6),
+            ),
+          ),
+        ] else if (themeId == 3) ...[
+          // 🟢 CLEAN MINIMAL: Prémiový jemný prechod (Soft Linen / Slate Gray)
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFFF8FAFC),
+                    Color(0xFFEEF2F6),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
             ),
           ),
         ] else if (themeId == 5) ...[
@@ -52,9 +67,9 @@ class ThemedBackground extends StatelessWidget {
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Color(0xFF05050A),
-                    Color(0xFF09140B),
-                    Color(0xFF0B1F12),
+                    Color(0xFF020305),
+                    Color(0xFF050810),
+                    Color(0xFF080D1A),
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -100,6 +115,13 @@ class ThemedBackground extends StatelessWidget {
               painter: SoftNeumorphismAmbientPainter(),
             ),
           ),
+        ] else if (themeId == 3) ...[
+          // 🟢 Ambientné svetlo v pozadí pre Clean Minimal (dodáva hĺbku a high-end look)
+          Positioned.fill(
+            child: CustomPaint(
+              painter: CleanMinimalGlowPainter(),
+            ),
+          ),
         ] else if (themeId == 0) ...[
           Positioned.fill(
             child: CustomPaint(
@@ -135,6 +157,25 @@ class ThemedBackground extends StatelessWidget {
       ],
     );
   }
+}
+
+class CleanMinimalGlowPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final glow1 = Paint()
+      ..color = const Color(0xFFCBD5E1).withValues(alpha: 0.35)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 100);
+
+    final glow2 = Paint()
+      ..color = const Color(0xFF94A3B8).withValues(alpha: 0.20)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 130);
+
+    canvas.drawCircle(Offset(size.width * 0.9, size.height * 0.1), 180, glow1);
+    canvas.drawCircle(Offset(size.width * 0.1, size.height * 0.8), 220, glow2);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class SoftNeumorphismAmbientPainter extends CustomPainter {
@@ -218,21 +259,48 @@ class CyberpunkPerspectiveGridPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    final double horizonY = size.height * 0.52;
+
+    // 1. CRT SCANLINES
+    final Paint scanlinePaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.20)
+      ..strokeWidth = 1.0;
+
+    for (double y = 0; y < size.height; y += 4.0) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), scanlinePaint);
+    }
+
+    // 2. HORIZONTÁLNA NEÓNOVÁ ŽIARA
+    final Rect horizonRect = Rect.fromLTRB(0, horizonY - 80, size.width, horizonY + 50);
+    final Paint horizonGlow = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          const Color(0xFFFF0055).withValues(alpha: 0.0),
+          const Color(0xFFFF0055).withValues(alpha: 0.30),
+          const Color(0xFF00F5FF).withValues(alpha: 0.40),
+          const Color(0xFF00F5FF).withValues(alpha: 0.0),
+        ],
+      ).createShader(horizonRect);
+
+    canvas.drawRect(horizonRect, horizonGlow);
+
     final paint = Paint()
-      ..color = gridColor.withValues(alpha: 0.75)
+      ..color = gridColor.withValues(alpha: 0.85)
       ..strokeWidth = 1.6
       ..style = PaintingStyle.stroke;
 
     final glowPaint = Paint()
-      ..color = gridColor.withValues(alpha: 0.25)
-      ..strokeWidth = 4.0
+      ..color = gridColor.withValues(alpha: 0.30)
+      ..strokeWidth = 4.5
       ..style = PaintingStyle.stroke;
 
-    final double horizonY = size.height * 0.55; 
-    final double bottomWidth = size.width * 2.2;
+    final double bottomWidth = size.width * 2.4;
     final double startX = size.width / 2;
 
-    const int verticalLines = 14;
+    // 3. PERSPEKTÍVNE ČIARY
+    const int verticalLines = 16;
     for (int i = -verticalLines; i <= verticalLines; i++) {
       double bottomX = startX + (i * (bottomWidth / verticalLines));
 
@@ -248,14 +316,15 @@ class CyberpunkPerspectiveGridPainter extends CustomPainter {
       );
     }
 
-    const int horizontalLines = 12;
+    // 4. VODOROVNÉ ČIARY
+    const int horizontalLines = 14;
     for (int i = 0; i < horizontalLines; i++) {
       double progress = i / horizontalLines;
       double y = horizonY + (size.height - horizonY) * (progress * progress);
 
       final linePaint = Paint()
-        ..color = gridColor.withValues(alpha: 0.15 + (progress * 0.65))
-        ..strokeWidth = 1.2 + (progress * 0.9)
+        ..color = gridColor.withValues(alpha: 0.15 + (progress * 0.70))
+        ..strokeWidth = 1.2 + (progress * 1.2)
         ..style = PaintingStyle.stroke;
 
       canvas.drawLine(

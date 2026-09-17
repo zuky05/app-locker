@@ -98,7 +98,6 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
     Color textColor;
 
     if (isSoft) {
-      // 🟢 SOFT NEUMORPHISM DIALÓGOVÉ TLAČIDLÁ
       if (isSecondary) {
         decoration = BoxDecoration(
           color: const Color(0xFFD1D9E6),
@@ -163,7 +162,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
             end: Alignment.bottomRight,
           ),
           borderRadius: currentTheme.buttonBorderRadius,
-          border: Border.all(color: const Color(0xFF00F5FF).withValues(alpha: 0.5), width: 1.5),
+          border: Border.all(color: accentColor.withValues(alpha: 0.5), width: 1.5),
         );
         textColor = Colors.white;
       } else if (isNeo) {
@@ -400,6 +399,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
     final bool isVibrant = currentTheme.id == 5;
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
+    final bool isCyber = currentTheme.id == 0;
 
     final headerDecoration = isNeo
         ? BoxDecoration(
@@ -408,26 +408,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
             border: Border.all(color: Colors.black, width: 3.5),
             boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(4, 4), blurRadius: 0)],
           )
-        : (isVibrant
-            ? BoxDecoration(
-                color: const Color(0xFF0F172A).withValues(alpha: 0.75),
-                borderRadius: currentTheme.cardBorderRadius,
-                border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.25),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              )
-            : BoxDecoration(
-                color: theme.cardColor,
-                borderRadius: currentTheme.cardBorderRadius,
-                border: currentTheme.cardBorder ?? Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.1)),
-                boxShadow: currentTheme.cardShadows,
-                gradient: currentTheme.cardGradient,
-              ));
+        : currentTheme.getCardDecoration(accentColor);
 
     final searchDecoration = isNeo
         ? BoxDecoration(
@@ -453,25 +434,16 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
                   ),
                 ],
               )
-            : (isVibrant
-                ? BoxDecoration(
-                    color: const Color(0xFF0F172A).withValues(alpha: 0.75),
-                    borderRadius: currentTheme.cardBorderRadius,
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  )
-                : BoxDecoration(
-                    color: theme.cardColor,
-                    borderRadius: currentTheme.cardBorderRadius,
-                    border: Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.12)),
-                    boxShadow: currentTheme.cardShadows,
-                  )));
+            : BoxDecoration(
+                color: theme.cardColor.withValues(alpha: isCyber ? 0.85 : 1.0),
+                borderRadius: currentTheme.cardBorderRadius,
+                border: Border.all(
+                  color: isCyber 
+                      ? accentColor.withValues(alpha: 0.4) 
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.12),
+                ),
+                boxShadow: currentTheme.cardShadows,
+              ));
 
     return ThemedBackground(
       child: Scaffold(
@@ -482,6 +454,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
             style: TextStyle(
               fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
               color: isNeo ? Colors.black : theme.colorScheme.onSurface,
+              fontFamily: isCyber ? 'monospace' : null,
             ),
           ),
           backgroundColor: Colors.transparent,
@@ -490,7 +463,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
           actions: [
             if (blockedPackages.isNotEmpty)
               IconButton(
-                icon: Icon(Icons.restart_alt_rounded, size: 26, color: isNeo ? Colors.black : null),
+                icon: Icon(Icons.restart_alt_rounded, size: 24, color: isNeo ? Colors.black : null),
                 tooltip: 'Odblokovať všetko',
                 onPressed: _resetAllBlockedApps,
               ),
@@ -502,7 +475,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
             : Column(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                    padding: const EdgeInsets.fromLTRB(20, 6, 20, 10),
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: headerDecoration,
@@ -513,19 +486,19 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                "Ktoré aplikácie zamknúť?",
+                                "Aplikácie na uzamknutie",
                                 style: TextStyle(
-                                  fontSize: 17,
+                                  fontSize: 16,
                                   fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
                                   color: isNeo ? Colors.black : (isVibrant ? Colors.white : theme.colorScheme.onSurface),
                                 ),
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                 decoration: isSoft
                                     ? BoxDecoration(
                                         color: const Color(0xFFC8D3E6),
-                                        borderRadius: BorderRadius.circular(16),
+                                        borderRadius: BorderRadius.circular(12),
                                         boxShadow: const [
                                           BoxShadow(
                                             color: Color(0xFF97A7C0),
@@ -540,10 +513,10 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
                                         ],
                                       )
                                     : BoxDecoration(
-                                        color: isNeo ? accentColor : accentColor.withValues(alpha: 0.2),
-                                        borderRadius: BorderRadius.circular(12),
+                                        color: isNeo ? accentColor : (isCyber ? Colors.black.withValues(alpha: 0.4) : accentColor.withValues(alpha: 0.18)),
+                                        borderRadius: BorderRadius.circular(isCyber ? 3 : 10),
                                         border: Border.all(
-                                          color: isNeo ? Colors.black : (isVibrant ? Colors.white : accentColor), 
+                                          color: isNeo ? Colors.black : accentColor, 
                                           width: isNeo ? 2.5 : 1,
                                         ),
                                         boxShadow: isNeo ? const [BoxShadow(color: Colors.black, offset: Offset(2, 2))] : null,
@@ -553,8 +526,9 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
                                       ? "${blockedPackages.length} / ∞" 
                                       : "${blockedPackages.length} / 3",
                                   style: TextStyle(
-                                    color: isNeo ? Colors.black : (isSoft ? accentColor : (isVibrant ? Colors.white : accentColor)),
-                                    fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
+                                    color: isNeo ? Colors.black : (isSoft ? accentColor : accentColor),
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: isCyber ? 'monospace' : null,
                                     fontSize: 13,
                                   ),
                                 ),
@@ -563,12 +537,12 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            "Zvolené aplikácie budú prístupné až po úspešnom vyriešení vedomostného testu.",
+                            "Zvolené aplikácie sa sprístupnia až po vyriešení vedomostného testu.",
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: 12,
                               fontWeight: isNeo ? FontWeight.bold : FontWeight.normal,
-                              color: isNeo ? Colors.black87 : (isVibrant ? Colors.white.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.7)),
-                              height: 1.3,
+                              color: isNeo ? Colors.black87 : (isVibrant ? Colors.white.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.75)),
+                              height: 1.25,
                             ),
                           ),
                         ],
@@ -576,31 +550,36 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
                     child: Container(
                       decoration: searchDecoration,
                       child: TextField(
                         controller: _searchController,
                         style: TextStyle(
                           fontWeight: isNeo ? FontWeight.w900 : FontWeight.normal,
+                          fontFamily: isCyber ? 'monospace' : null,
                           color: isNeo ? Colors.black : (isVibrant ? Colors.white : theme.colorScheme.onSurface),
+                          fontSize: 14,
                         ),
                         decoration: InputDecoration(
                           hintText: "Hľadať aplikáciu...",
                           hintStyle: TextStyle(
+                            fontSize: 14,
+                            fontFamily: isCyber ? 'monospace' : null,
                             color: isNeo ? Colors.black54 : (isVibrant ? Colors.white.withValues(alpha: 0.6) : theme.colorScheme.onSurface.withValues(alpha: 0.5)),
                           ),
                           prefixIcon: Icon(
                             Icons.search_rounded,
+                            size: 20,
                             color: isNeo ? Colors.black : (isVibrant ? Colors.white.withValues(alpha: 0.6) : theme.colorScheme.onSurface.withValues(alpha: 0.5)),
                           ),
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 10),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Expanded(
                     child: filteredApps.isEmpty
                         ? Center(
@@ -613,7 +592,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
                             ),
                           )
                         : ListView.builder(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
                             itemCount: filteredApps.length,
                             itemBuilder: (context, index) {
                               final app = filteredApps[index];
@@ -625,79 +604,48 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
                                           color: accentColor,
                                           borderRadius: currentTheme.cardBorderRadius,
                                           border: Border.all(color: Colors.black, width: 3.5),
-                                          boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(4, 4), blurRadius: 0)],
+                                          boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(3, 3), blurRadius: 0)],
                                         )
                                       : BoxDecoration(
                                           color: Colors.white,
                                           borderRadius: currentTheme.cardBorderRadius,
                                           border: Border.all(color: Colors.black, width: 3.5),
-                                          boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(4, 4), blurRadius: 0)],
+                                          boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(3, 3), blurRadius: 0)],
                                         ))
                                   : (isBlocked
                                       ? currentTheme.getCardDecoration(accentColor, isSelected: true)
-                                      : (isVibrant
-                                          ? BoxDecoration(
-                                              color: const Color(0xFF0F172A).withValues(alpha: 0.70),
-                                              borderRadius: currentTheme.cardBorderRadius,
-                                              border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 1.5),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.black.withValues(alpha: 0.2),
-                                                  blurRadius: 8,
-                                                  offset: const Offset(0, 3),
-                                                ),
-                                              ],
-                                            )
-                                          : BoxDecoration(
-                                              color: theme.cardColor,
-                                              borderRadius: currentTheme.cardBorderRadius,
-                                              border: currentTheme.cardBorder ?? Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.1)),
-                                              boxShadow: currentTheme.cardShadows,
-                                              gradient: currentTheme.cardGradient,
-                                            )));
+                                      : currentTheme.getCardDecoration(accentColor));
 
                               final textColor = isNeo 
                                   ? Colors.black 
                                   : (isBlocked ? currentTheme.getContrastTextColor(accentColor) : (isVibrant ? Colors.white : theme.colorScheme.onSurface));
 
                               return Container(
-                                margin: const EdgeInsets.only(bottom: 10),
+                                margin: const EdgeInsets.only(bottom: 8),
                                 decoration: itemDecoration,
                                 child: ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
                                   leading: ClipRRect(
-                                    borderRadius: BorderRadius.circular(10),
+                                    borderRadius: BorderRadius.circular(8),
                                     child: app.icon != null
-                                        ? Image.memory(app.icon!, width: 42, height: 42)
-                                        : Icon(Icons.android, size: 42, color: textColor),
+                                        ? Image.memory(app.icon!, width: 38, height: 38)
+                                        : Icon(Icons.android, size: 38, color: textColor),
                                   ),
                                   title: Text(
                                     app.name,
                                     style: TextStyle(
-                                      fontWeight: isNeo ? FontWeight.w900 : (isBlocked ? FontWeight.bold : FontWeight.w500),
+                                      fontWeight: isNeo ? FontWeight.w900 : (isBlocked ? FontWeight.bold : FontWeight.w600),
                                       fontSize: 15,
                                       color: textColor,
                                     ),
                                   ),
-                                  subtitle: Text(
-                                    isBlocked ? "Zablokovaná" : "Povolená",
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: isNeo ? FontWeight.bold : (isBlocked ? FontWeight.bold : FontWeight.normal),
-                                      color: isNeo 
-                                          ? Colors.black87 
-                                          : (isBlocked ? textColor.withValues(alpha: 0.85) : (isVibrant ? Colors.white.withValues(alpha: 0.6) : theme.colorScheme.onSurface.withValues(alpha: 0.5))),
-                                    ),
-                                  ),
                                   trailing: Switch(
                                     value: isBlocked,
-                                    trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
-                                    activeColor: isNeo ? Colors.black : (isSoft ? Colors.white : (isVibrant ? Colors.white : accentColor)),
-                                    activeTrackColor: isNeo 
-                                        ? Colors.white 
-                                        : (isSoft ? accentColor : (isBlocked ? textColor.withValues(alpha: 0.3) : accentColor.withValues(alpha: 0.3))),
-                                    inactiveThumbColor: isNeo ? Colors.black54 : (isSoft ? const Color(0xFF97A7C0) : (isVibrant ? Colors.white54 : theme.colorScheme.onSurface.withValues(alpha: 0.4))),
-                                    inactiveTrackColor: isNeo ? Colors.white54 : (isSoft ? const Color(0xFFC8D3E6) : (isVibrant ? Colors.white24 : theme.colorScheme.onSurface.withValues(alpha: 0.1))),
+                                    trackOutlineColor: WidgetStateProperty.all(isCyber ? accentColor.withValues(alpha: 0.4) : Colors.transparent),
+                                    activeColor: isCyber ? accentColor : (isNeo ? Colors.black : (isSoft ? Colors.white : textColor)),
+                                    activeTrackColor: isCyber ? accentColor.withValues(alpha: 0.35) : (isNeo ? Colors.white : accentColor.withValues(alpha: 0.4)),
+                                    inactiveThumbColor: isNeo ? Colors.black54 : (isSoft ? const Color(0xFF97A7C0) : theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                                    inactiveTrackColor: isNeo ? Colors.white54 : (isSoft ? const Color(0xFFC8D3E6) : theme.colorScheme.onSurface.withValues(alpha: 0.2)),
                                     onChanged: (_) => _toggleApp(app.packageName),
                                   ),
                                   onTap: () => _toggleApp(app.packageName),

@@ -15,6 +15,8 @@ class StatsDetailScreen extends StatefulWidget {
 
 class _StatsDetailScreenState extends State<StatsDetailScreen> {
   int _selectedFilterIndex = 0; // 0: Dnes, 1: Týždeň, 2: Všetok čas
+  double _dragOffset = 0.0;
+  bool _isSwipingRight = false;
 
   String _formatDuration(int totalSeconds) {
     if (totalSeconds <= 0) return '0 s';
@@ -48,21 +50,22 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
     }
   }
 
-  void _onSwipe(DragEndDetails details) {
-    if (details.primaryVelocity == null) return;
+  void _onDragEnd(DragEndDetails details) {
+    final double velocity = details.primaryVelocity ?? 0;
 
-    // Posun prsta doľava (velocity < 0) -> Posun na ďalší filter
-    if (details.primaryVelocity! < -200) {
+    // Sledovanie vzdialenosti (vhodné pre myš na PC) aj rýchlosti (pre dotyk)
+    if (_dragOffset > 40 || velocity > 120) {
       setState(() {
-        _selectedFilterIndex = (_selectedFilterIndex + 1) % 3;
-      });
-    } 
-    // Posun prsta doprava (velocity > 0) -> Posun na predchádzajúci filter
-    else if (details.primaryVelocity! > 200) {
-      setState(() {
+        _isSwipingRight = true;
         _selectedFilterIndex = (_selectedFilterIndex - 1 + 3) % 3;
       });
+    } else if (_dragOffset < -40 || velocity < -120) {
+      setState(() {
+        _isSwipingRight = false;
+        _selectedFilterIndex = (_selectedFilterIndex + 1) % 3;
+      });
     }
+    _dragOffset = 0.0;
   }
 
   @override
@@ -72,6 +75,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
     final theme = currentTheme.theme;
     final bool isVibrant = currentTheme.id == 5;
     final bool isSoft = currentTheme.id == 1;
+    final bool isCyber = currentTheme.id == 0;
 
     return ThemedBackground(
       child: Scaffold(
@@ -79,13 +83,33 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: theme.appBarTheme.elevation ?? 0,
-          title: Text(
-            'Štatistiky učenia',
-            style: theme.appBarTheme.titleTextStyle ?? TextStyle(
-              color: theme.colorScheme.onSurface,
-              fontWeight: FontWeight.bold,
-              fontSize: 22,
-            ),
+          title: Row(
+            children: [
+              Text(
+                'Štatistiky učenia',
+                style: theme.appBarTheme.titleTextStyle ?? TextStyle(
+                  color: theme.colorScheme.onSurface,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: isCyber ? 'monospace' : null,
+                  fontSize: 20,
+                ),
+              ),
+              if (isCyber) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF00FF66).withValues(alpha: 0.15),
+                    border: Border.all(color: const Color(0xFF00FF66), width: 1.0),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                  child: const Text(
+                    '// METRICS',
+                    style: TextStyle(color: Color(0xFF00FF66), fontSize: 9, fontFamily: 'monospace', fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ],
           ),
           iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
         ),
@@ -112,17 +136,30 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
             final int savedProcrastinationSeconds = (studySeconds * 2.5).round();
 
             return GestureDetector(
-              onHorizontalDragEnd: _onSwipe,
+              onHorizontalDragStart: (_) => _dragOffset = 0.0,
+              onHorizontalDragUpdate: (details) => _dragOffset += details.primaryDelta ?? 0,
+              onHorizontalDragEnd: _onDragEnd,
               behavior: HitTestBehavior.opaque,
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 250),
+                transitionBuilder: (Widget child, Animation<double> animation) {
+                  final offsetAnimation = Tween<Offset>(
+                    begin: Offset(_isSwipingRight ? -0.35 : 0.35, 0.0),
+                    end: Offset.zero,
+                  ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic));
+
+                  return SlideTransition(
+                    position: offsetAnimation,
+                    child: FadeTransition(opacity: animation, child: child),
+                  );
+                },
                 child: ListView(
                   key: ValueKey(_selectedFilterIndex),
                   padding: const EdgeInsets.all(20.0),
                   physics: const BouncingScrollPhysics(),
                   children: [
-                    // 1. PREPÍNAČ OBDOBIA (NEUMORPHIC TRACK)
-                    _buildSegmentedFilter(currentTheme),
+                    // 1. PREPÍNAČ OBDOBIA
+                    _buildSegmentedFilter(currentTheme, isCyber),
                     const SizedBox(height: 24),
 
                     // 2. STREAK KARTA
@@ -150,12 +187,13 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'AKTÍVNY STREAK',
+                                isCyber ? '// ACTIVE_STREAK' : 'AKTÍVNY STREAK',
                                 style: TextStyle(
                                   color: isVibrant 
                                       ? Colors.white.withValues(alpha: 0.8) 
                                       : (currentTheme.id == 2 ? Colors.black : currentTheme.dailyGoalColor),
                                   fontSize: 12,
+                                  fontFamily: isCyber ? 'monospace' : null,
                                   fontWeight: FontWeight.w800,
                                   letterSpacing: 1.1,
                                 ),
@@ -166,6 +204,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
                                 style: TextStyle(
                                   color: isVibrant ? Colors.white : (isSoft ? const Color(0xFF2D3748) : theme.colorScheme.onSurface),
                                   fontSize: 26,
+                                  fontFamily: isCyber ? 'monospace' : null,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -186,6 +225,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
                             icon: Icons.timer_rounded,
                             color: currentTheme.blockedAppsColor,
                             currentTheme: currentTheme,
+                            isCyber: isCyber,
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -196,6 +236,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
                             icon: Icons.lock_open_rounded,
                             color: Colors.amber.shade700,
                             currentTheme: currentTheme,
+                            isCyber: isCyber,
                           ),
                         ),
                       ],
@@ -212,6 +253,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
                             icon: Icons.style_rounded,
                             color: currentTheme.testSetupColor,
                             currentTheme: currentTheme,
+                            isCyber: isCyber,
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -222,6 +264,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
                             icon: Icons.hourglass_top_rounded,
                             color: Colors.teal,
                             currentTheme: currentTheme,
+                            isCyber: isCyber,
                             customGradient: isVibrant ? const LinearGradient(
                               colors: [Color(0xFF00B4DB), Color(0xFF0083B0)],
                               begin: Alignment.topLeft,
@@ -265,10 +308,11 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Priemerná úspešnosť',
+                                    isCyber ? '// PRIEMERNÁ ÚSPEŠNOSŤ' : 'Priemerná úspešnosť',
                                     style: TextStyle(
                                       color: isVibrant ? Colors.white : (isSoft ? const Color(0xFF2D3748) : theme.colorScheme.onSurface),
                                       fontSize: 16,
+                                      fontFamily: isCyber ? 'monospace' : null,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -292,6 +336,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
                             style: TextStyle(
                               color: isVibrant ? Colors.white : (isSoft ? currentTheme.decksColor : theme.colorScheme.onSurface),
                               fontSize: 26,
+                              fontFamily: isCyber ? 'monospace' : null,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -339,12 +384,13 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Najobľúbenejší balíček',
+                                  isCyber ? '// NAJOBĽÚBENEJŠÍ BALÍČEK' : 'Najobľúbenejší balíček',
                                   style: TextStyle(
                                     color: isVibrant 
                                         ? Colors.white.withValues(alpha: 0.8) 
                                         : (isSoft ? const Color(0xFF718096) : theme.colorScheme.onSurface.withValues(alpha: 0.7)),
                                     fontSize: 13,
+                                    fontFamily: isCyber ? 'monospace' : null,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -354,6 +400,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
                                   style: TextStyle(
                                     color: isVibrant ? Colors.white : (isSoft ? const Color(0xFF2D3748) : theme.colorScheme.onSurface),
                                     fontSize: 18,
+                                    fontFamily: isCyber ? 'monospace' : null,
                                     fontWeight: FontWeight.bold,
                                   ),
                                   overflow: TextOverflow.ellipsis,
@@ -377,7 +424,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
                                       color: (isVibrant || currentTheme.id == 4)
                                           ? Colors.white.withValues(alpha: 0.15)
                                           : theme.colorScheme.onSurface.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(12),
+                                      borderRadius: BorderRadius.circular(isCyber ? 3 : 12),
                                       border: Border.all(
                                         color: (isVibrant || currentTheme.id == 4)
                                             ? Colors.white.withValues(alpha: 0.25)
@@ -385,12 +432,13 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
                                       ),
                                     ),
                               child: Text(
-                                '$cardsCount kartičiek',
+                                isCyber ? '[$cardsCount KARTIČIEK]' : '$cardsCount kartičiek',
                                 style: TextStyle(
                                   color: isVibrant || currentTheme.id == 4 
                                       ? Colors.white 
                                       : (isSoft ? const Color(0xFF2D3748) : theme.colorScheme.onSurface),
                                   fontSize: 11,
+                                  fontFamily: isCyber ? 'monospace' : null,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -405,6 +453,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
                       prompt: nemesisPrompt,
                       correctAnswer: nemesisAnswer,
                       currentTheme: currentTheme,
+                      isCyber: isCyber,
                     ),
                   ],
                 ),
@@ -422,6 +471,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
     required IconData icon,
     required Color color,
     required AppThemeData currentTheme,
+    required bool isCyber,
     Gradient? customGradient,
   }) {
     final theme = currentTheme.theme;
@@ -460,12 +510,13 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            title,
+            isCyber ? '// $title' : title,
             style: TextStyle(
               color: useWhiteText 
                   ? Colors.white.withValues(alpha: 0.8) 
                   : (isSoft ? const Color(0xFF718096) : theme.colorScheme.onSurface.withValues(alpha: 0.7)),
-              fontSize: 13,
+              fontSize: 12,
+              fontFamily: isCyber ? 'monospace' : null,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -479,6 +530,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
                     ? Colors.white 
                     : (isSoft ? const Color(0xFF2D3748) : theme.colorScheme.onSurface),
                 fontSize: 22,
+                fontFamily: isCyber ? 'monospace' : null,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -488,7 +540,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
     );
   }
 
-  Widget _buildSegmentedFilter(AppThemeData currentTheme) {
+  Widget _buildSegmentedFilter(AppThemeData currentTheme, bool isCyber) {
     final theme = currentTheme.theme;
     final bool isVibrant = currentTheme.id == 5;
     final bool isGlass = currentTheme.id == 4;
@@ -496,8 +548,13 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
     final bool isSoft = currentTheme.id == 1;
 
     BoxDecoration outerDecoration;
-    if (isSoft) {
-      // 🟢 SOFT NEUMORPHISM: Zapustená drážka (Inset concave track)
+    if (isCyber) {
+      outerDecoration = BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.65),
+        borderRadius: currentTheme.buttonBorderRadius,
+        border: Border.all(color: currentTheme.quickImportColor.withValues(alpha: 0.4), width: 1.2),
+      );
+    } else if (isSoft) {
       outerDecoration = BoxDecoration(
         color: const Color(0xFFC8D3E6),
         borderRadius: currentTheme.buttonBorderRadius,
@@ -568,8 +625,21 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
 
           BoxDecoration? selectedDeco;
           if (isSelected) {
-            if (isSoft) {
-              // 🟢 SOFT NEUMORPHISM: Vystúpený samostatný gombík (Raised soft Convex)
+            if (isCyber) {
+              selectedDeco = BoxDecoration(
+                color: accentColor.withValues(alpha: 0.25),
+                borderRadius: BorderRadius.circular(
+                  (currentTheme.buttonBorderRadius.topLeft.x - 2).clamp(2.0, 10.0),
+                ),
+                border: Border.all(color: accentColor, width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: accentColor.withValues(alpha: 0.4),
+                    blurRadius: 8,
+                  ),
+                ],
+              );
+            } else if (isSoft) {
               selectedDeco = BoxDecoration(
                 color: const Color(0xFFD1D9E6),
                 borderRadius: BorderRadius.circular(
@@ -635,14 +705,18 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
           }
 
           final Color textColor = isSelected
-              ? (isSoft 
-                  ? currentTheme.decksColor 
-                  : (isNeo 
-                      ? Colors.black 
-                      : (isVibrant || isGlass ? Colors.white : currentTheme.getContrastTextColor(accentColor))))
-              : (isSoft 
-                  ? const Color(0xFF718096) 
-                  : (isVibrant || isGlass ? Colors.white.withValues(alpha: 0.7) : theme.colorScheme.onSurface.withValues(alpha: 0.65)));
+              ? (isCyber
+                  ? const Color(0xFF00FF66)
+                  : (isSoft 
+                      ? currentTheme.decksColor 
+                      : (isNeo 
+                          ? Colors.black 
+                          : (isVibrant || isGlass ? Colors.white : currentTheme.getContrastTextColor(accentColor)))))
+              : (isCyber 
+                  ? const Color(0xFF00F5FF).withValues(alpha: 0.7)
+                  : (isSoft 
+                      ? const Color(0xFF718096) 
+                      : (isVibrant || isGlass ? Colors.white.withValues(alpha: 0.7) : theme.colorScheme.onSurface.withValues(alpha: 0.65))));
 
           return Expanded(
             child: GestureDetector(
@@ -660,6 +734,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
                   filters[index],
                   style: TextStyle(
                     color: textColor,
+                    fontFamily: isCyber ? 'monospace' : null,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                     fontSize: 14,
                   ),
@@ -678,11 +753,13 @@ class _NemesisInteractiveCard extends StatefulWidget {
   final String prompt;
   final String correctAnswer;
   final AppThemeData currentTheme;
+  final bool isCyber;
 
   const _NemesisInteractiveCard({
     required this.prompt,
     required this.correctAnswer,
     required this.currentTheme,
+    required this.isCyber,
   });
 
   @override
@@ -738,12 +815,13 @@ class _NemesisInteractiveCardState extends State<_NemesisInteractiveCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Nemesis karta',
+                    widget.isCyber ? '// NEMESIS KARTA' : 'Nemesis karta',
                     style: TextStyle(
                       color: isVibrant 
                           ? Colors.white.withValues(alpha: 0.8) 
                           : (isSoft ? const Color(0xFF718096) : theme.colorScheme.onSurface.withValues(alpha: 0.7)),
                       fontSize: 13,
+                      fontFamily: widget.isCyber ? 'monospace' : null,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -833,12 +911,15 @@ class _NemesisInteractiveCardState extends State<_NemesisInteractiveCard> {
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        _isFlipped ? 'ODPOVEĎ' : 'NEMESIS KARTA (NAJVIAC CHÝB)',
+                        _isFlipped 
+                            ? (widget.isCyber ? '// ODPOVEĎ' : 'ODPOVEĎ') 
+                            : (widget.isCyber ? '// NEMESIS_TARGET [MOST_ERRORS]' : 'NEMESIS KARTA (NAJVIAC CHÝB)'),
                         style: TextStyle(
                           color: isVibrant 
                               ? Colors.white.withValues(alpha: 0.9) 
                               : (isSoft ? const Color(0xFF718096) : theme.colorScheme.onSurface.withValues(alpha: 0.8)),
                           fontSize: 12,
+                          fontFamily: widget.isCyber ? 'monospace' : null,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.8,
                         ),
@@ -878,6 +959,7 @@ class _NemesisInteractiveCardState extends State<_NemesisInteractiveCard> {
                     style: TextStyle(
                       color: textColor,
                       fontSize: 22,
+                      fontFamily: widget.isCyber ? 'monospace' : null,
                       fontWeight: FontWeight.bold,
                     ),
                     maxLines: 4,
@@ -887,11 +969,14 @@ class _NemesisInteractiveCardState extends State<_NemesisInteractiveCard> {
               const SizedBox(height: 16),
               Center(
                 child: Text(
-                  _isFlipped ? 'Ťukni pre návrat na otázku' : 'Ťukni pre otočenie a zobrazenie odpovede',
+                  _isFlipped 
+                      ? (widget.isCyber ? '// Ťukni pre návrat' : 'Ťukni pre návrat na otázku') 
+                      : (widget.isCyber ? '// Ťukni pre zobrazenie odpovede' : 'Ťukni pre otočenie a zobrazenie odpovede'),
                   style: TextStyle(
                     color: isVibrant ? Colors.white.withValues(alpha: 0.7) : (isSoft ? const Color(0xFF718096) : theme.colorScheme.onSurface.withValues(alpha: 0.5)),
                     fontSize: 11,
-                    fontStyle: FontStyle.italic,
+                    fontFamily: widget.isCyber ? 'monospace' : null,
+                    fontStyle: widget.isCyber ? FontStyle.normal : FontStyle.italic,
                   ),
                 ),
               ),

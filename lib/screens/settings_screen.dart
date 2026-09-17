@@ -66,22 +66,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final cleanName = appTheme.name.toLowerCase();
 
     if (cleanName.contains('cyberpunk')) {
+      final Color activeBorder = isSelected ? const Color(0xFFFF007F) : const Color(0xFF00F0FF);
       return BoxDecoration(
-        color: const Color(0xFF120E24),
+        color: const Color(0xFF050014),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isSelected ? const Color(0xFFFF007F) : const Color(0xFF00F0FF),
-          width: isSelected ? 3.5 : 1.5,
+          color: activeBorder,
+          width: isSelected ? 3.0 : 1.8,
         ),
         boxShadow: [
           BoxShadow(
-            color: (isSelected ? const Color(0xFFFF007F) : const Color(0xFF00F0FF)).withValues(alpha: 0.35),
-            blurRadius: 10,
-          )
+            color: activeBorder.withValues(alpha: isSelected ? 0.6 : 0.35),
+            blurRadius: isSelected ? 16 : 10,
+            spreadRadius: isSelected ? 2 : 0,
+          ),
+          BoxShadow(
+            color: const Color(0xFFFF007F).withValues(alpha: 0.25),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
         ],
       );
     } else if (cleanName.contains('neumorphism')) {
-      // 🟢 SOFT NEUMORPHISM: Zladená farba náhľadu `#D1D9E6` a stieňovanie
       return BoxDecoration(
         color: const Color(0xFFD1D9E6),
         borderRadius: BorderRadius.circular(16),
@@ -91,7 +97,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 8),
         ],
       );
-    } else if (cleanName.contains('brutalism')) {
+    } else if (appTheme.id == 2 || cleanName.contains('brutalism') || cleanName.contains('neo')) {
       return BoxDecoration(
         color: const Color(0xFFFFD166),
         borderRadius: BorderRadius.circular(16),
@@ -182,7 +188,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       return {
         'text': Colors.white,
         'subtext': const Color(0xFF00F0FF),
-        'accent': const Color(0xFFFF007F),
+        'accent': const Color(0xFF00F0FF),
       };
     } else if (cleanName.contains('neumorphism')) {
       return {
@@ -190,7 +196,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         'subtext': const Color(0xFF718096),
         'accent': const Color(0xFF6C5CE7),
       };
-    } else if (cleanName.contains('brutalism')) {
+    } else if (appTheme.id == 2 || cleanName.contains('brutalism') || cleanName.contains('neo')) {
       return {
         'text': Colors.black,
         'subtext': Colors.black,
@@ -342,8 +348,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       final Color subtextColor = colors['subtext']!;
                       final Color accentColor = colors['accent']!;
                       
-                      final bool isItemNeo = appTheme.id == 2;
-                      final bool isStarlight = appTheme.id == 4 || appTheme.name.toLowerCase().contains('starlight');
+                      final cleanName = appTheme.name.toLowerCase();
+                      final bool isBrutalism = appTheme.id == 2 || cleanName.contains('brutalism') || cleanName.contains('neo');
+                      final bool isCyberpunk = cleanName.contains('cyberpunk');
+                      final bool isStarlight = cleanName.contains('starlight');
+
+                      final Color dot1Color = isBrutalism 
+                          ? Colors.black 
+                          : (isCyberpunk ? const Color(0xFF00F0FF) : itemTheme.colorScheme.primary);
+                      
+                      final Color dot2Color = isBrutalism 
+                          ? const Color(0xFFFF007F) 
+                          : (isCyberpunk ? const Color(0xFFFF007F) : appTheme.decksColor);
+                      
+                      final Color dot3Color = isBrutalism 
+                          ? const Color(0xFF00E5FF) 
+                          : (isCyberpunk ? const Color(0xFF00FF66) : appTheme.testSetupColor);
 
                       return InkWell(
                         onTap: () => _onThemeTap(appTheme, themeProvider),
@@ -354,6 +374,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             borderRadius: BorderRadius.circular(16),
                             child: Stack(
                               children: [
+                                if (isBrutalism)
+                                  Positioned.fill(
+                                    child: CustomPaint(
+                                      painter: MiniBrutalismDotsPainter(),
+                                    ),
+                                  ),
+                                if (isCyberpunk)
+                                  Positioned.fill(
+                                    child: CustomPaint(
+                                      painter: MiniCyberpunkGridPainter(),
+                                    ),
+                                  ),
                                 if (isStarlight)
                                   Positioned.fill(
                                     child: CustomPaint(
@@ -372,15 +404,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                         children: [
                                           Icon(
                                             isSelected ? Icons.check_circle_rounded : Icons.circle_outlined,
-                                            color: isItemNeo 
-                                                ? Colors.black 
-                                                : (isSelected ? accentColor : textColor.withValues(alpha: 0.4)),
+                                            color: isBrutalism
+                                                ? Colors.black
+                                                : (isSelected ? (isCyberpunk ? const Color(0xFFFF007F) : accentColor) : textColor.withValues(alpha: 0.5)),
                                             size: 22,
                                           ),
                                           if (appTheme.isPremium)
                                             Icon(
                                               Icons.star_rounded,
-                                              color: isItemNeo ? Colors.black : accentColor,
+                                              color: isBrutalism
+                                                  ? Colors.black
+                                                  : (isCyberpunk ? const Color(0xFFFF007F) : accentColor),
                                               size: 20,
                                             ),
                                         ],
@@ -393,9 +427,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             style: TextStyle(
-                                              fontWeight: isItemNeo ? FontWeight.w900 : FontWeight.bold,
+                                              fontWeight: isBrutalism ? FontWeight.w900 : FontWeight.bold,
                                               fontSize: 14,
-                                              color: textColor,
+                                              fontFamily: isCyberpunk ? 'monospace' : null,
+                                              color: isBrutalism ? Colors.black : textColor,
                                             ),
                                           ),
                                           const SizedBox(height: 2),
@@ -403,8 +438,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                             appTheme.isPremium ? "Premium štýl" : "Základný štýl",
                                             style: TextStyle(
                                               fontSize: 11,
-                                              fontWeight: isItemNeo ? FontWeight.bold : FontWeight.normal,
-                                              color: subtextColor,
+                                              fontWeight: isBrutalism ? FontWeight.w900 : FontWeight.normal,
+                                              fontFamily: isCyberpunk ? 'monospace' : null,
+                                              color: isBrutalism ? Colors.black : subtextColor,
                                             ),
                                           ),
                                         ],
@@ -415,12 +451,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                             width: 10,
                                             height: 10,
                                             decoration: BoxDecoration(
-                                              color: isItemNeo ? Colors.black : itemTheme.colorScheme.primary,
+                                              color: dot1Color,
                                               shape: BoxShape.circle,
-                                              border: Border.all(
-                                                color: isItemNeo ? Colors.black : textColor.withValues(alpha: 0.3), 
-                                                width: 1,
-                                              ),
+                                              border: isBrutalism ? Border.all(color: Colors.black, width: 1.5) : null,
+                                              boxShadow: isCyberpunk ? [const BoxShadow(color: Color(0xFF00F0FF), blurRadius: 4)] : null,
                                             ),
                                           ),
                                           const SizedBox(width: 4),
@@ -428,12 +462,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                             width: 10,
                                             height: 10,
                                             decoration: BoxDecoration(
-                                              color: isItemNeo ? const Color(0xFFFF70A6) : appTheme.decksColor,
+                                              color: dot2Color,
                                               shape: BoxShape.circle,
-                                              border: Border.all(
-                                                color: isItemNeo ? Colors.black : textColor.withValues(alpha: 0.3), 
-                                                width: 1,
-                                              ),
+                                              border: isBrutalism ? Border.all(color: Colors.black, width: 1.5) : null,
+                                              boxShadow: isCyberpunk ? [const BoxShadow(color: Color(0xFFFF007F), blurRadius: 4)] : null,
                                             ),
                                           ),
                                           const SizedBox(width: 4),
@@ -441,12 +473,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                             width: 10,
                                             height: 10,
                                             decoration: BoxDecoration(
-                                              color: isItemNeo ? const Color(0xFF00E5FF) : appTheme.testSetupColor,
+                                              color: dot3Color,
                                               shape: BoxShape.circle,
-                                              border: Border.all(
-                                                color: isItemNeo ? Colors.black : textColor.withValues(alpha: 0.3), 
-                                                width: 1,
-                                              ),
+                                              border: isBrutalism ? Border.all(color: Colors.black, width: 1.5) : null,
+                                              boxShadow: isCyberpunk ? [const BoxShadow(color: Color(0xFF00FF66), blurRadius: 4)] : null,
                                             ),
                                           ),
                                         ],
@@ -466,6 +496,77 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
+}
+
+class MiniBrutalismDotsPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint dotPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.22) // Presný stred medzi 0.12 a 0.35
+      ..style = PaintingStyle.fill;
+
+    const double spacing = 14.0;
+    for (double x = 10; x < size.width; x += spacing) {
+      for (double y = 10; y < size.height; y += spacing) {
+        canvas.drawCircle(Offset(x, y), 1.2, dotPaint); // Veľkosť upravená na stred
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class MiniCyberpunkGridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double horizon = size.height * 0.45;
+
+    final Paint glowPaint = Paint()
+      ..shader = LinearGradient(
+        colors: [
+          const Color(0xFFFF007F).withValues(alpha: 0.6),
+          const Color(0xFF00F0FF).withValues(alpha: 0.3),
+          Colors.transparent,
+        ],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ).createShader(Rect.fromLTRB(0, 0, size.width, horizon + 15));
+
+    canvas.drawRect(Rect.fromLTRB(0, 0, size.width, horizon + 15), glowPaint);
+
+    final Paint horizonLinePaint = Paint()
+      ..color = const Color(0xFFFF007F)
+      ..strokeWidth = 1.2;
+    canvas.drawLine(Offset(0, horizon), Offset(size.width, horizon), horizonLinePaint);
+
+    final Paint gridPattern = Paint()
+      ..color = const Color(0xFF00FF66).withValues(alpha: 0.55)
+      ..strokeWidth = 0.8;
+
+    double vanishingX = size.width / 2;
+
+    for (double x = -size.width; x <= size.width * 2; x += 18) {
+      canvas.drawLine(
+        Offset(vanishingX, horizon),
+        Offset(x, size.height),
+        gridPattern,
+      );
+    }
+
+    for (int i = 1; i <= 6; i++) {
+      double t = pow(i / 6, 2.2).toDouble();
+      double y = horizon + (size.height - horizon) * t;
+      canvas.drawLine(
+        Offset(0, y),
+        Offset(size.width, y),
+        gridPattern,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class MiniStarlightPainter extends CustomPainter {

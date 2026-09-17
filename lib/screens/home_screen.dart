@@ -117,7 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final dialogTextColor = isNeo 
         ? Colors.black 
-        : (isSoft ? const Color(0xFF2D3748) : Colors.black);
+        : (isSoft ? const Color(0xFF2D3748) : Colors.white);
 
     showDialog(
       context: context,
@@ -196,17 +196,32 @@ class _HomeScreenState extends State<HomeScreen> {
     required Color titleColor,
     required bool isSoft,
     required bool isNeo,
+    required bool isCyber,
+    String? sysCode,
   }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const SizedBox(width: 26),
+        if (isCyber)
+          Text(
+            sysCode ?? '// SYS_01',
+            style: TextStyle(
+              color: titleColor.withValues(alpha: 0.8),
+              fontSize: 10,
+              fontFamily: 'monospace',
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+            ),
+          )
+        else
+          const SizedBox(width: 26),
         Text(
           title,
           style: TextStyle(
             color: titleColor,
             fontSize: 12,
-            letterSpacing: 1.2,
+            letterSpacing: isCyber ? 1.5 : 1.2,
+            fontFamily: isCyber ? 'monospace' : null,
             fontWeight: FontWeight.w900,
           ),
         ),
@@ -228,7 +243,7 @@ class _HomeScreenState extends State<HomeScreen> {
             size: 13,
             color: isNeo 
                 ? Colors.black 
-                : (isSoft ? const Color(0xFF64748B) : titleColor.withValues(alpha: 0.8)),
+                : (isSoft ? const Color(0xFF64748B) : titleColor.withValues(alpha: 0.85)),
           ),
         ),
       ],
@@ -243,6 +258,7 @@ class _HomeScreenState extends State<HomeScreen> {
     
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
+    final bool isCyber = currentTheme.id == 0;
     final bool isLimitReached = customDeckCount >= 3 && !isPremium; 
 
     return Scaffold(
@@ -252,13 +268,34 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: theme.appBarTheme.elevation ?? 0,
-        title: Text(
-          'Brainlock Decks',
-          style: theme.appBarTheme.titleTextStyle ?? TextStyle(
-            color: isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : theme.colorScheme.onSurface),
-            fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
-            fontSize: 24,
-          ),
+        title: Row(
+          children: [
+            Text(
+              'Brainlock Decks',
+              style: theme.appBarTheme.titleTextStyle ?? TextStyle(
+                color: isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : theme.colorScheme.onSurface),
+                fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
+                fontSize: 22,
+                fontFamily: isCyber ? 'monospace' : null,
+                letterSpacing: isCyber ? 1.5 : 1.0,
+              ),
+            ),
+            if (isCyber) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00FF66).withValues(alpha: 0.15),
+                  border: Border.all(color: const Color(0xFF00FF66), width: 1.0),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+                child: const Text(
+                  'v1.0',
+                  style: TextStyle(color: Color(0xFF00FF66), fontSize: 9, fontFamily: 'monospace', fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ],
         ),
         actions: [
           IconButton(
@@ -293,7 +330,7 @@ class _HomeScreenState extends State<HomeScreen> {
       
       body: ThemedBackground(
         child: isLoading
-            ? Center(child: CircularProgressIndicator(color: currentTheme.decksColor))
+            ? Center(child: CircularProgressIndicator(color: currentTheme.testSetupColor))
             : Consumer<StatsProvider>(
                 builder: (context, statsProvider, child) {
                   final todayStats = statsProvider.todayStats;
@@ -328,12 +365,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                     cardsDone: cardsDone,
                                     dailyTarget: dailyTarget,
                                     progressValue: progressValue,
+                                    isCyber: isCyber,
                                   ),
 
                                   _buildDailyChallengeCard(
                                     context: context,
                                     currentTheme: currentTheme,
                                     theme: theme,
+                                    isCyber: isCyber,
                                   ),
 
                                   _buildTimeEarnedCard(
@@ -341,6 +380,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     currentTheme: currentTheme,
                                     theme: theme,
                                     earnedSeconds: timeEarnedSeconds,
+                                    isCyber: isCyber,
                                   ),
 
                                   _buildAccuracyMasteryCard(
@@ -348,6 +388,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     currentTheme: currentTheme,
                                     theme: theme,
                                     statsProvider: statsProvider,
+                                    isCyber: isCyber,
                                   ),
                                 ],
                               ),
@@ -360,9 +401,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 Color dotColor;
                                 switch (index) {
                                   case 0: dotColor = currentTheme.dailyGoalColor; break;
-                                  case 1: dotColor = currentTheme.id == 5 ? const Color(0xFFFF3344) : currentTheme.testSetupColor; break;
+                                  case 1: dotColor = currentTheme.id == 5 ? const Color(0xFFFF3344) : currentTheme.decksColor; break;
                                   case 2: dotColor = currentTheme.quickImportColor; break;
-                                  case 3: dotColor = currentTheme.id == 5 ? currentTheme.decksColor : currentTheme.blockedAppsColor; break;
+                                  case 3: dotColor = currentTheme.id == 5 ? currentTheme.testSetupColor : currentTheme.blockedAppsColor; break;
                                   default: dotColor = currentTheme.dailyGoalColor;
                                 }
 
@@ -375,8 +416,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                     color: isSelected 
                                         ? (isNeo ? Colors.black : (isSoft ? const Color(0xFF2563EB) : dotColor))
                                         : (isNeo ? Colors.black26 : (isSoft ? const Color(0xFFA0AEC0) : theme.colorScheme.onSurface.withValues(alpha: 0.2))),
-                                    borderRadius: BorderRadius.circular(4),
-                                    border: isNeo ? Border.all(color: Colors.black, width: 1.5) : null,
+                                    borderRadius: BorderRadius.circular(isCyber ? 1 : 4),
+                                    border: isNeo ? Border.all(color: Colors.black, width: 1.5) : (isCyber && isSelected ? Border.all(color: dotColor, width: 1) : null),
                                   ),
                                 );
                               }),
@@ -388,15 +429,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                 Icon(
                                   Icons.touch_app_rounded,
                                   size: 13,
-                                  color: isSoft ? const Color(0xFF64748B) : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                                  color: isSoft ? const Color(0xFF64748B) : (isCyber ? const Color(0xFF00F5FF).withValues(alpha: 0.7) : theme.colorScheme.onSurface.withValues(alpha: 0.5)),
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  'Ťukni na kartu pre detailné štatistiky',
+                                  isCyber ? '// Ťukni na kartu pre detailné štatistiky' : 'Ťukni na kartu pre detailné štatistiky',
                                   style: TextStyle(
                                     fontSize: 11,
+                                    fontFamily: isCyber ? 'monospace' : null,
                                     fontWeight: FontWeight.w600,
-                                    color: isSoft ? const Color(0xFF64748B) : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                                    color: isSoft ? const Color(0xFF64748B) : (isCyber ? const Color(0xFF00F5FF).withValues(alpha: 0.7) : theme.colorScheme.onSurface.withValues(alpha: 0.5)),
                                   ),
                                 ),
                               ],
@@ -456,12 +498,15 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               const SizedBox(width: 14),
                               Text(
-                                isPremium ? 'MANAGE PREMIUM' : 'PREMIUM ACCESS',
+                                isPremium 
+                                    ? (isCyber ? '// MANAGE PREMIUM' : 'MANAGE PREMIUM') 
+                                    : (isCyber ? '// UNLOCK PREMIUM' : 'PREMIUM ACCESS'),
                                 style: TextStyle(
                                   color: isNeo 
                                       ? Colors.black 
                                       : (isSoft ? const Color(0xFFB45309) : (currentTheme.id == 5 ? Colors.white : currentTheme.warningColor)),
                                   fontWeight: FontWeight.w900,
+                                  fontFamily: isCyber ? 'monospace' : null,
                                   letterSpacing: 1.3,
                                   fontSize: 16,
                                 ),
@@ -494,10 +539,24 @@ class _HomeScreenState extends State<HomeScreen> {
                                     BoxShadow(color: Colors.white, offset: Offset(-6, -6), blurRadius: 12),
                                   ],
                                 )
-                              : currentTheme.getCardDecoration(currentTheme.decksColor),
+                              : currentTheme.getCardDecoration(currentTheme.testSetupColor),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
+                              if (isCyber)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 6),
+                                  child: Text(
+                                    '// STORAGE_BANK :: DECKS',
+                                    style: TextStyle(
+                                      color: currentTheme.testSetupColor.withValues(alpha: 0.85),
+                                      fontSize: 10,
+                                      fontFamily: 'monospace',
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1.5,
+                                    ),
+                                  ),
+                                ),
                               Container(
                                 width: 68,
                                 height: 68,
@@ -514,7 +573,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: Icon(
                                   Icons.style_rounded, 
                                   size: 38, 
-                                  color: isNeo ? Colors.black : (isSoft ? const Color(0xFF0D9488) : currentTheme.getIconColor(currentTheme.decksColor)),
+                                  color: isNeo ? Colors.black : (isSoft ? const Color(0xFF0D9488) : currentTheme.getIconColor(currentTheme.testSetupColor)),
                                 ),
                               ),
                               const SizedBox(height: 10),
@@ -523,16 +582,20 @@ class _HomeScreenState extends State<HomeScreen> {
                                 style: TextStyle(
                                   color: isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : (currentTheme.id == 5 ? Colors.white : theme.colorScheme.onSurface)),
                                   fontSize: 22,
+                                  fontFamily: isCyber ? 'monospace' : null,
                                   fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
                                 ),
                               ),
                               const SizedBox(height: 3),
                               Text(
-                                '$customDeckCount balíčkov · Správa & tvorba',
+                                isCyber 
+                                    ? '[$customDeckCount BALÍČKOV] :: Správa & tvorba' 
+                                    : '$customDeckCount balíčkov · Správa & tvorba',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  color: isNeo ? Colors.black87 : (isSoft ? const Color(0xFF64748B) : (currentTheme.id == 5 ? Colors.white70 : theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+                                  color: isNeo ? Colors.black87 : (isSoft ? const Color(0xFF64748B) : (currentTheme.id == 5 ? Colors.white70 : theme.colorScheme.onSurface.withValues(alpha: 0.7))),
                                   fontSize: 12,
+                                  fontFamily: isCyber ? 'monospace' : null,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -550,11 +613,12 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: _buildActionTile(
                               icon: Icons.settings_suggest_rounded,
                               title: 'Test Setup',
-                              subtitle: 'Prispôsob si učenie',
-                              accentColor: currentTheme.testSetupColor,
+                              subtitle: isCyber ? '[SYS_CONFIG]' : 'Prispôsob si učenie',
+                              accentColor: currentTheme.decksColor,
                               socketBgColor: isSoft ? const Color(0xFFEDE9FE) : null,
                               socketIconColor: isSoft ? const Color(0xFF7C3AED) : null,
                               currentTheme: currentTheme,
+                              isCyber: isCyber,
                               onTap: () {
                                 Navigator.push(context, MaterialPageRoute(builder: (context) => const TestSetupScreen()))
                                     .then((_) => _refreshAllData());
@@ -566,11 +630,12 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: _buildActionTile(
                               icon: Icons.smartphone_rounded,
                               title: 'Blocked Apps',
-                              subtitle: 'Výber blokovaných appiek',
+                              subtitle: isCyber ? '[APP_LOCK]' : 'Výber blokovaných appiek',
                               accentColor: currentTheme.blockedAppsColor,
                               socketBgColor: isSoft ? const Color(0xFFFFE4E6) : null,
                               socketIconColor: isSoft ? const Color(0xFFE11D48) : null,
                               currentTheme: currentTheme,
+                              isCyber: isCyber,
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -584,7 +649,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                       const SizedBox(height: 22),
 
-                      // 🟢 QUICK IMPORT PRIAMO V LISTVIEW (BEZ OVERLAPU)
+                      // QUICK IMPORT PRIAMO V LISTVIEW
                       Center(
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
@@ -599,19 +664,22 @@ class _HomeScreenState extends State<HomeScreen> {
                                 )
                               : BoxDecoration(
                                   color: isNeo ? Colors.white : theme.scaffoldBackgroundColor.withValues(alpha: 0.8),
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: isNeo ? Border.all(color: Colors.black, width: 2.0) : (currentTheme.id == 0 
-                                      ? Border.all(color: const Color(0xFF00FF66).withValues(alpha: 0.4), width: 1) 
+                                  borderRadius: BorderRadius.circular(isCyber ? 3 : 6),
+                                  border: isNeo ? Border.all(color: Colors.black, width: 2.0) : (isCyber 
+                                      ? Border.all(color: currentTheme.quickImportColor, width: 1.5) 
                                       : null),
-                                  boxShadow: isNeo ? const [BoxShadow(color: Colors.black, offset: Offset(2, 2))] : null,
+                                  boxShadow: isNeo ? const [BoxShadow(color: Colors.black, offset: Offset(2, 2))] : (isCyber ? [
+                                    BoxShadow(color: currentTheme.quickImportColor.withValues(alpha: 0.3), blurRadius: 8)
+                                  ] : null),
                                 ),
                           child: Text(
-                            'QUICK IMPORT',
+                            isCyber ? '// DATA_INGESTION_PROTOCOL' : 'QUICK IMPORT',
                             style: TextStyle(
                               color: isNeo 
                                   ? Colors.black 
-                                  : (isSoft ? const Color(0xFF4A5568) : (currentTheme.id == 0 ? const Color(0xFF00FF66) : theme.colorScheme.onSurface.withValues(alpha: 0.8))),
+                                  : (isSoft ? const Color(0xFF4A5568) : (isCyber ? currentTheme.quickImportColor : theme.colorScheme.onSurface.withValues(alpha: 0.8))),
                               fontSize: 11,
+                              fontFamily: isCyber ? 'monospace' : null,
                               fontWeight: FontWeight.w900,
                               letterSpacing: 1.4,
                             ),
@@ -630,6 +698,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               socketIconColor: isSoft ? const Color(0xFF2563EB) : null,
                               isLocked: isLimitReached,
                               currentTheme: currentTheme,
+                              isCyber: isCyber,
                               onTap: () {
                                 if (isLimitReached) {
                                   _showPremiumDialog();
@@ -652,6 +721,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               socketIconColor: isSoft ? const Color(0xFF0284C7) : null,
                               isLocked: isLimitReached,
                               currentTheme: currentTheme,
+                              isCyber: isCyber,
                               onTap: () {
                                 if (isLimitReached) {
                                   _showPremiumDialog();
@@ -681,6 +751,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required int cardsDone,
     required int dailyTarget,
     required double progressValue,
+    required bool isCyber,
   }) {
     final bool isNeobrutalism = currentTheme.id == 2;
     final bool isVibrant = currentTheme.id == 5;
@@ -696,11 +767,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final Color progressFillColor = isNeobrutalism 
         ? Colors.black 
-        : (isSoft ? const Color(0xFF2563EB) : (isVibrant ? Colors.white : (isCompleted ? currentTheme.successColor : Colors.white)));
+        : (isSoft ? const Color(0xFF2563EB) : (isVibrant ? Colors.white : (isCompleted ? currentTheme.successColor : currentTheme.dailyGoalColor)));
         
     final Color progressBgColor = isNeobrutalism 
         ? Colors.white 
-        : (isSoft ? const Color(0xFFC8D3E6) : Colors.black.withValues(alpha: 0.25));
+        : (isSoft ? const Color(0xFFC8D3E6) : Colors.black.withValues(alpha: 0.35));
 
     final BoxDecoration cardDecoration = isSoft
         ? BoxDecoration(
@@ -732,6 +803,8 @@ class _HomeScreenState extends State<HomeScreen> {
               titleColor: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFF2563EB) : (isVibrant ? Colors.white.withValues(alpha: 0.9) : currentTheme.dailyGoalColor)),
               isSoft: isSoft,
               isNeo: isNeobrutalism,
+              isCyber: isCyber,
+              sysCode: '// GOAL_TRACKER',
             ),
             const SizedBox(height: 10),
             Row(
@@ -745,6 +818,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(
                     color: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFF1E293B) : (isVibrant ? Colors.white : theme.colorScheme.onSurface)),
                     fontWeight: isNeobrutalism || isSoft ? FontWeight.w900 : FontWeight.bold,
+                    fontFamily: isCyber ? 'monospace' : null,
                     fontSize: 19,
                     height: 1.1,
                   ),
@@ -756,15 +830,13 @@ class _HomeScreenState extends State<HomeScreen> {
               height: 12,
               decoration: BoxDecoration(
                 color: progressBgColor,
-                borderRadius: BorderRadius.circular(isNeobrutalism ? 6 : 8),
-                border: isNeobrutalism ? Border.all(color: Colors.black, width: 2.5) : null,
-                boxShadow: isSoft ? const [
-                  BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(2, 2), blurRadius: 4),
-                  BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
-                ] : null,
+                borderRadius: BorderRadius.circular(isNeobrutalism ? 6 : (isCyber ? 2 : 8)),
+                border: isNeobrutalism 
+                    ? Border.all(color: Colors.black, width: 2.5) 
+                    : (isCyber ? Border.all(color: currentTheme.dailyGoalColor.withValues(alpha: 0.5), width: 1) : null),
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(isNeobrutalism ? 3 : 8),
+                borderRadius: BorderRadius.circular(isNeobrutalism ? 3 : (isCyber ? 1 : 8)),
                 child: LinearProgressIndicator(
                   value: progressValue,
                   backgroundColor: Colors.transparent,
@@ -782,6 +854,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required BuildContext context,
     required AppThemeData currentTheme,
     required ThemeData theme,
+    required bool isCyber,
   }) {
     final bool isVibrantGradient = currentTheme.id == 5;
     final bool isNeobrutalism = currentTheme.id == 2;
@@ -789,7 +862,7 @@ class _HomeScreenState extends State<HomeScreen> {
     
     final Color textColor = isNeobrutalism
         ? Colors.black
-        : (isSoft ? const Color(0xFF1E293B) : (isVibrantGradient ? Colors.white : currentTheme.getContrastTextColor(currentTheme.testSetupColor)));
+        : (isSoft ? const Color(0xFF1E293B) : (isVibrantGradient ? Colors.white : currentTheme.getContrastTextColor(currentTheme.decksColor)));
 
     final BoxDecoration cardDecoration = isSoft
         ? BoxDecoration(
@@ -809,7 +882,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   end: Alignment.bottomRight,
                 ),
               )
-            : currentTheme.getCardDecoration(currentTheme.testSetupColor));
+            : currentTheme.getCardDecoration(currentTheme.decksColor));
 
     if (_todayChallenge == null) {
       return Container(
@@ -836,10 +909,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text(_todayChallenge!.iconEmoji, style: const TextStyle(fontSize: 20)),
                   const SizedBox(width: 8),
                   Text(
-                    'DENNÁ VÝZVA',
+                    isCyber ? '// MISSION_CONTROL' : 'DENNÁ VÝZVA',
                     style: TextStyle(
-                      color: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFF7C3AED) : textColor.withValues(alpha: 0.8)),
+                      color: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFF7C3AED) : (isCyber ? currentTheme.decksColor : textColor.withValues(alpha: 0.8))),
                       fontSize: 12,
+                      fontFamily: isCyber ? 'monospace' : null,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 1.1,
                     ),
@@ -851,8 +925,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: isNeobrutalism ? Colors.white : (isSoft ? const Color(0xFFC8D3E6) : Colors.black),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: isNeobrutalism ? Colors.black : Colors.orange, width: 2.0),
+                  borderRadius: BorderRadius.circular(isCyber ? 3 : 10),
+                  border: Border.all(color: isNeobrutalism ? Colors.black : Colors.orange, width: isCyber ? 1.0 : 2.0),
                 ),
                 child: Row(
                   children: [
@@ -863,6 +937,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: TextStyle(
                         color: isNeobrutalism ? Colors.black : Colors.orange,
                         fontWeight: FontWeight.w900,
+                        fontFamily: isCyber ? 'monospace' : null,
                         fontSize: 12,
                       ),
                     ),
@@ -877,6 +952,7 @@ class _HomeScreenState extends State<HomeScreen> {
             style: TextStyle(
               color: textColor,
               fontSize: 17,
+              fontFamily: isCyber ? 'monospace' : null,
               fontWeight: isNeobrutalism || isSoft ? FontWeight.w900 : FontWeight.bold,
             ),
           ),
@@ -898,12 +974,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Container(
                   height: 12,
                   decoration: BoxDecoration(
-                    color: isNeobrutalism ? Colors.white : (isSoft ? const Color(0xFFC8D3E6) : Colors.black.withValues(alpha: 0.25)),
-                    borderRadius: BorderRadius.circular(isNeobrutalism ? 6 : 8),
-                    border: isNeobrutalism ? Border.all(color: Colors.black, width: 2.0) : null,
+                    color: isNeobrutalism ? Colors.white : (isSoft ? const Color(0xFFC8D3E6) : Colors.black.withValues(alpha: 0.35)),
+                    borderRadius: BorderRadius.circular(isNeobrutalism ? 6 : (isCyber ? 2 : 8)),
+                    border: isNeobrutalism ? Border.all(color: Colors.black, width: 2.0) : (isCyber ? Border.all(color: currentTheme.decksColor.withValues(alpha: 0.5), width: 1) : null),
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(isNeobrutalism ? 3 : 8),
+                    borderRadius: BorderRadius.circular(isNeobrutalism ? 3 : (isCyber ? 1 : 8)),
                     child: LinearProgressIndicator(
                       value: challengeProgressPct,
                       backgroundColor: Colors.transparent,
@@ -920,6 +996,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: TextStyle(
                   color: textColor,
                   fontWeight: FontWeight.w900,
+                  fontFamily: isCyber ? 'monospace' : null,
                   fontSize: 12,
                 ),
               ),
@@ -941,14 +1018,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     )
                   : BoxDecoration(
                       color: isNeobrutalism ? Colors.white : Colors.amber.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(8),
-                      border: isNeobrutalism ? Border.all(color: Colors.black, width: 2.0) : null,
+                      borderRadius: BorderRadius.circular(isCyber ? 3 : 8),
+                      border: isNeobrutalism ? Border.all(color: Colors.black, width: 2.0) : (isCyber ? Border.all(color: Colors.amber, width: 1.0) : null),
                     ),
               child: Text(
                 'Odmena: +$bonusMin min',
                 style: TextStyle(
                   color: isSoft ? const Color(0xFF7C3AED) : textColor,
                   fontSize: 11,
+                  fontFamily: isCyber ? 'monospace' : null,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -964,6 +1042,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required AppThemeData currentTheme,
     required ThemeData theme,
     required int earnedSeconds,
+    required bool isCyber,
   }) {
     int minutes = earnedSeconds ~/ 60;
     int seconds = earnedSeconds % 60;
@@ -1001,6 +1080,8 @@ class _HomeScreenState extends State<HomeScreen> {
               titleColor: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFF2563EB) : (isVibrant ? Colors.white.withValues(alpha: 0.9) : currentTheme.quickImportColor)),
               isSoft: isSoft,
               isNeo: isNeobrutalism,
+              isCyber: isCyber,
+              sysCode: '// TIME_LOG',
             ),
             const SizedBox(height: 10),
             Row(
@@ -1013,6 +1094,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(
                     color: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFF1E293B) : (isVibrant ? Colors.white : theme.colorScheme.onSurface)),
                     fontWeight: isNeobrutalism || isSoft ? FontWeight.w900 : FontWeight.bold,
+                    fontFamily: isCyber ? 'monospace' : null,
                     fontSize: 26,
                   ),
                 ),
@@ -1020,11 +1102,12 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Vybojovaný čas na odomknutie aplikácií',
+              isCyber ? '[UNLOCK_TIME_BANK] :: Vybojovaný čas' : 'Vybojovaný čas na odomknutie aplikácií',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: isNeobrutalism ? Colors.black87 : (isSoft ? const Color(0xFF64748B) : (isVibrant ? Colors.white.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.7))),
                 fontSize: 12,
+                fontFamily: isCyber ? 'monospace' : null,
                 fontWeight: isNeobrutalism || isSoft ? FontWeight.bold : FontWeight.w600,
               ),
             ),
@@ -1039,6 +1122,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required AppThemeData currentTheme,
     required ThemeData theme,
     required StatsProvider statsProvider,
+    required bool isCyber,
   }) {
     final rawAccuracy = statsProvider.todayStats['accuracy'];
     double val = (rawAccuracy as num?)?.toDouble() ?? 0.0;
@@ -1051,7 +1135,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final bool isSoft = currentTheme.id == 1;
 
     final Color accuracyCardColor = isVibrant 
-        ? currentTheme.decksColor 
+        ? currentTheme.testSetupColor 
         : currentTheme.blockedAppsColor;
 
     final BoxDecoration cardDecoration = isSoft
@@ -1084,6 +1168,8 @@ class _HomeScreenState extends State<HomeScreen> {
               titleColor: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFFE11D48) : (isVibrant ? Colors.white.withValues(alpha: 0.9) : accuracyCardColor)),
               isSoft: isSoft,
               isNeo: isNeobrutalism,
+              isCyber: isCyber,
+              sysCode: '// METRICS',
             ),
             const SizedBox(height: 10),
             Row(
@@ -1098,6 +1184,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: TextStyle(
                         color: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFF1E293B) : (isVibrant ? Colors.white : theme.colorScheme.onSurface)),
                         fontWeight: isNeobrutalism || isSoft ? FontWeight.w900 : FontWeight.bold,
+                        fontFamily: isCyber ? 'monospace' : null,
                         fontSize: 20,
                       ),
                     ),
@@ -1106,6 +1193,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: TextStyle(
                         color: isNeobrutalism ? Colors.black87 : (isSoft ? const Color(0xFF64748B) : (isVibrant ? Colors.white.withValues(alpha: 0.7) : theme.colorScheme.onSurface.withValues(alpha: 0.6))),
                         fontSize: 11,
+                        fontFamily: isCyber ? 'monospace' : null,
                         fontWeight: isNeobrutalism || isSoft ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
@@ -1125,6 +1213,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: TextStyle(
                         color: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFF1E293B) : (isVibrant ? Colors.white : theme.colorScheme.onSurface)),
                         fontWeight: isNeobrutalism || isSoft ? FontWeight.w900 : FontWeight.bold,
+                        fontFamily: isCyber ? 'monospace' : null,
                         fontSize: 20,
                       ),
                     ),
@@ -1133,6 +1222,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: TextStyle(
                         color: isNeobrutalism ? Colors.black87 : (isSoft ? const Color(0xFF64748B) : (isVibrant ? Colors.white.withValues(alpha: 0.7) : theme.colorScheme.onSurface.withValues(alpha: 0.6))),
                         fontSize: 11,
+                        fontFamily: isCyber ? 'monospace' : null,
                         fontWeight: isNeobrutalism || isSoft ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
@@ -1153,6 +1243,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required Color accentColor,
     required AppThemeData currentTheme,
     required VoidCallback onTap,
+    required bool isCyber,
     Color? socketBgColor,
     Color? socketIconColor,
   }) {
@@ -1207,6 +1298,7 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(
                 color: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFF1E293B) : (isVibrant ? Colors.white : theme.colorScheme.onSurface)),
                 fontWeight: isNeobrutalism || isSoft ? FontWeight.w900 : FontWeight.bold,
+                fontFamily: isCyber ? 'monospace' : null,
                 fontSize: 15,
               ),
             ),
@@ -1220,6 +1312,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: TextStyle(
                   color: isNeobrutalism ? Colors.black87 : (isSoft ? const Color(0xFF64748B) : (isVibrant ? Colors.white70 : theme.colorScheme.onSurface.withValues(alpha: 0.6))),
                   fontSize: 11,
+                  fontFamily: isCyber ? 'monospace' : null,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1236,6 +1329,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required Color accentColor,
     required AppThemeData currentTheme,
     required VoidCallback onTap,
+    required bool isCyber,
     bool isLocked = false,
     Color? socketBgColor,
     Color? socketIconColor,
@@ -1294,6 +1388,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: TextStyle(
                   color: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFF1E293B) : (isVibrant ? Colors.white : theme.colorScheme.onSurface)),
                   fontWeight: isNeobrutalism || isSoft ? FontWeight.w900 : FontWeight.bold,
+                  fontFamily: isCyber ? 'monospace' : null,
                   fontSize: 14,
                 ),
               ),

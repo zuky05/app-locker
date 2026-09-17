@@ -108,14 +108,18 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     final bool isGlass = currentTheme.id == 4 || currentTheme.id.toString() == '4';
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
+    final String cleanName = currentTheme.name.toLowerCase();
+    final bool isCyberpunk = cleanName.contains('cyberpunk');
     
-    final Color textColor = isNeo
-        ? Colors.black
-        : (isSoft 
-            ? const Color(0xFF1E293B) 
-            : ((isVibrant || isGlass)
-                ? Colors.white 
-                : currentTheme.getContrastTextColor(backgroundColor)));
+    final Color textColor = isCyberpunk
+        ? Colors.white
+        : (isNeo
+            ? Colors.black
+            : (isSoft 
+                ? const Color(0xFF1E293B) 
+                : ((isVibrant || isGlass)
+                    ? Colors.white 
+                    : currentTheme.getContrastTextColor(backgroundColor))));
 
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -124,17 +128,20 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
           message,
           style: TextStyle(
             color: textColor,
-            fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
+            fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.bold,
+            fontFamily: isCyberpunk ? 'monospace' : null,
             fontSize: 14,
           ),
         ),
-        backgroundColor: isSoft ? const Color(0xFFD1D9E6) : backgroundColor,
+        backgroundColor: isCyberpunk ? const Color(0xFF120E24) : (isSoft ? const Color(0xFFD1D9E6) : backgroundColor),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: currentTheme.buttonBorderRadius,
-          side: isNeo
-              ? const BorderSide(color: Colors.black, width: 3.5)
-              : BorderSide.none,
+          side: isCyberpunk
+              ? const BorderSide(color: Color(0xFFFF007F), width: 1.5)
+              : (isNeo
+                  ? const BorderSide(color: Colors.black, width: 3.5)
+                  : BorderSide.none),
         ),
         elevation: isNeo ? 0 : 4,
         duration: const Duration(seconds: 3),
@@ -802,7 +809,16 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     final bool isGlass = currentTheme.id == 4 || currentTheme.id.toString() == '4';
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
+    final String cleanName = currentTheme.name.toLowerCase();
+    final bool isCyberpunk = cleanName.contains('cyberpunk');
 
+    if (isCyberpunk) {
+      return BoxDecoration(
+        color: const Color(0xFF120E24),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFF00F0FF).withValues(alpha: 0.5), width: 1.5),
+      );
+    }
     if (isSoft) {
       return BoxDecoration(
         color: const Color(0xFFD1D9E6),
@@ -842,7 +858,10 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     final bool isGlass = currentTheme.id == 4 || currentTheme.id.toString() == '4';
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
+    final String cleanName = currentTheme.name.toLowerCase();
+    final bool isCyberpunk = cleanName.contains('cyberpunk');
 
+    if (isCyberpunk) return Colors.white;
     if (isSoft) return const Color(0xFF1E293B);
     if (isNeo) return Colors.black;
     return (isVibrant || isGlass) ? Colors.white : currentTheme.theme.colorScheme.onSurface;
@@ -858,9 +877,32 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     final bool isGlass = currentTheme.id == 4 || currentTheme.id.toString() == '4';
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
+    final String cleanName = currentTheme.name.toLowerCase();
+    final bool isCyberpunk = cleanName.contains('cyberpunk');
 
     BoxDecoration dialogBgDecoration;
-    if (isSoft) {
+    if (isCyberpunk) {
+      dialogBgDecoration = BoxDecoration(
+        color: const Color(0xFF050014),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFF00F0FF),
+          width: 2.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF00F0FF).withValues(alpha: 0.5),
+            blurRadius: 16,
+            spreadRadius: 2,
+          ),
+          BoxShadow(
+            color: const Color(0xFFFF007F).withValues(alpha: 0.35),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      );
+    } else if (isSoft) {
       dialogBgDecoration = BoxDecoration(
         color: const Color(0xFFD1D9E6),
         borderRadius: currentTheme.cardBorderRadius,
@@ -904,7 +946,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     final Widget mainBody = Scaffold(
       backgroundColor: isPractice 
           ? Colors.transparent 
-          : Colors.black.withValues(alpha: 0.40),
+          : Colors.black.withValues(alpha: 0.70),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
@@ -921,7 +963,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                           height: 200, 
                           child: Center(
                             child: CircularProgressIndicator(
-                              color: isNeo ? Colors.black : (isSoft ? const Color(0xFF2563EB) : currentTheme.testSetupColor),
+                              color: isCyberpunk ? const Color(0xFF00F0FF) : (isNeo ? Colors.black : (isSoft ? const Color(0xFF2563EB) : currentTheme.testSetupColor)),
                             ),
                           ),
                         ) 
@@ -935,14 +977,15 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                   onPressed: _closeOrExitScreen,
                   icon: Icon(
                     Icons.close_rounded, 
-                    color: isNeo ? Colors.black : (isSoft ? const Color(0xFF4A5568) : ((isVibrant || isGlass) ? Colors.white.withValues(alpha: 0.85) : theme.colorScheme.onSurface.withValues(alpha: 0.75))), 
+                    color: isCyberpunk ? const Color(0xFF00F0FF) : (isNeo ? Colors.black : (isSoft ? const Color(0xFF4A5568) : ((isVibrant || isGlass) ? Colors.white.withValues(alpha: 0.85) : theme.colorScheme.onSurface.withValues(alpha: 0.75)))), 
                     size: 20,
                   ),
                   label: Text(
                     "Zrušiť test", 
                     style: TextStyle(
-                      color: isNeo ? Colors.black : (isSoft ? const Color(0xFF4A5568) : ((isVibrant || isGlass) ? Colors.white.withValues(alpha: 0.85) : theme.colorScheme.onSurface.withValues(alpha: 0.75))), 
-                      fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold, 
+                      color: isCyberpunk ? const Color(0xFF00F0FF) : (isNeo ? Colors.black : (isSoft ? const Color(0xFF4A5568) : ((isVibrant || isGlass) ? Colors.white.withValues(alpha: 0.85) : theme.colorScheme.onSurface.withValues(alpha: 0.75)))), 
+                      fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.bold, 
+                      fontFamily: isCyberpunk ? 'monospace' : null,
                       fontSize: 15,
                     ),
                   ),
@@ -970,12 +1013,15 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
         final bool isGlass = currentTheme.id == 4 || currentTheme.id.toString() == '4';
         final bool isNeo = currentTheme.id == 2;
         final bool isSoft = currentTheme.id == 1;
+        final String cleanName = currentTheme.name.toLowerCase();
+        final bool isCyberpunk = cleanName.contains('cyberpunk');
 
         return Text(
           "Žiadne kartičky v databáze!", 
           style: TextStyle(
-            fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.normal,
-            color: isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : ((isVibrant || isGlass) ? Colors.white : currentTheme.theme.colorScheme.onSurface)),
+            fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.normal,
+            fontFamily: isCyberpunk ? 'monospace' : null,
+            color: isCyberpunk ? Colors.white : (isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : ((isVibrant || isGlass) ? Colors.white : currentTheme.theme.colorScheme.onSurface))),
           ),
         );
       }
@@ -986,12 +1032,15 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
         final bool isGlass = currentTheme.id == 4 || currentTheme.id.toString() == '4';
         final bool isNeo = currentTheme.id == 2;
         final bool isSoft = currentTheme.id == 1;
+        final String cleanName = currentTheme.name.toLowerCase();
+        final bool isCyberpunk = cleanName.contains('cyberpunk');
 
         return Text(
           "Žiadne kartičky v databáze!",
           style: TextStyle(
-            fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.normal,
-            color: isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : ((isVibrant || isGlass) ? Colors.white : currentTheme.theme.colorScheme.onSurface)),
+            fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.normal,
+            fontFamily: isCyberpunk ? 'monospace' : null,
+            color: isCyberpunk ? Colors.white : (isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : ((isVibrant || isGlass) ? Colors.white : currentTheme.theme.colorScheme.onSurface))),
           ),
         );
       }
@@ -1005,34 +1054,39 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     final bool isGlass = currentTheme.id == 4 || currentTheme.id.toString() == '4';
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
-    final Color textColor = isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : ((isVibrant || isGlass) ? Colors.white : theme.colorScheme.onSurface));
+    final String cleanName = currentTheme.name.toLowerCase();
+    final bool isCyberpunk = cleanName.contains('cyberpunk');
+    final Color textColor = isCyberpunk ? Colors.white : (isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : ((isVibrant || isGlass) ? Colors.white : theme.colorScheme.onSurface)));
 
     if (_isLearningMode) {
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          isSoft
-              ? Container(
-                  width: 72,
-                  height: 72,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFCCFBF1),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(3, 3), blurRadius: 6),
-                      BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 6),
-                    ],
-                  ),
-                  child: const Icon(Icons.school_rounded, size: 38, color: Color(0xFF0D9488)),
-                )
-              : const Icon(Icons.school_rounded, size: 60, color: Colors.green),
+          isCyberpunk
+              ? const Icon(Icons.school_rounded, size: 60, color: Color(0xFF00F0FF))
+              : (isSoft
+                  ? Container(
+                      width: 72,
+                      height: 72,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFCCFBF1),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(3, 3), blurRadius: 6),
+                          BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 6),
+                        ],
+                      ),
+                      child: const Icon(Icons.school_rounded, size: 38, color: Color(0xFF0D9488)),
+                    )
+                  : const Icon(Icons.school_rounded, size: 60, color: Colors.green)),
           const SizedBox(height: 16),
           Text(
             "Učenie dokončené!", 
             style: TextStyle(
               fontSize: 24, 
-              fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold, 
-              color: isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : ((isVibrant || isGlass) ? Colors.white : theme.colorScheme.primary)),
+              fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.bold, 
+              fontFamily: isCyberpunk ? 'monospace' : null,
+              color: isCyberpunk ? const Color(0xFF00F0FF) : (isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : ((isVibrant || isGlass) ? Colors.white : theme.colorScheme.primary))),
             ),
           ),
           const SizedBox(height: 16),
@@ -1041,8 +1095,9 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             textAlign: TextAlign.center, 
             style: TextStyle(
               fontSize: 16, 
-              fontWeight: isNeo || isSoft ? FontWeight.bold : FontWeight.normal,
-              color: isNeo ? Colors.black87 : (isSoft ? const Color(0xFF64748B) : textColor),
+              fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.bold : FontWeight.normal,
+              fontFamily: isCyberpunk ? 'monospace' : null,
+              color: isCyberpunk ? Colors.white70 : (isNeo ? Colors.black87 : (isSoft ? const Color(0xFF64748B) : textColor)),
             ),
           ),
           const SizedBox(height: 24),
@@ -1073,36 +1128,43 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        isSoft
-            ? Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: isSuccess ? const Color(0xFFCCFBF1) : const Color(0xFFFFE4E6),
-                  shape: BoxShape.circle,
-                  boxShadow: const [
-                    BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(3, 3), blurRadius: 6),
-                    BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 6),
-                  ],
-                ),
-                child: Icon(
-                  isSuccess ? Icons.emoji_events_rounded : Icons.sentiment_dissatisfied_rounded,
-                  size: 38,
-                  color: isSuccess ? const Color(0xFF0D9488) : const Color(0xFFE11D48),
-                ),
+        isCyberpunk
+            ? Icon(
+                isSuccess ? Icons.emoji_events_rounded : Icons.sentiment_dissatisfied_rounded,
+                size: 60,
+                color: isSuccess ? const Color(0xFF00F0FF) : const Color(0xFFFF007F),
               )
-            : Icon(
-                isSuccess ? Icons.emoji_events_rounded : Icons.sentiment_dissatisfied_rounded, 
-                size: 60, 
-                color: isSuccess ? (isNeo ? Colors.black : currentTheme.getIconColor(currentTheme.successColor)) : textColor.withValues(alpha: 0.4),
-              ),
+            : (isSoft
+                ? Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: isSuccess ? const Color(0xFFCCFBF1) : const Color(0xFFFFE4E6),
+                      shape: BoxShape.circle,
+                      boxShadow: const [
+                        BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(3, 3), blurRadius: 6),
+                        BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 6),
+                      ],
+                    ),
+                    child: Icon(
+                      isSuccess ? Icons.emoji_events_rounded : Icons.sentiment_dissatisfied_rounded,
+                      size: 38,
+                      color: isSuccess ? const Color(0xFF0D9488) : const Color(0xFFE11D48),
+                    ),
+                  )
+                : Icon(
+                    isSuccess ? Icons.emoji_events_rounded : Icons.sentiment_dissatisfied_rounded, 
+                    size: 60, 
+                    color: isSuccess ? (isNeo ? Colors.black : currentTheme.getIconColor(currentTheme.successColor)) : textColor.withValues(alpha: 0.4),
+                  )),
         const SizedBox(height: 16),
         Text(
           titleText, 
           style: TextStyle(
             fontSize: 24, 
-            fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold, 
-            color: isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : ((isVibrant || isGlass) ? Colors.white : theme.colorScheme.primary)),
+            fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.bold, 
+            fontFamily: isCyberpunk ? 'monospace' : null,
+            color: isCyberpunk ? const Color(0xFF00F0FF) : (isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : ((isVibrant || isGlass) ? Colors.white : theme.colorScheme.primary))),
           ), 
           textAlign: TextAlign.center,
         ),
@@ -1111,16 +1173,18 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
           "Úspešnosť: $_correctAnswersCount / ${_questionCount.toInt()}", 
           style: TextStyle(
             fontSize: 16, 
-            fontWeight: isNeo || isSoft ? FontWeight.bold : FontWeight.normal,
-            color: isNeo ? Colors.black87 : (isSoft ? const Color(0xFF1E293B) : textColor),
+            fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.bold : FontWeight.normal,
+            fontFamily: isCyberpunk ? 'monospace' : null,
+            color: isCyberpunk ? Colors.white : (isNeo ? Colors.black87 : (isSoft ? const Color(0xFF1E293B) : textColor)),
           ),
         ),
         Text(
           "Požadovaný prah: $_requiredCorrectQuestions / ${_questionCount.toInt()}", 
           style: TextStyle(
             fontSize: 16, 
-            fontWeight: isNeo || isSoft ? FontWeight.bold : FontWeight.normal,
-            color: isNeo ? Colors.black54 : (isSoft ? const Color(0xFF64748B) : textColor.withValues(alpha: 0.7)),
+            fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.bold : FontWeight.normal,
+            fontFamily: isCyberpunk ? 'monospace' : null,
+            color: isCyberpunk ? Colors.white70 : (isNeo ? Colors.black54 : (isSoft ? const Color(0xFF64748B) : textColor.withValues(alpha: 0.7))),
           ),
         ),
         
@@ -1129,29 +1193,42 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
-            decoration: isSoft
+            decoration: isCyberpunk
                 ? BoxDecoration(
-                    color: const Color(0xFFD1D9E6),
-                    borderRadius: currentTheme.cardBorderRadius,
-                    boxShadow: const [
-                      BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(4, 4), blurRadius: 8),
-                      BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 8),
+                    color: const Color(0xFF120E24),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: isSuccess ? const Color(0xFF00F0FF) : const Color(0xFFFF007F), width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: (isSuccess ? const Color(0xFF00F0FF) : const Color(0xFFFF007F)).withValues(alpha: 0.3),
+                        blurRadius: 8,
+                      ),
                     ],
                   )
-                : (isNeo
+                : (isSoft
                     ? BoxDecoration(
-                        color: accentResultColor,
+                        color: const Color(0xFFD1D9E6),
                         borderRadius: currentTheme.cardBorderRadius,
-                        border: Border.all(color: Colors.black, width: 3.5),
-                        boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(4, 4), blurRadius: 0)],
+                        boxShadow: const [
+                          BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(4, 4), blurRadius: 8),
+                          BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 8),
+                        ],
                       )
-                    : currentTheme.getCardDecoration(accentResultColor)),
+                    : (isNeo
+                        ? BoxDecoration(
+                            color: accentResultColor,
+                            borderRadius: currentTheme.cardBorderRadius,
+                            border: Border.all(color: Colors.black, width: 3.5),
+                            boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(4, 4), blurRadius: 0)],
+                          )
+                        : currentTheme.getCardDecoration(accentResultColor))),
             child: Text(
               isSuccess ? "Získaný čas: ${m}m ${s}s" : "Nesplnil si podmienku pre zisk času.", 
               style: TextStyle(
                 fontSize: 18, 
-                fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold, 
-                color: isNeo ? Colors.black : (isSoft ? (isSuccess ? const Color(0xFF0D9488) : const Color(0xFFE11D48)) : ((isVibrant || isGlass) ? Colors.white : currentTheme.getContrastTextColor(accentResultColor))),
+                fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.bold, 
+                fontFamily: isCyberpunk ? 'monospace' : null,
+                color: isCyberpunk ? (isSuccess ? const Color(0xFF00F0FF) : const Color(0xFFFF007F)) : (isNeo ? Colors.black : (isSoft ? (isSuccess ? const Color(0xFF0D9488) : const Color(0xFFE11D48)) : ((isVibrant || isGlass) ? Colors.white : currentTheme.getContrastTextColor(accentResultColor)))),
               ), 
               textAlign: TextAlign.center,
             ),
@@ -1174,21 +1251,27 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     final bool isGlass = currentTheme.id == 4 || currentTheme.id.toString() == '4';
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
-    final Color textColor = isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : ((isVibrant || isGlass) ? Colors.white : theme.colorScheme.onSurface));
+    final String cleanName = currentTheme.name.toLowerCase();
+    final bool isCyberpunk = cleanName.contains('cyberpunk');
+    final Color textColor = isCyberpunk ? Colors.white : (isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : ((isVibrant || isGlass) ? Colors.white : theme.colorScheme.onSurface)));
     final card = _learningCardsQueue.first;
     int currentIndex = _totalLearnedCards - _learningCardsQueue.length + 1;
 
-    final Color warningBtnTextColor = isNeo
-        ? Colors.black
-        : (isSoft ? const Color(0xFFD97706) : ((isVibrant || isGlass) 
-            ? Colors.white 
-            : currentTheme.getContrastTextColor(currentTheme.warningColor)));
+    final Color warningBtnTextColor = isCyberpunk
+        ? const Color(0xFFFF007F)
+        : (isNeo
+            ? Colors.black
+            : (isSoft ? const Color(0xFFD97706) : ((isVibrant || isGlass) 
+                ? Colors.white 
+                : currentTheme.getContrastTextColor(currentTheme.warningColor))));
 
-    final Color successBtnTextColor = isNeo
-        ? Colors.black
-        : (isSoft ? const Color(0xFF0D9488) : ((isVibrant || isGlass) 
-            ? Colors.white 
-            : currentTheme.getContrastTextColor(currentTheme.successColor)));
+    final Color successBtnTextColor = isCyberpunk
+        ? const Color(0xFF00F0FF)
+        : (isNeo
+            ? Colors.black
+            : (isSoft ? const Color(0xFF0D9488) : ((isVibrant || isGlass) 
+                ? Colors.white 
+                : currentTheme.getContrastTextColor(currentTheme.successColor))));
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -1197,28 +1280,35 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
           Container(
             margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
-            decoration: isSoft
+            decoration: isCyberpunk
                 ? BoxDecoration(
-                    color: const Color(0xFFFFE4E6),
-                    borderRadius: currentTheme.cardBorderRadius,
-                    boxShadow: const [
-                      BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(2, 2), blurRadius: 4),
-                      BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
-                    ],
+                    color: const Color(0xFF120E24),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFFF007F), width: 1.5),
                   )
-                : (isNeo
+                : (isSoft
                     ? BoxDecoration(
-                        color: currentTheme.errorColor,
+                        color: const Color(0xFFFFE4E6),
                         borderRadius: currentTheme.cardBorderRadius,
-                        border: Border.all(color: Colors.black, width: 3.5),
-                        boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(3, 3), blurRadius: 0)],
+                        boxShadow: const [
+                          BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(2, 2), blurRadius: 4),
+                          BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
+                        ],
                       )
-                    : currentTheme.getCardDecoration(currentTheme.errorColor)),
+                    : (isNeo
+                        ? BoxDecoration(
+                            color: currentTheme.errorColor,
+                            borderRadius: currentTheme.cardBorderRadius,
+                            border: Border.all(color: Colors.black, width: 3.5),
+                            boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(3, 3), blurRadius: 0)],
+                          )
+                        : currentTheme.getCardDecoration(currentTheme.errorColor))),
             child: Text(
               "POVINNÉ OPAKOVANIE ZA TREST", 
               style: TextStyle(
-                color: isNeo ? Colors.black : (isSoft ? const Color(0xFFE11D48) : ((isVibrant || isGlass) ? Colors.white : currentTheme.getContrastTextColor(currentTheme.errorColor))), 
+                color: isCyberpunk ? const Color(0xFFFF007F) : (isNeo ? Colors.black : (isSoft ? const Color(0xFFE11D48) : ((isVibrant || isGlass) ? Colors.white : currentTheme.getContrastTextColor(currentTheme.errorColor)))), 
                 fontWeight: FontWeight.w900, 
+                fontFamily: isCyberpunk ? 'monospace' : null,
                 fontSize: 12,
               ),
             ),
@@ -1228,59 +1318,71 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
           children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              decoration: isSoft
+              decoration: isCyberpunk
                   ? BoxDecoration(
-                      color: const Color(0xFFFFE4E6),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: const [
-                        BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(2, 2), blurRadius: 4),
-                        BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
-                      ],
+                      color: const Color(0xFF120E24),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFFF007F), width: 1.5),
                     )
-                  : BoxDecoration(
-                      color: isNeo ? currentTheme.warningColor : Colors.transparent, 
-                      border: Border.all(color: Colors.black, width: isNeo ? 3.5 : 2), 
-                      borderRadius: BorderRadius.circular(isNeo ? 12 : 16),
-                      boxShadow: isNeo ? const [BoxShadow(color: Colors.black, offset: Offset(2, 2), blurRadius: 0)] : null,
-                    ),
-              child: Text("${_failedCards.length}", style: TextStyle(color: isNeo ? Colors.black : (isSoft ? const Color(0xFFE11D48) : currentTheme.warningColor), fontWeight: FontWeight.w900, fontSize: 16)),
+                  : (isSoft
+                      ? BoxDecoration(
+                          color: const Color(0xFFFFE4E6),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: const [
+                            BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(2, 2), blurRadius: 4),
+                            BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
+                          ],
+                        )
+                      : BoxDecoration(
+                          color: isNeo ? currentTheme.warningColor : Colors.transparent, 
+                          border: Border.all(color: Colors.black, width: isNeo ? 3.5 : 2), 
+                          borderRadius: BorderRadius.circular(isNeo ? 12 : 16),
+                          boxShadow: isNeo ? const [BoxShadow(color: Colors.black, offset: Offset(2, 2), blurRadius: 0)] : null,
+                        )),
+              child: Text("${_failedCards.length}", style: TextStyle(color: isCyberpunk ? const Color(0xFFFF007F) : (isNeo ? Colors.black : (isSoft ? const Color(0xFFE11D48) : currentTheme.warningColor)), fontWeight: FontWeight.w900, fontFamily: isCyberpunk ? 'monospace' : null, fontSize: 16)),
             ),
             Column(
               children: [
                 Text(
                   "$currentIndex / $_totalLearnedCards", 
-                  style: TextStyle(color: isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : textColor.withValues(alpha: 0.7)), fontWeight: FontWeight.w900, fontSize: 16),
+                  style: TextStyle(color: isCyberpunk ? Colors.white : (isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : textColor.withValues(alpha: 0.7))), fontWeight: FontWeight.w900, fontFamily: isCyberpunk ? 'monospace' : null, fontSize: 16),
                 ),
                 if (_learningRound > 1) 
-                  Text("Kolo $_learningRound", style: TextStyle(color: isNeo ? Colors.black : (isSoft ? const Color(0xFF2563EB) : currentTheme.warningColor), fontSize: 12, fontWeight: FontWeight.w900)),
+                  Text("Kolo $_learningRound", style: TextStyle(color: isCyberpunk ? const Color(0xFF00F0FF) : (isNeo ? Colors.black : (isSoft ? const Color(0xFF2563EB) : currentTheme.warningColor)), fontSize: 12, fontWeight: FontWeight.w900, fontFamily: isCyberpunk ? 'monospace' : null)),
               ],
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              decoration: isSoft
+              decoration: isCyberpunk
                   ? BoxDecoration(
-                      color: const Color(0xFFCCFBF1),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: const [
-                        BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(2, 2), blurRadius: 4),
-                        BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
-                      ],
+                      color: const Color(0xFF120E24),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFF00F0FF), width: 1.5),
                     )
-                  : BoxDecoration(
-                      color: isNeo ? currentTheme.successColor : Colors.transparent, 
-                      border: Border.all(color: Colors.black, width: isNeo ? 3.5 : 2), 
-                      borderRadius: BorderRadius.circular(isNeo ? 12 : 16),
-                      boxShadow: isNeo ? const [BoxShadow(color: Colors.black, offset: Offset(2, 2), blurRadius: 0)] : null,
-                    ),
-              child: Text("$_masteredCount", style: TextStyle(color: isNeo ? Colors.black : (isSoft ? const Color(0xFF0D9488) : currentTheme.successColor), fontWeight: FontWeight.w900, fontSize: 16)),
+                  : (isSoft
+                      ? BoxDecoration(
+                          color: const Color(0xFFCCFBF1),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: const [
+                            BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(2, 2), blurRadius: 4),
+                            BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
+                          ],
+                        )
+                      : BoxDecoration(
+                          color: isNeo ? currentTheme.successColor : Colors.transparent, 
+                          border: Border.all(color: Colors.black, width: isNeo ? 3.5 : 2), 
+                          borderRadius: BorderRadius.circular(isNeo ? 12 : 16),
+                          boxShadow: isNeo ? const [BoxShadow(color: Colors.black, offset: Offset(2, 2), blurRadius: 0)] : null,
+                        )),
+              child: Text("$_masteredCount", style: TextStyle(color: isCyberpunk ? const Color(0xFF00F0FF) : (isNeo ? Colors.black : (isSoft ? const Color(0xFF0D9488) : currentTheme.successColor)), fontWeight: FontWeight.w900, fontFamily: isCyberpunk ? 'monospace' : null, fontSize: 16)),
             ),
           ],
         ),
         const SizedBox(height: 16),
         LinearProgressIndicator(
           value: currentIndex / _totalLearnedCards, 
-          backgroundColor: isNeo ? Colors.black12 : (isSoft ? const Color(0xFFC8D3E6) : textColor.withValues(alpha: 0.12)), 
-          color: isNeo ? Colors.black : (isSoft ? const Color(0xFF2563EB) : currentTheme.testSetupColor),
+          backgroundColor: isCyberpunk ? const Color(0xFF120E24) : (isNeo ? Colors.black12 : (isSoft ? const Color(0xFFC8D3E6) : textColor.withValues(alpha: 0.12))), 
+          color: isCyberpunk ? const Color(0xFF00F0FF) : (isNeo ? Colors.black : (isSoft ? const Color(0xFF2563EB) : currentTheme.testSetupColor)),
         ),
         const SizedBox(height: 24),
 
@@ -1291,22 +1393,28 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
           background: Container(
             alignment: Alignment.centerLeft,
             padding: const EdgeInsets.symmetric(horizontal: 30),
-            decoration: isSoft
+            decoration: isCyberpunk
                 ? BoxDecoration(
-                    color: const Color(0xFFCCFBF1),
-                    borderRadius: currentTheme.cardBorderRadius,
-                    boxShadow: const [
-                      BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(4, 4), blurRadius: 8),
-                      BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 8),
-                    ],
+                    color: const Color(0xFF120E24),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFF00F0FF), width: 2),
                   )
-                : (isNeo
+                : (isSoft
                     ? BoxDecoration(
-                        color: currentTheme.successColor,
+                        color: const Color(0xFFCCFBF1),
                         borderRadius: currentTheme.cardBorderRadius,
-                        border: Border.all(color: Colors.black, width: 3.5),
+                        boxShadow: const [
+                          BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(4, 4), blurRadius: 8),
+                          BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 8),
+                        ],
                       )
-                    : currentTheme.getCardDecoration(currentTheme.successColor)),
+                    : (isNeo
+                        ? BoxDecoration(
+                            color: currentTheme.successColor,
+                            borderRadius: currentTheme.cardBorderRadius,
+                            border: Border.all(color: Colors.black, width: 3.5),
+                          )
+                        : currentTheme.getCardDecoration(currentTheme.successColor))),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1318,7 +1426,8 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                   style: TextStyle(
                     color: successBtnTextColor, 
                     fontSize: 24, 
-                    fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
+                    fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.bold,
+                    fontFamily: isCyberpunk ? 'monospace' : null,
                   ),
                 ),
               ],
@@ -1327,22 +1436,28 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
           secondaryBackground: Container(
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.symmetric(horizontal: 30),
-            decoration: isSoft
+            decoration: isCyberpunk
                 ? BoxDecoration(
-                    color: const Color(0xFFFFE4E6),
-                    borderRadius: currentTheme.cardBorderRadius,
-                    boxShadow: const [
-                      BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(4, 4), blurRadius: 8),
-                      BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 8),
-                    ],
+                    color: const Color(0xFF120E24),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFFF007F), width: 2),
                   )
-                : (isNeo
+                : (isSoft
                     ? BoxDecoration(
-                        color: currentTheme.warningColor,
+                        color: const Color(0xFFFFE4E6),
                         borderRadius: currentTheme.cardBorderRadius,
-                        border: Border.all(color: Colors.black, width: 3.5),
+                        boxShadow: const [
+                          BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(4, 4), blurRadius: 8),
+                          BoxShadow(color: Colors.white, offset: Offset(-4, -4), blurRadius: 8),
+                        ],
                       )
-                    : currentTheme.getCardDecoration(currentTheme.warningColor)),
+                    : (isNeo
+                        ? BoxDecoration(
+                            color: currentTheme.warningColor,
+                            borderRadius: currentTheme.cardBorderRadius,
+                            border: Border.all(color: Colors.black, width: 3.5),
+                          )
+                        : currentTheme.getCardDecoration(currentTheme.warningColor))),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -1354,7 +1469,8 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                   style: TextStyle(
                     color: warningBtnTextColor, 
                     fontSize: 24, 
-                    fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
+                    fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.bold,
+                    fontFamily: isCyberpunk ? 'monospace' : null,
                   ),
                 ),
               ],
@@ -1384,26 +1500,32 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: _isCardFlipped ? () => _handleLearningAnswer(false) : null,
-                    borderRadius: currentTheme.buttonBorderRadius,
+                    borderRadius: isCyberpunk ? BorderRadius.circular(8) : currentTheme.buttonBorderRadius,
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: isSoft
+                      decoration: isCyberpunk
                           ? BoxDecoration(
-                              color: const Color(0xFFFFE4E6),
-                              borderRadius: currentTheme.buttonBorderRadius,
-                              boxShadow: const [
-                                BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(3, 3), blurRadius: 6),
-                                BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 6),
-                              ],
+                              color: const Color(0xFF120E24),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFFF007F), width: 1.5),
                             )
-                          : (isNeo
+                          : (isSoft
                               ? BoxDecoration(
-                                  color: currentTheme.warningColor,
+                                  color: const Color(0xFFFFE4E6),
                                   borderRadius: currentTheme.buttonBorderRadius,
-                                  border: Border.all(color: Colors.black, width: 3.5),
-                                  boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(3, 3), blurRadius: 0)],
+                                  boxShadow: const [
+                                    BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(3, 3), blurRadius: 6),
+                                    BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 6),
+                                  ],
                                 )
-                              : currentTheme.getCardDecoration(currentTheme.warningColor)),
+                              : (isNeo
+                                  ? BoxDecoration(
+                                      color: currentTheme.warningColor,
+                                      borderRadius: currentTheme.buttonBorderRadius,
+                                      border: Border.all(color: Colors.black, width: 3.5),
+                                      boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(3, 3), blurRadius: 0)],
+                                    )
+                                  : currentTheme.getCardDecoration(currentTheme.warningColor))),
                       alignment: Alignment.center,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -1413,7 +1535,8 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                           Text(
                             "Znova", 
                             style: TextStyle(
-                              fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold, 
+                              fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.bold, 
+                              fontFamily: isCyberpunk ? 'monospace' : null,
                               fontSize: 16,
                               color: warningBtnTextColor,
                             ),
@@ -1430,38 +1553,50 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: _isCardFlipped ? () => _handleLearningAnswer(true) : null,
-                    borderRadius: currentTheme.buttonBorderRadius,
+                    borderRadius: isCyberpunk ? BorderRadius.circular(8) : currentTheme.buttonBorderRadius,
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: isSoft
+                      decoration: isCyberpunk
                           ? BoxDecoration(
-                              color: const Color(0xFFCCFBF1),
-                              borderRadius: currentTheme.buttonBorderRadius,
-                              boxShadow: const [
-                                BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(3, 3), blurRadius: 6),
-                                BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 6),
+                              color: const Color(0xFF00F0FF),
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF00F0FF).withValues(alpha: 0.5),
+                                  blurRadius: 10,
+                                ),
                               ],
                             )
-                          : (isNeo
+                          : (isSoft
                               ? BoxDecoration(
-                                  color: currentTheme.successColor,
+                                  color: const Color(0xFFCCFBF1),
                                   borderRadius: currentTheme.buttonBorderRadius,
-                                  border: Border.all(color: Colors.black, width: 3.5),
-                                  boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(3, 3), blurRadius: 0)],
+                                  boxShadow: const [
+                                    BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(3, 3), blurRadius: 6),
+                                    BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 6),
+                                  ],
                                 )
-                              : currentTheme.getCardDecoration(currentTheme.successColor)),
+                              : (isNeo
+                                  ? BoxDecoration(
+                                      color: currentTheme.successColor,
+                                      borderRadius: currentTheme.buttonBorderRadius,
+                                      border: Border.all(color: Colors.black, width: 3.5),
+                                      boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(3, 3), blurRadius: 0)],
+                                    )
+                                  : currentTheme.getCardDecoration(currentTheme.successColor))),
                       alignment: Alignment.center,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.check, color: successBtnTextColor),
+                          Icon(Icons.check, color: isCyberpunk ? Colors.black : successBtnTextColor),
                           const SizedBox(width: 8),
                           Text(
                             "Viem", 
                             style: TextStyle(
-                              fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold, 
+                              fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.bold, 
+                              fontFamily: isCyberpunk ? 'monospace' : null,
                               fontSize: 16,
-                              color: successBtnTextColor,
+                              color: isCyberpunk ? Colors.black : successBtnTextColor,
                             ),
                           ),
                         ],
@@ -1483,31 +1618,45 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     final bool isGlass = currentTheme.id == 4 || currentTheme.id.toString() == '4';
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
-    final Color textColor = isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : ((isVibrant || isGlass) ? Colors.white : theme.colorScheme.onSurface));
+    final String cleanName = currentTheme.name.toLowerCase();
+    final bool isCyberpunk = cleanName.contains('cyberpunk');
+    final Color textColor = isCyberpunk ? Colors.white : (isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : ((isVibrant || isGlass) ? Colors.white : theme.colorScheme.onSurface)));
 
-    final cardDecor = isSoft
+    final cardDecor = isCyberpunk
         ? BoxDecoration(
-            color: const Color(0xFFD1D9E6),
-            borderRadius: currentTheme.cardBorderRadius,
-            boxShadow: const [
-              BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(6, 6), blurRadius: 12),
-              BoxShadow(color: Colors.white, offset: Offset(-6, -6), blurRadius: 12),
+            color: const Color(0xFF120E24),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFF00F0FF), width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF00F0FF).withValues(alpha: 0.25),
+                blurRadius: 10,
+              ),
             ],
           )
-        : (isGlass
+        : (isSoft
             ? BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.12),
+                color: const Color(0xFFD1D9E6),
                 borderRadius: currentTheme.cardBorderRadius,
-                border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 1.5),
+                boxShadow: const [
+                  BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(6, 6), blurRadius: 12),
+                  BoxShadow(color: Colors.white, offset: Offset(-6, -6), blurRadius: 12),
+                ],
               )
-            : (isNeo
+            : (isGlass
                 ? BoxDecoration(
-                    color: currentTheme.decksColor,
+                    color: Colors.white.withValues(alpha: 0.12),
                     borderRadius: currentTheme.cardBorderRadius,
-                    border: Border.all(color: Colors.black, width: 3.5),
-                    boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(4, 4), blurRadius: 0)],
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 1.5),
                   )
-                : currentTheme.getCardDecoration(currentTheme.decksColor)));
+                : (isNeo
+                    ? BoxDecoration(
+                        color: currentTheme.decksColor,
+                        borderRadius: currentTheme.cardBorderRadius,
+                        border: Border.all(color: Colors.black, width: 3.5),
+                        boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(4, 4), blurRadius: 0)],
+                      )
+                    : currentTheme.getCardDecoration(currentTheme.decksColor))));
 
     return Container(
       key: const ValueKey('front'),
@@ -1527,16 +1676,18 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
               style: TextStyle(
                 fontSize: 24, 
                 color: textColor, 
-                fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
+                fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.bold,
+                fontFamily: isCyberpunk ? 'monospace' : null,
               ),
             ),
           const SizedBox(height: 40),
           Text(
             "Ťukni pre otočenie", 
             style: TextStyle(
-              color: isNeo ? Colors.black87 : (isSoft ? const Color(0xFF64748B) : textColor.withValues(alpha: 0.6)), 
+              color: isCyberpunk ? const Color(0xFF00F0FF).withValues(alpha: 0.8) : (isNeo ? Colors.black87 : (isSoft ? const Color(0xFF64748B) : textColor.withValues(alpha: 0.6))), 
               fontSize: 13, 
-              fontWeight: isNeo || isSoft ? FontWeight.bold : FontWeight.normal,
+              fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.bold : FontWeight.normal,
+              fontFamily: isCyberpunk ? 'monospace' : null,
               fontStyle: FontStyle.italic,
             ),
           ),
@@ -1550,25 +1701,39 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     final bool isGlass = currentTheme.id == 4 || currentTheme.id.toString() == '4';
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
-    final Color textColor = isNeo ? Colors.black : (isSoft ? const Color(0xFF0D9488) : ((isVibrant || isGlass) ? Colors.white : currentTheme.getContrastTextColor(currentTheme.successColor)));
+    final String cleanName = currentTheme.name.toLowerCase();
+    final bool isCyberpunk = cleanName.contains('cyberpunk');
+    final Color textColor = isCyberpunk ? const Color(0xFF00F0FF) : (isNeo ? Colors.black : (isSoft ? const Color(0xFF0D9488) : ((isVibrant || isGlass) ? Colors.white : currentTheme.getContrastTextColor(currentTheme.successColor))));
 
-    final cardDecor = isSoft
+    final cardDecor = isCyberpunk
         ? BoxDecoration(
-            color: const Color(0xFFCCFBF1),
-            borderRadius: currentTheme.cardBorderRadius,
-            boxShadow: const [
-              BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(6, 6), blurRadius: 12),
-              BoxShadow(color: Colors.white, offset: Offset(-6, -6), blurRadius: 12),
+            color: const Color(0xFF120E24),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFF00F0FF), width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF00F0FF).withValues(alpha: 0.35),
+                blurRadius: 12,
+              ),
             ],
           )
-        : (isNeo
+        : (isSoft
             ? BoxDecoration(
-                color: currentTheme.successColor,
+                color: const Color(0xFFCCFBF1),
                 borderRadius: currentTheme.cardBorderRadius,
-                border: Border.all(color: Colors.black, width: 3.5),
-                boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(4, 4), blurRadius: 0)],
+                boxShadow: const [
+                  BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(6, 6), blurRadius: 12),
+                  BoxShadow(color: Colors.white, offset: Offset(-6, -6), blurRadius: 12),
+                ],
               )
-            : currentTheme.getCardDecoration(currentTheme.successColor, isSelected: true));
+            : (isNeo
+                ? BoxDecoration(
+                    color: currentTheme.successColor,
+                    borderRadius: currentTheme.cardBorderRadius,
+                    border: Border.all(color: Colors.black, width: 3.5),
+                    boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(4, 4), blurRadius: 0)],
+                  )
+                : currentTheme.getCardDecoration(currentTheme.successColor, isSelected: true)));
 
     return Container(
       key: const ValueKey('back'),
@@ -1587,13 +1752,14 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
               textAlign: TextAlign.center, 
               style: TextStyle(
                 fontSize: 16, 
-                color: isNeo ? Colors.black87 : (isSoft ? const Color(0xFF1E293B) : textColor.withValues(alpha: 0.85)), 
-                fontWeight: isNeo || isSoft ? FontWeight.bold : FontWeight.w600,
+                color: isCyberpunk ? Colors.white70 : (isNeo ? Colors.black87 : (isSoft ? const Color(0xFF1E293B) : textColor.withValues(alpha: 0.85))), 
+                fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.bold : FontWeight.w600,
+                fontFamily: isCyberpunk ? 'monospace' : null,
               ),
             ),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 24), 
-            child: Divider(color: isNeo ? Colors.black : (isSoft ? const Color(0xFF9EAEC6) : textColor.withValues(alpha: 0.4)), thickness: isNeo ? 2 : 1),
+            child: Divider(color: isCyberpunk ? const Color(0xFF00F0FF).withValues(alpha: 0.3) : (isNeo ? Colors.black : (isSoft ? const Color(0xFF9EAEC6) : textColor.withValues(alpha: 0.4))), thickness: isNeo ? 2 : 1),
           ),
           Text(
             card['correct_answer'], 
@@ -1601,7 +1767,8 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             style: TextStyle(
               fontSize: 28, 
               color: textColor, 
-              fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
+              fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.bold,
+              fontFamily: isCyberpunk ? 'monospace' : null,
             ),
           ),
         ],
@@ -1620,14 +1787,28 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     final bool isGlass = currentTheme.id == 4 || currentTheme.id.toString() == '4';
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
+    final String cleanName = currentTheme.name.toLowerCase();
+    final bool isCyberpunk = cleanName.contains('cyberpunk');
     final bool isEnabled = onPressed != null;
 
     final Color textColor = isEnabled
-        ? (isNeo || isSoft ? (isSoft ? Colors.white : Colors.black) : Colors.white)
+        ? (isCyberpunk ? Colors.black : (isNeo || isSoft ? (isSoft ? Colors.white : Colors.black) : Colors.white))
         : (isNeo || isSoft ? Colors.black38 : Colors.white38);
 
     BoxDecoration buttonDecor;
-    if (isSoft) {
+    if (isCyberpunk) {
+      buttonDecor = BoxDecoration(
+        color: const Color(0xFF00F0FF),
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF00F0FF).withValues(alpha: 0.6),
+            blurRadius: 16,
+            spreadRadius: 2,
+          ),
+        ],
+      );
+    } else if (isSoft) {
       buttonDecor = BoxDecoration(
         color: const Color(0xFF2563EB),
         borderRadius: currentTheme.buttonBorderRadius,
@@ -1680,7 +1861,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
         color: Colors.transparent,
         child: InkWell(
           onTap: onPressed,
-          borderRadius: currentTheme.buttonBorderRadius,
+          borderRadius: isCyberpunk ? BorderRadius.circular(8) : currentTheme.buttonBorderRadius,
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -1690,8 +1871,10 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
               text,
               style: TextStyle(
                 fontSize: 16,
-                fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
+                fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.bold,
+                fontFamily: isCyberpunk ? 'monospace' : null,
                 color: textColor,
+                letterSpacing: isCyberpunk ? 1.5 : 0.5,
               ),
             ),
           ),
@@ -1706,7 +1889,9 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     final bool isGlass = currentTheme.id == 4 || currentTheme.id.toString() == '4';
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
-    final Color textColor = isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : ((isVibrant || isGlass) ? Colors.white : theme.colorScheme.onSurface));
+    final String cleanName = currentTheme.name.toLowerCase();
+    final bool isCyberpunk = cleanName.contains('cyberpunk');
+    final Color textColor = isCyberpunk ? Colors.white : (isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : ((isVibrant || isGlass) ? Colors.white : theme.colorScheme.onSurface)));
 
     Widget? hardcoreFeedbackWidget;
 
@@ -1714,9 +1899,9 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       String typed = _selectedAnswer ?? "";
       String expected = _actualCorrectAnswer.trim().toLowerCase();
       if (typed == expected && typed.isNotEmpty) {
-        hardcoreFeedbackWidget = Text("Výborne!", style: TextStyle(color: isNeo ? Colors.black : (isSoft ? const Color(0xFF0D9488) : Colors.green), fontWeight: FontWeight.w900));
+        hardcoreFeedbackWidget = Text("Výborne!", style: TextStyle(color: isCyberpunk ? const Color(0xFF00F0FF) : (isNeo ? Colors.black : (isSoft ? const Color(0xFF0D9488) : Colors.green)), fontWeight: FontWeight.w900, fontFamily: isCyberpunk ? 'monospace' : null));
       } else {
-        if (!_hideCorrectAnswer) hardcoreFeedbackWidget = Text("Odpoveď bola: $_actualCorrectAnswer", style: TextStyle(color: isSoft ? const Color(0xFFE11D48) : currentTheme.errorColor, fontWeight: FontWeight.w900));
+        if (!_hideCorrectAnswer) hardcoreFeedbackWidget = Text("Odpoveď bola: $_actualCorrectAnswer", style: TextStyle(color: isCyberpunk ? const Color(0xFFFF007F) : (isSoft ? const Color(0xFFE11D48) : currentTheme.errorColor), fontWeight: FontWeight.w900, fontFamily: isCyberpunk ? 'monospace' : null));
       }
     }
 
@@ -1725,39 +1910,45 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       topTitleText = "Opravný test • Otázka ${_currentQuestionIndex + 1} z ${_questionCount.toInt()}";
     } else if (_isDoubleTest) topTitleText = "Kolo $_currentTestRound/2 • Otázka ${_currentQuestionIndex + 1} z ${_questionCount.toInt()}";
 
-    final BoxDecoration inputDecoration = isSoft
+    final BoxDecoration inputDecoration = isCyberpunk
         ? BoxDecoration(
-            color: const Color(0xFFC8D3E6),
-            borderRadius: currentTheme.cardBorderRadius,
-            boxShadow: const [
-              BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(3, 3), blurRadius: 6),
-              BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 6),
-            ],
+            color: const Color(0xFF120E24),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0xFF00F0FF), width: 1.5),
           )
-        : (isNeo
+        : (isSoft
             ? BoxDecoration(
-                color: Colors.white,
+                color: const Color(0xFFC8D3E6),
                 borderRadius: currentTheme.cardBorderRadius,
-                border: Border.all(color: Colors.black, width: 3.5),
-                boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(3, 3), blurRadius: 0)],
+                boxShadow: const [
+                  BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(3, 3), blurRadius: 6),
+                  BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 6),
+                ],
               )
-            : (isGlass
+            : (isNeo
                 ? BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.12),
+                    color: Colors.white,
                     borderRadius: currentTheme.cardBorderRadius,
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 1.5),
+                    border: Border.all(color: Colors.black, width: 3.5),
+                    boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(3, 3), blurRadius: 0)],
                   )
-                : ((isVibrant)
+                : (isGlass
                     ? BoxDecoration(
-                        color: const Color(0xFF1E293B).withValues(alpha: 0.8),
+                        color: Colors.white.withValues(alpha: 0.12),
                         borderRadius: currentTheme.cardBorderRadius,
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 1.5),
                       )
-                    : BoxDecoration(
-                        color: theme.cardColor,
-                        borderRadius: currentTheme.cardBorderRadius,
-                        border: Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.15), width: 1.2),
-                      ))));
+                    : ((isVibrant)
+                        ? BoxDecoration(
+                            color: const Color(0xFF1E293B).withValues(alpha: 0.8),
+                            borderRadius: currentTheme.cardBorderRadius,
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5),
+                          )
+                        : BoxDecoration(
+                            color: theme.cardColor,
+                            borderRadius: currentTheme.cardBorderRadius,
+                            border: Border.all(color: theme.colorScheme.onSurface.withValues(alpha: 0.15), width: 1.2),
+                          )))));
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -1768,16 +1959,17 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             Text(
               topTitleText, 
               style: TextStyle(
-                color: isNeo ? Colors.black : (isSoft ? (_isRemedialQuiz ? const Color(0xFFE11D48) : const Color(0xFF1E293B)) : (_isRemedialQuiz ? currentTheme.errorColor : textColor.withValues(alpha: 0.85))), 
-                fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
+                color: isCyberpunk ? const Color(0xFF00F0FF) : (isNeo ? Colors.black : (isSoft ? (_isRemedialQuiz ? const Color(0xFFE11D48) : const Color(0xFF1E293B)) : (_isRemedialQuiz ? currentTheme.errorColor : textColor.withValues(alpha: 0.85)))), 
+                fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.bold,
+                fontFamily: isCyberpunk ? 'monospace' : null,
               ),
             ),
             if (_maxTime > 0)
               Row(
                 children: [
-                  Icon(Icons.timer_outlined, size: 18, color: isNeo ? Colors.black : (isSoft ? (_timeLeft <= 5 ? const Color(0xFFE11D48) : const Color(0xFF2563EB)) : (_timeLeft <= 5 ? currentTheme.errorColor : currentTheme.testSetupColor))),
+                  Icon(Icons.timer_outlined, size: 18, color: isCyberpunk ? const Color(0xFFFF007F) : (isNeo ? Colors.black : (isSoft ? (_timeLeft <= 5 ? const Color(0xFFE11D48) : const Color(0xFF2563EB)) : (_timeLeft <= 5 ? currentTheme.errorColor : currentTheme.testSetupColor)))),
                   const SizedBox(width: 4),
-                  Text("$_timeLeft s", style: TextStyle(fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold, color: isNeo ? Colors.black : (isSoft ? (_timeLeft <= 5 ? const Color(0xFFE11D48) : const Color(0xFF2563EB)) : (_timeLeft <= 5 ? currentTheme.errorColor : currentTheme.testSetupColor)))),
+                  Text("$_timeLeft s", style: TextStyle(fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.bold, fontFamily: isCyberpunk ? 'monospace' : null, color: isCyberpunk ? const Color(0xFFFF007F) : (isNeo ? Colors.black : (isSoft ? (_timeLeft <= 5 ? const Color(0xFFE11D48) : const Color(0xFF2563EB)) : (_timeLeft <= 5 ? currentTheme.errorColor : currentTheme.testSetupColor))))),
                 ],
               )
           ],
@@ -1785,8 +1977,8 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
         const SizedBox(height: 16),
         LinearProgressIndicator(
           value: (_currentQuestionIndex + 1) / _questionCount, 
-          backgroundColor: isNeo ? Colors.black12 : (isSoft ? const Color(0xFFC8D3E6) : textColor.withValues(alpha: 0.12)), 
-          color: isNeo ? Colors.black : (isSoft ? (_isRemedialQuiz ? const Color(0xFFE11D48) : const Color(0xFF2563EB)) : (_isRemedialQuiz ? currentTheme.errorColor : currentTheme.testSetupColor)),
+          backgroundColor: isCyberpunk ? const Color(0xFF120E24) : (isNeo ? Colors.black12 : (isSoft ? const Color(0xFFC8D3E6) : textColor.withValues(alpha: 0.12))), 
+          color: isCyberpunk ? const Color(0xFF00F0FF) : (isNeo ? Colors.black : (isSoft ? (_isRemedialQuiz ? const Color(0xFFE11D48) : const Color(0xFF2563EB)) : (_isRemedialQuiz ? currentTheme.errorColor : currentTheme.testSetupColor))),
         ),
         const SizedBox(height: 24),
         
@@ -1799,7 +1991,8 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             style: TextStyle(
               fontSize: 20, 
               color: textColor, 
-              fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
+              fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.bold,
+              fontFamily: isCyberpunk ? 'monospace' : null,
             ),
           ),
         
@@ -1809,43 +2002,57 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             color: Colors.transparent,
             child: InkWell(
               onTap: _swapCurrentQuestion,
-              borderRadius: currentTheme.buttonBorderRadius,
+              borderRadius: isCyberpunk ? BorderRadius.circular(8) : currentTheme.buttonBorderRadius,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: isSoft
+                decoration: isCyberpunk
                     ? BoxDecoration(
-                        // 🟢 ZMENENÉ NA ROVNAKÚ MODREJ AKO PROGRESS BAR (#2563EB) S NEUMORFNÝM TIEŇOM
-                        color: const Color(0xFF2563EB),
-                        borderRadius: currentTheme.buttonBorderRadius,
-                        boxShadow: const [
-                          BoxShadow(color: Color(0xFF1D4ED8), offset: Offset(2, 2), blurRadius: 4),
-                          BoxShadow(color: Color(0xFF93C5FD), offset: Offset(-2, -2), blurRadius: 4),
-                        ],
+                        color: const Color(0xFF120E24),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFF00F0FF), width: 1.5),
                       )
-                    : (isGlass
+                    : (isSoft
                         ? BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.12),
+                            color: const Color(0xFF2563EB),
                             borderRadius: currentTheme.buttonBorderRadius,
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 1.5),
+                            boxShadow: const [
+                              BoxShadow(color: Color(0xFF1D4ED8), offset: Offset(2, 2), blurRadius: 4),
+                              BoxShadow(color: Color(0xFF93C5FD), offset: Offset(-2, -2), blurRadius: 4),
+                            ],
                           )
-                        : (isNeo
+                        : (isGlass
                             ? BoxDecoration(
-                                color: const Color(0xFFFFB6C1),
+                                color: Colors.white.withValues(alpha: 0.12),
                                 borderRadius: currentTheme.buttonBorderRadius,
-                                border: Border.all(color: Colors.black, width: 3.5),
-                                boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(3, 3), blurRadius: 0)],
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 1.5),
                               )
-                            : currentTheme.getCardDecoration(currentTheme.testSetupColor))),
+                            : (isNeo
+                                ? BoxDecoration(
+                                    color: const Color(0xFFFFB6C1),
+                                    borderRadius: currentTheme.buttonBorderRadius,
+                                    border: Border.all(color: Colors.black, width: 3.5),
+                                    boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(3, 3), blurRadius: 0)],
+                                  )
+                                : currentTheme.getCardDecoration(currentTheme.testSetupColor)))),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.swap_horiz_rounded, size: 18, color: isNeo ? Colors.black : (isSoft ? Colors.white : ((isVibrant || isGlass) ? Colors.white : currentTheme.getContrastTextColor(currentTheme.testSetupColor)))),
+                    Icon(
+                      Icons.swap_horiz_rounded, 
+                      size: 18, 
+                      color: isCyberpunk 
+                          ? const Color(0xFF00F0FF) 
+                          : (isNeo ? Colors.black : (isSoft ? Colors.white : ((isVibrant || isGlass) ? Colors.white : currentTheme.getContrastTextColor(currentTheme.testSetupColor)))),
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       "Vymeň kartu (1x)", 
                       style: TextStyle(
-                        fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
-                        color: isNeo ? Colors.black : (isSoft ? Colors.white : ((isVibrant || isGlass) ? Colors.white : currentTheme.getContrastTextColor(currentTheme.testSetupColor))),
+                        fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.bold,
+                        fontFamily: isCyberpunk ? 'monospace' : null,
+                        color: isCyberpunk 
+                            ? const Color(0xFF00F0FF) 
+                            : (isNeo ? Colors.black : (isSoft ? Colors.white : ((isVibrant || isGlass) ? Colors.white : currentTheme.getContrastTextColor(currentTheme.testSetupColor)))),
                       ),
                     ),
                   ],
@@ -1865,10 +2072,10 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
               controller: _hardcoreController,
               textAlign: TextAlign.center,
               enabled: !_isAnswerChecked, 
-              style: TextStyle(fontSize: 18, fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold, color: textColor),
+              style: TextStyle(fontSize: 18, fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.bold, fontFamily: isCyberpunk ? 'monospace' : null, color: textColor),
               decoration: InputDecoration(
                 hintText: "Napíš odpoveď sem...",
-                hintStyle: TextStyle(color: isSoft ? const Color(0xFF64748B) : textColor.withValues(alpha: 0.4)),
+                hintStyle: TextStyle(color: isCyberpunk ? Colors.white38 : (isSoft ? const Color(0xFF64748B) : textColor.withValues(alpha: 0.4)), fontFamily: isCyberpunk ? 'monospace' : null),
                 border: InputBorder.none,
               ),
               onSubmitted: (_) => _checkQuizAnswer(""), 
@@ -1890,37 +2097,42 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             if (_isAnswerChecked) {
               if (_isBlindTest) {
                 if (option == _selectedAnswer) {
-                  decoration = isSoft
+                  decoration = isCyberpunk
                       ? BoxDecoration(
-                          color: const Color(0xFFD6E4FF),
-                          borderRadius: currentTheme.buttonBorderRadius,
-                          boxShadow: const [
-                            BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(3, 3), blurRadius: 6),
-                            BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 6),
-                          ],
+                          color: const Color(0xFF00F0FF),
+                          borderRadius: BorderRadius.circular(8),
                         )
-                      : (isGlass
+                      : (isSoft
                           ? BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  const Color(0xFF38BDF8).withValues(alpha: 0.3),
-                                  const Color(0xFF818CF8).withValues(alpha: 0.3),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
+                              color: const Color(0xFFD6E4FF),
                               borderRadius: currentTheme.buttonBorderRadius,
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.5),
+                              boxShadow: const [
+                                BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(3, 3), blurRadius: 6),
+                                BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 6),
+                              ],
                             )
-                          : (isNeo
+                          : (isGlass
                               ? BoxDecoration(
-                                  color: const Color(0xFFFFB6C1),
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      const Color(0xFF38BDF8).withValues(alpha: 0.3),
+                                      const Color(0xFF818CF8).withValues(alpha: 0.3),
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
                                   borderRadius: currentTheme.buttonBorderRadius,
-                                  border: Border.all(color: Colors.black, width: 3.5),
-                                  boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(3, 3), blurRadius: 0)],
+                                  border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 1.5),
                                 )
-                              : currentTheme.getCardDecoration(currentTheme.testSetupColor)));
-                  optionTextColor = isNeo ? Colors.black : (isSoft ? const Color(0xFF2563EB) : ((isVibrant || isGlass) ? Colors.white : currentTheme.getContrastTextColor(currentTheme.testSetupColor)));
+                              : (isNeo
+                                  ? BoxDecoration(
+                                      color: const Color(0xFFFFB6C1),
+                                      borderRadius: currentTheme.buttonBorderRadius,
+                                      border: Border.all(color: Colors.black, width: 3.5),
+                                      boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(3, 3), blurRadius: 0)],
+                                    )
+                                  : currentTheme.getCardDecoration(currentTheme.testSetupColor))));
+                  optionTextColor = isCyberpunk ? Colors.black : (isNeo ? Colors.black : (isSoft ? const Color(0xFF2563EB) : ((isVibrant || isGlass) ? Colors.white : currentTheme.getContrastTextColor(currentTheme.testSetupColor))));
                 } else {
                   decoration = _getUncheckedOptionDecoration(currentTheme);
                   optionTextColor = _getUncheckedOptionTextColor(currentTheme);
@@ -1928,43 +2140,65 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                 }
               } else {
                 if (option == _actualCorrectAnswer && !_hideCorrectAnswer) {
-                  decoration = isSoft
+                  decoration = isCyberpunk
                       ? BoxDecoration(
-                          color: const Color(0xFFCCFBF1),
-                          borderRadius: currentTheme.buttonBorderRadius,
-                          boxShadow: const [
-                            BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(3, 3), blurRadius: 6),
-                            BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 6),
+                          color: const Color(0xFF00F0FF),
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF00F0FF).withValues(alpha: 0.5),
+                              blurRadius: 10,
+                            ),
                           ],
                         )
-                      : (isNeo
+                      : (isSoft
                           ? BoxDecoration(
-                              color: currentTheme.successColor,
+                              color: const Color(0xFFCCFBF1),
                               borderRadius: currentTheme.buttonBorderRadius,
-                              border: Border.all(color: Colors.black, width: 3.5),
-                              boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(3, 3), blurRadius: 0)],
+                              boxShadow: const [
+                                BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(3, 3), blurRadius: 6),
+                                BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 6),
+                              ],
                             )
-                          : currentTheme.getCardDecoration(currentTheme.successColor));
-                  optionTextColor = isNeo ? Colors.black : (isSoft ? const Color(0xFF0D9488) : ((isVibrant || isGlass) ? Colors.white : currentTheme.getContrastTextColor(currentTheme.successColor)));
+                          : (isNeo
+                              ? BoxDecoration(
+                                  color: currentTheme.successColor,
+                                  borderRadius: currentTheme.buttonBorderRadius,
+                                  border: Border.all(color: Colors.black, width: 3.5),
+                                  boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(3, 3), blurRadius: 0)],
+                                )
+                              : currentTheme.getCardDecoration(currentTheme.successColor)));
+                  optionTextColor = isCyberpunk ? Colors.black : (isNeo ? Colors.black : (isSoft ? const Color(0xFF0D9488) : ((isVibrant || isGlass) ? Colors.white : currentTheme.getContrastTextColor(currentTheme.successColor))));
                 } else if (option == _selectedAnswer) {
-                  decoration = isSoft
+                  decoration = isCyberpunk
                       ? BoxDecoration(
-                          color: const Color(0xFFFFE4E6),
-                          borderRadius: currentTheme.buttonBorderRadius,
-                          boxShadow: const [
-                            BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(3, 3), blurRadius: 6),
-                            BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 6),
+                          color: const Color(0xFFFF007F),
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFFF007F).withValues(alpha: 0.5),
+                              blurRadius: 10,
+                            ),
                           ],
                         )
-                      : (isNeo
+                      : (isSoft
                           ? BoxDecoration(
-                              color: currentTheme.errorColor,
+                              color: const Color(0xFFFFE4E6),
                               borderRadius: currentTheme.buttonBorderRadius,
-                              border: Border.all(color: Colors.black, width: 3.5),
-                              boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(3, 3), blurRadius: 0)],
+                              boxShadow: const [
+                                BoxShadow(color: Color(0xFF9EAEC6), offset: Offset(3, 3), blurRadius: 6),
+                                BoxShadow(color: Colors.white, offset: Offset(-3, -3), blurRadius: 6),
+                              ],
                             )
-                          : currentTheme.getCardDecoration(currentTheme.errorColor));
-                  optionTextColor = isNeo ? Colors.black : (isSoft ? const Color(0xFFE11D48) : ((isVibrant || isGlass) ? Colors.white : currentTheme.getContrastTextColor(currentTheme.errorColor)));
+                          : (isNeo
+                              ? BoxDecoration(
+                                  color: currentTheme.errorColor,
+                                  borderRadius: currentTheme.buttonBorderRadius,
+                                  border: Border.all(color: Colors.black, width: 3.5),
+                                  boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(3, 3), blurRadius: 0)],
+                                )
+                              : currentTheme.getCardDecoration(currentTheme.errorColor)));
+                  optionTextColor = isCyberpunk ? Colors.white : (isNeo ? Colors.black : (isSoft ? const Color(0xFFE11D48) : ((isVibrant || isGlass) ? Colors.white : currentTheme.getContrastTextColor(currentTheme.errorColor))));
                 } else {
                   decoration = _getUncheckedOptionDecoration(currentTheme);
                   optionTextColor = _getUncheckedOptionTextColor(currentTheme);
@@ -1985,7 +2219,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: _isAnswerChecked ? null : () => _checkQuizAnswer(option),
-                    borderRadius: currentTheme.buttonBorderRadius,
+                    borderRadius: isCyberpunk ? BorderRadius.circular(8) : currentTheme.buttonBorderRadius,
                     child: Container(
                       width: double.infinity,
                       constraints: const BoxConstraints(minHeight: 54),
@@ -1996,7 +2230,8 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                         option, 
                         style: TextStyle(
                           fontSize: 16, 
-                          fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
+                          fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.bold,
+                          fontFamily: isCyberpunk ? 'monospace' : null,
                           color: optionTextColor,
                         ), 
                         textAlign: TextAlign.center,

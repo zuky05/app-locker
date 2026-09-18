@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:country_flags/country_flags.dart';
 import 'package:provider/provider.dart';
 import '../services/stats_provider.dart';
 import '../themes/theme_provider.dart';
@@ -769,6 +770,24 @@ class _NemesisInteractiveCard extends StatefulWidget {
 class _NemesisInteractiveCardState extends State<_NemesisInteractiveCard> {
   bool _isFlipped = false;
 
+  Widget _buildNemesisFlag(String path) {
+    final cleanPath = path.trim();
+    final code = cleanPath.split('/').last.replaceAll('.svg', '').toUpperCase();
+    if (code.length == 2) {
+      return CountryFlag.fromCountryCode(
+        code,
+        height: 85,
+        width: 120,
+        shape: const Rectangle(),
+      );
+    }
+    return SvgPicture.asset(
+      cleanPath,
+      height: 85,
+      fit: BoxFit.contain,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = widget.currentTheme.theme;
@@ -943,11 +962,7 @@ class _NemesisInteractiveCardState extends State<_NemesisInteractiveCard> {
                         border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: SvgPicture.asset(
-                        textToDisplay.trim(),
-                        height: 85,
-                        fit: BoxFit.contain,
-                      ),
+                      child: _buildNemesisFlag(textToDisplay),
                     ),
                   ),
                 )

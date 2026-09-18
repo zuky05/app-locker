@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:country_flags/country_flags.dart';
 import 'package:provider/provider.dart';
 import '../services/database_helper.dart';
 import '../models/deck_model.dart';
@@ -59,6 +60,23 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
     if (currentIndex > 0) {
       _pageController.previousPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
     }
+  }
+
+  Widget _buildFlagWidget(String path) {
+    final code = path.trim().split('/').last.replaceAll('.svg', '').toUpperCase();
+    if (code.length == 2) {
+      return CountryFlag.fromCountryCode(
+        code,
+        height: 120,
+        width: 160,
+        shape: const Rectangle(),
+      );
+    }
+    return SvgPicture.asset(
+      path,
+      height: 120,
+      fit: BoxFit.contain,
+    );
   }
 
   void _deleteCard() async {
@@ -445,11 +463,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                                           const SizedBox(height: 12),
                                           ClipRRect(
                                             borderRadius: BorderRadius.circular(8),
-                                            child: SvgPicture.asset(
-                                              card['prompt'],
-                                              height: 120,
-                                              fit: BoxFit.contain,
-                                            ),
+                                            child: _buildFlagWidget(card['prompt']),
                                           ),
                                           const SizedBox(height: 10),
                                           Text(

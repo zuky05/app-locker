@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:country_flags/country_flags.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -112,6 +113,26 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
   }
 
   Widget _buildSvgImage(String path, {double? height, double? width, BoxFit fit = BoxFit.contain}) {
+    final cleanPath = path.trim();
+    final code = cleanPath.split('/').last.replaceAll('.svg', '').toUpperCase();
+
+    Widget flagWidget;
+    if (code.length == 2) {
+      flagWidget = CountryFlag.fromCountryCode(
+        code,
+        height: height ?? 80,
+        width: width ?? ((height ?? 80) * 1.4),
+        shape: const Rectangle(),
+      );
+    } else {
+      flagWidget = SvgPicture.asset(
+        cleanPath,
+        height: height,
+        width: width,
+        fit: fit,
+      );
+    }
+
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(4),
@@ -122,12 +143,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(3),
-        child: SvgPicture.asset(
-          path.trim(),
-          height: height,
-          width: width,
-          fit: fit,
-        ),
+        child: flagWidget,
       ),
     );
   }

@@ -1,4 +1,4 @@
-package com.example.brainlock
+package com.example.flashpass
 
 import android.accessibilityservice.AccessibilityService
 import android.app.NotificationChannel
@@ -19,7 +19,7 @@ class AppBlockerService : AccessibilityService() {
 
     private var countDownTimer: CountDownTimer? = null
     private val notificationId = 1001
-    private val channelId = "brainlock_timer_channel"
+    private val channelId = "flashpass_timer_channel"
     
     private val reblockHandler = Handler(Looper.getMainLooper())
     private var reblockRunnable: Runnable? = null
@@ -36,7 +36,7 @@ class AppBlockerService : AccessibilityService() {
     }
 
     companion object {
-        const val ACTION_UNLOCK = "com.example.brainlock.ACTION_UNLOCK"
+        const val ACTION_UNLOCK = "com.example.flashpass.ACTION_UNLOCK"
         var unlockedUntil: Long = 0
         var gracePeriodUntil: Long = 0
         var currentApp: String = ""
@@ -81,7 +81,7 @@ class AppBlockerService : AccessibilityService() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,
-                "Brainlock Časovač",
+                "FlashPass Časovač",
                 NotificationManager.IMPORTANCE_DEFAULT
             )
             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -136,7 +136,7 @@ class AppBlockerService : AccessibilityService() {
         createNotificationChannel()
 
         val intent = Intent(this, MainActivity::class.java).apply {
-            action = "com.example.brainlock.ACTION_RETEST"
+            action = "com.example.flashpass.ACTION_RETEST"
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra("isOverlay", true)
             putExtra("isFromNotification", true)
@@ -154,7 +154,7 @@ class AppBlockerService : AccessibilityService() {
         val timeFormatted = String.format("%02d:%02d", minutes, seconds)
 
         val notification = NotificationCompat.Builder(this, channelId)
-            .setContentTitle("Brainlock: Aplikácia odomknutá")
+            .setContentTitle("Flashpass: Aplikácia odomknutá")
             .setContentText("Zostávajúci čas: $timeFormatted")
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setColor(themeColor)

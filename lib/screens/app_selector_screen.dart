@@ -23,7 +23,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
   bool isLoading = true;
   bool isPremium = false;
   final TextEditingController _searchController = TextEditingController();
-  static const platform = MethodChannel('brainlock.channel');
+  static const platform = MethodChannel('flashpass.channel');
 
   @override
   void initState() {
@@ -49,7 +49,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
       withIcon: true,
     );
     
-    apps.removeWhere((app) => app.packageName == 'com.example.brainlock');
+    apps.removeWhere((app) => app.packageName == 'com.example.flashpass');
     apps.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
 
     final premiumStatus = await RevenueCatService.isPremium();
@@ -336,7 +336,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
                 Icon(Icons.star_rounded, size: 50, color: isNeo ? Colors.black : currentTheme.warningColor),
                 const SizedBox(height: 10),
                 Text(
-                  "Odomkni Brainlock Premium!",
+                  "Odomkni FlashPass Premium!",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,

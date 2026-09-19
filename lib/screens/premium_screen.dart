@@ -76,7 +76,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("Brainlock Premium"),
+        title: const Text("FlashPass Premium"),
         backgroundColor: theme.appBarTheme.backgroundColor ?? Colors.transparent,
         foregroundColor: theme.colorScheme.onSurface,
         elevation: theme.appBarTheme.elevation ?? 0,
@@ -106,8 +106,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
               const SizedBox(height: 12),
               Text(
                 _isPremium 
-                    ? "Užívaj si neobmedzené balíčky, importy z Quizletu a všetky funkcie naplno." 
-                    : "Odomkni si neobmedzené vlastné balíčky, hromadný import a pokročilé funkcie.",
+                    ? "Užívaj si neobmedzené balíčky, ďalšie štýly a všetky funkcie naplno." 
+                    : "Odomkni si neobmedzené vlastné balíčky, premium štýly a iné pokročilé funkcie.",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16, 

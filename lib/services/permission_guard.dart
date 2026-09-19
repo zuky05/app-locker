@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class PermissionGuard with WidgetsBindingObserver {
-  static const MethodChannel _channel = MethodChannel('brainlock.channel');
+  static const MethodChannel _channel = MethodChannel('flashpass.channel');
   final GlobalKey<NavigatorState> navigatorKey;
 
   PermissionGuard({required this.navigatorKey});

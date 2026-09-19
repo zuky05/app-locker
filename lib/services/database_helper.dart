@@ -13,7 +13,7 @@ class DatabaseHelper {
 
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDB('brainlock.db');
+    _database = await _initDB('flashpass.db');
     return _database!;
   }
 
@@ -23,7 +23,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 3, // 🟢 Zvýšená verzia pre opravu schémy a odmien
+      version: 4, // 🟢 Zvýšená verzia pre podporu jazykov v balíčkoch (front_lang, back_lang)
       onCreate: _createDB,
       onUpgrade: _onUpgradeDB,
     );
@@ -35,7 +35,9 @@ class DatabaseHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         category TEXT NOT NULL,
-        is_premade INTEGER NOT NULL
+        is_premade INTEGER NOT NULL,
+        front_lang TEXT NOT NULL DEFAULT 'en-US',
+        back_lang TEXT NOT NULL DEFAULT 'en-US'
       )
     ''');
 
@@ -76,6 +78,12 @@ class DatabaseHelper {
       } catch (_) {}
       await db.execute('UPDATE study_sessions SET correct_count = total_questions WHERE correct_count > total_questions AND total_questions > 0');
     }
+    if (oldVersion < 4) {
+      try {
+        await db.execute("ALTER TABLE decks ADD COLUMN front_lang TEXT NOT NULL DEFAULT 'en-US'");
+        await db.execute("ALTER TABLE decks ADD COLUMN back_lang TEXT NOT NULL DEFAULT 'en-US'");
+      } catch (_) {}
+    }
   }
 
   Future<void> _seedPremadeDecks(Database db) async {
@@ -87,6 +95,8 @@ class DatabaseHelper {
           'name': d['name'],
           'category': d['category'],
           'is_premade': 1,
+          'front_lang': d['front_lang'] ?? 'en-US',
+          'back_lang': d['back_lang'] ?? 'en-US',
         });
 
         for (var c in d['cards']) {
@@ -110,12 +120,14 @@ class DatabaseHelper {
     return result.map((json) => Deck.fromMap(json)).toList();
   }
 
-  Future<int> addNewDeck(String name, String category) async {
+  Future<int> addNewDeck(String name, String category, {String frontLang = 'en-US', String backLang = 'en-US'}) async {
     final db = await instance.database;
     final deckId = await db.insert('decks', {
       'name': name,
       'category': category,
       'is_premade': 0,
+      'front_lang': frontLang,
+      'back_lang': backLang,
     });
     return deckId;
   }
@@ -229,15 +241,33 @@ class DatabaseHelper {
     );
   }
 
+
+  Future<Map<String, dynamic>?> getDeckById(int id) async {
+    final db = await instance.database;
+    final maps = await db.query(
+      'decks',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    return maps.isNotEmpty ? maps.first : null;
+  }
+
   Future<void> removeDeck(int deckId) async {
     final db = await instance.database;
     await db.rawDelete('DELETE FROM decks WHERE id = ?', [deckId]);
     await db.rawDelete('DELETE FROM cards WHERE deck_id = ?', [deckId]);
   }
 
-  Future<void> updateDeck(int deckId, String newName, String newCategory) async {
+  Future<void> updateDeck(int deckId, String newName, String newCategory, {String? frontLang, String? backLang}) async {
     final db = await instance.database;
-    await db.rawUpdate('UPDATE decks SET name = ?, category = ? WHERE id = ?', [newName, newCategory, deckId]);
+    final Map<String, dynamic> values = {
+      'name': newName,
+      'category': newCategory,
+    };
+    if (frontLang != null) values['front_lang'] = frontLang;
+    if (backLang != null) values['back_lang'] = backLang;
+
+    await db.update('decks', values, where: 'id = ?', whereArgs: [deckId]);
   }
   
   Future<int> getCardCountForDeck(int deckId) async {
@@ -386,14 +416,13 @@ class DatabaseHelper {
     return streak;
   }
 
-  // 🟢 OPRAVENÁ METÓDA (zapisuje do earned_seconds namiesto duration_seconds)
   Future<int> addEarnedTime(int bonusSeconds) async {
     final db = await instance.database;
     return await db.insert('study_sessions', {
       'timestamp': DateTime.now().toIso8601String(),
-      'deck_id': 0, // 0 = Odmena z dennej výzvy
+      'deck_id': 0,
       'duration_seconds': 0,
-      'earned_seconds': bonusSeconds, // 🟢 Správny stĺpec!
+      'earned_seconds': bonusSeconds,
       'correct_count': 0,
       'total_questions': 0,
     });

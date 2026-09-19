@@ -1,4 +1,4 @@
-package com.example.brainlock
+package com.example.flashpass
 
 import android.content.ComponentName
 import android.content.Context
@@ -16,7 +16,7 @@ import io.flutter.plugin.common.MethodChannel
 
 class MainActivity: FlutterFragmentActivity() {
     
-    private val CHANNEL = "brainlock.channel"
+    private val CHANNEL = "flashpass.channel"
     private var methodChannel: MethodChannel? = null
     private var isUnlocking = false
 
@@ -39,7 +39,7 @@ class MainActivity: FlutterFragmentActivity() {
 
                     val isLauncher = intent.action == Intent.ACTION_MAIN && intent.hasCategory(Intent.CATEGORY_LAUNCHER)
 
-                    val isFromNotif = intent.getBooleanExtra("isFromNotification", false) || intent.action == "com.example.brainlock.ACTION_RETEST"
+                    val isFromNotif = intent.getBooleanExtra("isFromNotification", false) || intent.action == "com.example.flashpass.ACTION_RETEST"
                     val isOverlay = if (isLauncher) false else (intent.getBooleanExtra("isOverlay", false) || isFromNotif)
                     val isTimeout = if (isLauncher) false else intent.getBooleanExtra("isTimeout", false)
                     val deckId = intent.data?.getQueryParameter("deckId")
@@ -47,7 +47,7 @@ class MainActivity: FlutterFragmentActivity() {
                     intent.removeExtra("isOverlay")
                     intent.removeExtra("isTimeout")
                     intent.removeExtra("isFromNotification")
-                    if (intent.action == "com.example.brainlock.ACTION_RETEST") {
+                    if (intent.action == "com.example.flashpass.ACTION_RETEST") {
                         intent.action = null
                     }
 
@@ -146,7 +146,7 @@ class MainActivity: FlutterFragmentActivity() {
 
         val isLauncher = intent.action == Intent.ACTION_MAIN && intent.hasCategory(Intent.CATEGORY_LAUNCHER)
         
-        val isFromNotif = intent.getBooleanExtra("isFromNotification", false) || intent.action == "com.example.brainlock.ACTION_RETEST"
+        val isFromNotif = intent.getBooleanExtra("isFromNotification", false) || intent.action == "com.example.flashpass.ACTION_RETEST"
         val isOverlay = if (isLauncher) false else (intent.getBooleanExtra("isOverlay", false) || isFromNotif)
         val isTimeout = if (isLauncher) false else intent.getBooleanExtra("isTimeout", false)
         
@@ -154,7 +154,7 @@ class MainActivity: FlutterFragmentActivity() {
         intent.removeExtra("isTimeout")
         intent.removeExtra("isFromNotification")
         
-        if (intent.action == "com.example.brainlock.ACTION_RETEST") {
+        if (intent.action == "com.example.flashpass.ACTION_RETEST") {
             intent.action = null
         }
 

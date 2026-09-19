@@ -31,7 +31,7 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  const platform = MethodChannel('brainlock.channel');
+  const platform = MethodChannel('flashpass.channel');
 
   try {
     final prefs = await SharedPreferences.getInstance();
@@ -100,7 +100,7 @@ class _MyAppState extends State<MyApp> {
   late bool isOverlay;
   late bool isTimeout;
   late bool isFromNotification;
-  static const platform = MethodChannel('brainlock.channel');
+  static const platform = MethodChannel('flashpass.channel');
 
   late AppLinks _appLinks;
 
@@ -196,7 +196,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _handleDeepLink(Uri uri) {
-    if (uri.scheme == 'brainlock' && uri.host == 'share') {
+    if (uri.scheme == 'flashpass' && uri.host == 'share') {
       final rawData = uri.queryParameters['data'];
       
       if (rawData != null) {
@@ -237,7 +237,7 @@ class _MyAppState extends State<MyApp> {
                 Icon(Icons.star_rounded, size: 50, color: Colors.amber),
                 SizedBox(height: 10),
                 Text(
-                  "Odomkni Brainlock Premium!",
+                  "Odomkni flashpass Premium!",
                   textAlign: TextAlign.center,
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
@@ -344,7 +344,7 @@ class _MyAppState extends State<MyApp> {
       builder: (context, themeProvider, child) {
         return MaterialApp(
           navigatorKey: navigatorKey,
-          title: 'Brainlock',
+          title: 'flashpass',
           
           // Tu sa aplikuje zvolená téma z tvojho katalógu app_themes.dart
           theme: themeProvider.theme,

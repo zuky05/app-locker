@@ -290,7 +290,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
               Icon(Icons.star_rounded, size: 50, color: isNeo ? Colors.black : currentTheme.warningColor),
               const SizedBox(height: 10),
               Text(
-                "Odomkni Brainlock Premium!",
+                "Odomkni FlashPass Premium!",
                 textAlign: TextAlign.center,
                 style: TextStyle(fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold, color: dialogTextColor),
               ),
@@ -917,8 +917,8 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                                 String jsonString = jsonEncode(mapData);
                                 String base64Data = base64Url.encode(utf8.encode(jsonString));
 
-                                final String shareLink = 'brainlock://share?data=$base64Data';
-                                final String message = 'Poď sa učiť balíček "${deck.name}" v Brainlocku! Klikni pre import: $shareLink';
+                                final String shareLink = 'flashpass://share?data=$base64Data';
+                                final String message = 'Poď sa učiť balíček "${deck.name}" vo FlashPasse! Klikni pre import: $shareLink';
 
                                 Share.share(message);
                               },
@@ -1172,7 +1172,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
         backgroundColor: Colors.transparent,
         appBar: AppBar(
           title: Text(
-            'Balíčky Brainlock',
+            'FlashPass Balíčky ',
             style: TextStyle(
               fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
               color: isNeo ? Colors.black : theme.colorScheme.onSurface,

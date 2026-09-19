@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:country_flags/country_flags.dart';
 import 'package:provider/provider.dart';
 import '../services/database_helper.dart';
+import '../services/tts_service.dart';
 import '../models/deck_model.dart';
 import '../themes/app_themes.dart';
 import '../themes/theme_provider.dart';
@@ -36,6 +37,13 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
     _loadCards();
   }
 
+  @override
+  void dispose() {
+    TtsService.stop();
+    _pageController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadCards() async {
     final loadedCards = await DatabaseHelper.instance.getCardsForDeck(widget.deck.id!);
     setState(() {
@@ -62,20 +70,53 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
     }
   }
 
-  Widget _buildFlagWidget(String path) {
-    final code = path.trim().split('/').last.replaceAll('.svg', '').toUpperCase();
+  Widget _buildFlagWidget(String path, AppThemeData currentTheme) {
+    final cleanPath = path.trim();
+    final code = cleanPath.split('/').last.replaceAll('.svg', '').toUpperCase();
+
+    Widget flagWidget;
     if (code.length == 2) {
-      return CountryFlag.fromCountryCode(
+      flagWidget = CountryFlag.fromCountryCode(
         code,
         height: 120,
         width: 160,
         shape: const Rectangle(),
       );
+    } else {
+      flagWidget = SvgPicture.asset(
+        cleanPath,
+        height: 120,
+        fit: BoxFit.contain,
+      );
     }
-    return SvgPicture.asset(
-      path,
-      height: 120,
-      fit: BoxFit.contain,
+
+    final bool isNeo = currentTheme.id == 2;
+    final bool isCyber = currentTheme.id == 0;
+
+    final Color flagBorderColor = isNeo
+        ? Colors.black
+        : (isCyber
+            ? const Color(0xFF00F0FF)
+            : currentTheme.theme.colorScheme.onSurface.withValues(alpha: 0.50));
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.zero,
+        border: Border.all(
+          color: flagBorderColor,
+          width: isNeo ? 7.0 : 2.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isCyber
+                ? const Color(0xFF00F0FF).withValues(alpha: 0.45)
+                : Colors.black.withValues(alpha: 0.18),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: flagWidget,
     );
   }
 
@@ -117,7 +158,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
     final answerController = TextEditingController();
     final currentTheme = Provider.of<ThemeProvider>(context, listen: false).currentThemeData;
     final theme = currentTheme.theme;
-    final Color sectionColor = currentTheme.testSetupColor; // Tyrkysová / Čierna podla témy
+    final Color sectionColor = currentTheme.testSetupColor;
     final bool isVibrant = currentTheme.id == 5;
     final bool isSoft = currentTheme.id == 1;
     final bool isCyber = currentTheme.id == 0;
@@ -348,7 +389,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
-    final Color sectionColor = currentTheme.testSetupColor; // Tyrkysová / Čierna
+    final Color sectionColor = currentTheme.testSetupColor;
     final bool isVibrant = currentTheme.id == 5;
     final bool isSoft = currentTheme.id == 1;
     final bool isCyber = currentTheme.id == 0;
@@ -447,35 +488,39 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                                     child: Column(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Text(
-                                          showAnswer ? "ODPOVEĎ" : "OTÁZKA",
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                            fontFamily: isCyber ? 'monospace' : null,
-                                            color: isCyber ? sectionColor : (isSoft ? const Color(0xFF718096) : cardTextColor.withValues(alpha: 0.7)),
-                                            letterSpacing: 2,
-                                          ),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              showAnswer ? "ODPOVEĎ" : "OTÁZKA",
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                                fontFamily: isCyber ? 'monospace' : null,
+                                                color: isCyber ? sectionColor : (isSoft ? const Color(0xFF718096) : cardTextColor.withValues(alpha: 0.7)),
+                                                letterSpacing: 2,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 6),
+                                            IconButton(
+                                              padding: EdgeInsets.zero,
+                                              constraints: const BoxConstraints(),
+                                              icon: const Icon(Icons.volume_up_rounded, size: 20),
+                                              color: isCyber ? sectionColor : (isSoft ? const Color(0xFF718096) : cardTextColor.withValues(alpha: 0.8)),
+                                              onPressed: () {
+                                                final textToSpeak = showAnswer ? card['correct_answer'] : card['prompt'];
+                                                final lang = showAnswer ? widget.deck.backLang : widget.deck.frontLang;
+                                                TtsService.speak(textToSpeak.toString(), targetLanguage: lang);
+                                              },
+                                            ),
+                                          ],
                                         ),
                                         const SizedBox(height: 20),
 
                                         if (!showAnswer && card['prompt'].toString().endsWith('.svg')) ...[
                                           const SizedBox(height: 12),
-                                          ClipRRect(
-                                            borderRadius: BorderRadius.circular(8),
-                                            child: _buildFlagWidget(card['prompt']),
-                                          ),
+                                          _buildFlagWidget(card['prompt'], currentTheme),
                                           const SizedBox(height: 10),
-                                          Text(
-                                            'Komu patrí táto vlajka?',
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                              fontSize: 22, 
-                                              fontWeight: FontWeight.w600,
-                                              fontFamily: isCyber ? 'monospace' : null,
-                                              color: cardTextColor,
-                                            ),
-                                          ),
                                         ] else ...[
                                           Text(
                                             showAnswer ? card['correct_answer'] : card['prompt'],
@@ -548,7 +593,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                           padding: const EdgeInsets.all(14),
                           decoration: isClean
                               ? BoxDecoration(
-                                  color: const Color(0xFFDC2626), // 🟢 Červené pozadie pre kôš
+                                  color: const Color(0xFFDC2626),
                                   borderRadius: currentTheme.buttonBorderRadius,
                                   border: Border.all(color: const Color(0xFFB91C1C), width: 1.2),
                                   boxShadow: [
@@ -575,7 +620,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                           child: Icon(
                             Icons.delete_rounded, 
                             color: isClean 
-                                ? Colors.white // 🟢 Biela ikona koša
+                                ? Colors.white
                                 : (isSoft ? currentTheme.errorColor : (isCyber ? currentTheme.errorColor : currentTheme.getContrastTextColor(currentTheme.errorColor))), 
                             size: 22,
                           ),

@@ -7,12 +7,14 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vibration/vibration.dart';
+import 'package:confetti/confetti.dart';
 import '../services/database_helper.dart';
 import '../themes/theme_provider.dart';
 import '../themes/app_themes.dart';
 import '../themes/themed_background.dart';
 import '../services/stats_provider.dart';
 import '../services/daily_challenge_service.dart';
+import '../services/tts_service.dart';
 import 'deck_manager_screen.dart';
 
 class QuizOverlayScreen extends StatefulWidget {
@@ -34,9 +36,12 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
   bool _isTestFinished = false;
   final List<int> _excludedCardIds = [];
   final Stopwatch _sessionStopwatch = Stopwatch();
+  late ConfettiController _confettiController;
   
   // --- SPOLOČNÉ NASTAVENIA ---
   int? _activeDeckId;
+  String? _deckFrontLang;
+  String? _deckBackLang;
   bool _isVibrationEnabled = true;
   bool _isLearningMode = false;
 
@@ -96,15 +101,34 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
   @override
   void initState() {
     super.initState();
+    _confettiController = ConfettiController(duration: const Duration(seconds: 2));
     _sessionStopwatch.start();
     _loadSettingsAndStart();
   }
 
   @override
   void dispose() {
+    _confettiController.dispose();
+    TtsService.stop();
     _timer?.cancel();
     _hardcoreController.dispose();
     super.dispose();
+  }
+
+  String _normalizeLangCode(String? lang) {
+    if (lang == null || lang.trim().isEmpty) return 'en-US';
+    final clean = lang.trim().toLowerCase();
+    if (clean.contains('fi') || clean.contains('fín') || clean.contains('finnish')) return 'fi-FI';
+    if (clean.contains('sk') || clean.contains('slov')) return 'sk-SK';
+    if (clean.contains('en') || clean.contains('ang') || clean.contains('english')) return 'en-US';
+    if (clean.contains('de') || clean.contains('nem') || clean.contains('german')) return 'de-DE';
+    if (clean.contains('es') || clean.contains('špa') || clean.contains('spanish')) return 'es-ES';
+    if (clean.contains('fr') || clean.contains('fra') || clean.contains('french')) return 'fr-FR';
+    if (clean.contains('it') || clean.contains('tal') || clean.contains('italian')) return 'it-IT';
+    if (clean.contains('ru') || clean.contains('rus') || clean.contains('russian')) return 'ru-RU';
+    if (clean.contains('cz') || clean.contains('cs') || clean.contains('čes') || clean.contains('czech')) return 'cs-CZ';
+    if (clean.length == 2) return '$clean-${clean.toUpperCase()}';
+    return lang;
   }
 
   bool _isSvg(String? path) {
@@ -133,18 +157,35 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       );
     }
 
+    final currentTheme = Provider.of<ThemeProvider>(context, listen: false).currentThemeData;
+    final bool isNeo = currentTheme.id == 2;
+    final String cleanName = currentTheme.name.toLowerCase();
+    final bool isCyber = currentTheme.id == 0 || cleanName.contains('cyberpunk');
+
+    final Color flagBorderColor = isNeo
+        ? Colors.black
+        : (isCyber
+            ? const Color(0xFF00F0FF)
+            : currentTheme.theme.colorScheme.onSurface.withValues(alpha: 0.50));
+
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.zero,
         border: Border.all(
-          color: Colors.black.withValues(alpha: 0.25),
-          width: 1.0,
+          color: flagBorderColor,
+          width: isNeo ? 7.0 : 2.5,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: isCyber
+                ? const Color(0xFF00F0FF).withValues(alpha: 0.45)
+                : Colors.black.withValues(alpha: 0.18),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(3),
-        child: flagWidget,
-      ),
+      child: flagWidget,
     );
   }
 
@@ -199,9 +240,22 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
   Future<void> _loadSettingsAndStart() async {
     final prefs = await SharedPreferences.getInstance();
     _blindTestRecap.clear();
+
+    final activeDeckId = widget.practiceDeckId ?? prefs.getInt('active_test_deck_id');
+
+    if (activeDeckId != null) {
+      try {
+        final deckData = await DatabaseHelper.instance.getDeckById(activeDeckId);
+        if (deckData != null) {
+            _deckFrontLang = deckData['front_lang']?.toString() ?? deckData['frontLang']?.toString();
+            _deckBackLang = deckData['back_lang']?.toString() ?? deckData['backLang']?.toString();
+        }
+      } catch (_) {}
+    }
+
     setState(() {
       _isVibrationEnabled = prefs.getBool('vibration_enabled') ?? true;
-      _activeDeckId = widget.practiceDeckId ?? prefs.getInt('active_test_deck_id'); 
+      _activeDeckId = activeDeckId;
       _isLearningMode = prefs.getBool('test_isLearningMode') ?? false;
 
       if (_isLearningMode) {
@@ -370,6 +424,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     });
 
     if (_currentQuestionIndex >= _remedialQuizQuestions.length) {
+      _confettiController.play();
       setState(() => _isTestFinished = true);
       return;
     }
@@ -419,6 +474,9 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       _isCardFlipped = false;
       _isLoading = false;
       _isTestFinished = _learningCardsQueue.isEmpty;
+      if (_isTestFinished) {
+        _confettiController.play();
+      }
     });
   }
 
@@ -451,6 +509,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
           if (_isRemedialLearning) {
             _startRemedialQuiz();
           } else {
+            _confettiController.play();
             _isTestFinished = true;
           }
         }
@@ -716,7 +775,11 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
         _startRemedialLearning();
       } 
       else {
-        if (!passed) _triggerFailureVibration();
+        if (!passed) {
+          _triggerFailureVibration();
+        } else {
+          _confettiController.play();
+        }
         setState(() => _isTestFinished = true);
       }
     } 
@@ -772,7 +835,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       int totalEarnedInPractice = earnedSecondsForPractice + challengeBonusSeconds;
 
       if (totalEarnedInPractice > 0) {
-        const platform = MethodChannel('brainlock.channel');
+        const platform = MethodChannel('flashpass.channel');
         try {
           await platform.invokeMethod('unlockApp', {
             'seconds': totalEarnedInPractice,
@@ -806,7 +869,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       int totalEarned = earnedSeconds + challengeBonusSeconds;
       int actualAddedSeconds = 0;
 
-      const platform = MethodChannel('brainlock.channel');
+      const platform = MethodChannel('flashpass.channel');
       try { 
         final dynamic result = await platform.invokeMethod('unlockApp', {
           'seconds': totalEarned, 
@@ -853,7 +916,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     int maxCapSeconds = (_questionCount * 30 * mult).round() + challengeBonusSeconds; 
     int actualAddedSeconds = 0;
 
-    const platform = MethodChannel('brainlock.channel');
+    const platform = MethodChannel('flashpass.channel');
     try { 
       final dynamic result = await platform.invokeMethod('unlockApp', {
         'seconds': totalEarnedWithChallenge, 
@@ -1035,54 +1098,84 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       backgroundColor: isPractice 
           ? Colors.transparent 
           : Colors.black.withValues(alpha: 0.70),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: MediaQuery.of(context).size.width * 0.92,
-                decoration: dialogBgDecoration,
-                child: Container(
-                  padding: const EdgeInsets.all(24),
-                  child: _isLoading 
-                      ? SizedBox(
-                          height: 200, 
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              color: isCyberpunk ? const Color(0xFF00F0FF) : (isNeo ? Colors.black : (isSoft ? const Color(0xFF2563EB) : currentTheme.testSetupColor)),
-                            ),
-                          ),
-                        ) 
-                      : _buildContent(currentTheme),
-                ),
-              ),
-
-              if (isPractice) ...[
-                const SizedBox(height: 16),
-                TextButton.icon(
-                  onPressed: _closeOrExitScreen,
-                  icon: Icon(
-                    Icons.close_rounded, 
-                    color: isCyberpunk ? const Color(0xFF00F0FF) : (isNeo ? Colors.black : (isSoft ? const Color(0xFF4A5568) : ((isVibrant || isGlass) ? Colors.white.withValues(alpha: 0.85) : theme.colorScheme.onSurface.withValues(alpha: 0.75)))), 
-                    size: 20,
-                  ),
-                  label: Text(
-                    "Zrušiť test", 
-                    style: TextStyle(
-                      color: isCyberpunk ? const Color(0xFF00F0FF) : (isNeo ? Colors.black : (isSoft ? const Color(0xFF4A5568) : ((isVibrant || isGlass) ? Colors.white.withValues(alpha: 0.85) : theme.colorScheme.onSurface.withValues(alpha: 0.75)))), 
-                      fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.bold, 
-                      fontFamily: isCyberpunk ? 'monospace' : null,
-                      fontSize: 15,
+      body: Stack(
+        alignment: Alignment.center,
+        children: [
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: MediaQuery.of(context).size.width * 0.92,
+                    decoration: dialogBgDecoration,
+                    child: Container(
+                      padding: const EdgeInsets.all(24),
+                      child: _isLoading 
+                          ? SizedBox(
+                              height: 200, 
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  color: isCyberpunk ? const Color(0xFF00F0FF) : (isNeo ? Colors.black : (isSoft ? const Color(0xFF2563EB) : currentTheme.testSetupColor)),
+                                ),
+                              ),
+                            ) 
+                          : _buildContent(currentTheme),
                     ),
                   ),
-                  style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
-                ),
-              ],
-            ],
+
+                  if (isPractice) ...[
+                    const SizedBox(height: 16),
+                    TextButton.icon(
+                      onPressed: _closeOrExitScreen,
+                      icon: Icon(
+                        Icons.close_rounded, 
+                        color: isCyberpunk ? const Color(0xFF00F0FF) : (isNeo ? Colors.black : (isSoft ? const Color(0xFF4A5568) : ((isVibrant || isGlass) ? Colors.white.withValues(alpha: 0.85) : theme.colorScheme.onSurface.withValues(alpha: 0.75)))), 
+                        size: 20,
+                      ),
+                      label: Text(
+                        "Zrušiť test", 
+                        style: TextStyle(
+                          color: isCyberpunk ? const Color(0xFF00F0FF) : (isNeo ? Colors.black : (isSoft ? const Color(0xFF4A5568) : ((isVibrant || isGlass) ? Colors.white.withValues(alpha: 0.85) : theme.colorScheme.onSurface.withValues(alpha: 0.75)))), 
+                          fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.bold, 
+                          fontFamily: isCyberpunk ? 'monospace' : null,
+                          fontSize: 15,
+                        ),
+                      ),
+                      style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ),
-        ),
+          
+          // 💥 CENTRÁLNY 360° VÝBUCH S VYSOKOU POČIATOČNOU RÝCHLOSŤOU
+          Align(
+            alignment: Alignment.center,
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirectionality: BlastDirectionality.explosive, // Strieľa do všetkých 360°
+              minBlastForce: 35, // Vysoká štartovacia rýchlosť
+              maxBlastForce: 90, // Vystrelí vysoko nahor a ďaleko do strán
+              emissionFrequency: 0.01, // Bleskový nával častíc naraz
+              numberOfParticles: 100, // Poriadne bohatá nálož konfiet
+              gravity: 0.35, // Vyvážená gravitácia pre prirodzený, no rýchly oblúk a pád
+              shouldLoop: false,
+              colors: const [
+                Colors.green,
+                Colors.blue,
+                Colors.pink,
+                Colors.orange,
+                Colors.purple,
+                Colors.amber,
+                Colors.cyan,
+                Colors.lime,
+              ],
+            ),
+          ),
+        ],
       ),
     );
 
@@ -1982,6 +2075,20 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          Align(
+            alignment: Alignment.topRight,
+            child: IconButton(
+              icon: Icon(
+                Icons.volume_up_rounded, 
+                color: isCyberpunk ? const Color(0xFF00F0FF) : textColor,
+                size: 24,
+              ),
+              onPressed: () => TtsService.speak(
+                card['prompt'].toString(),
+                targetLanguage: _normalizeLangCode(card['front_lang']?.toString() ?? card['frontLang']?.toString() ?? _deckFrontLang),
+              ),
+            ),
+          ),
           if (_isSvg(card['prompt'].toString()))
             _buildSvgImage(card['prompt'].toString(), height: 100)
           else
@@ -1995,7 +2102,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                 fontFamily: isCyberpunk ? 'monospace' : null,
               ),
             ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 20),
           Text(
             "Ťukni pre otočenie", 
             style: TextStyle(
@@ -2059,6 +2166,20 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          Align(
+            alignment: Alignment.topRight,
+            child: IconButton(
+              icon: Icon(
+                Icons.volume_up_rounded, 
+                color: textColor,
+                size: 24,
+              ),
+              onPressed: () => TtsService.speak(
+                card['correct_answer'].toString(),
+                targetLanguage: _normalizeLangCode(card['back_lang']?.toString() ?? card['backLang']?.toString() ?? _deckBackLang),
+              ),
+            ),
+          ),
           if (_isSvg(card['prompt'].toString()))
             _buildSvgImage(card['prompt'].toString(), height: 60)
           else
@@ -2073,7 +2194,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
               ),
             ),
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24), 
+            padding: const EdgeInsets.symmetric(vertical: 16), 
             child: Divider(color: isCyberpunk ? const Color(0xFF00F0FF).withValues(alpha: 0.3) : (isNeo ? Colors.black : (isSoft ? const Color(0xFF9EAEC6) : textColor.withValues(alpha: 0.4))), thickness: isNeo ? 2 : 1),
           ),
           if (_isSvg(card['correct_answer'].toString()))
@@ -2322,15 +2443,41 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
         if (_isSvg(_currentQuestion!['prompt'].toString()))
           _buildSvgImage(_currentQuestion!['prompt'].toString(), height: 110)
         else
-          Text(
-            _currentQuestion!['prompt'], 
-            textAlign: TextAlign.center, 
-            style: TextStyle(
-              fontSize: 20, 
-              color: textColor, 
-              fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.bold,
-              fontFamily: isCyberpunk ? 'monospace' : null,
-            ),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 44.0),
+                child: Text(
+                  _currentQuestion!['prompt'], 
+                  textAlign: TextAlign.center, 
+                  style: TextStyle(
+                    fontSize: 20, 
+                    color: textColor, 
+                    fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.bold,
+                    fontFamily: isCyberpunk ? 'monospace' : null,
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 0,
+                child: IconButton(
+                  icon: Icon(
+                    Icons.volume_up_rounded,
+                    color: isCyberpunk ? const Color(0xFF00F0FF) : textColor,
+                    size: 22,
+                  ),
+                  onPressed: () => TtsService.speak(
+                    _currentQuestion!['prompt'].toString(),
+                    targetLanguage: _normalizeLangCode(
+                      _currentQuestion!['front_lang']?.toString() ??
+                      _currentQuestion!['frontLang']?.toString() ??
+                      _deckFrontLang,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         
         if (_isSwapQuestion && !_isRemedialQuiz && !_hasUsedSwap && !_isAnswerChecked) ...[

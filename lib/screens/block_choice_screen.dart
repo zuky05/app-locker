@@ -52,7 +52,7 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
 
   void _useGracePeriod() async {
     if (isPremium) {
-      const platform = MethodChannel('brainlock.channel');
+      const platform = MethodChannel('flashpass.channel');
       try {
         await platform.invokeMethod('unlockApp', {'seconds': 60, 'maxCap': 60});
         if (mounted) SystemNavigator.pop(); 
@@ -64,7 +64,7 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
 
     bool success = await PrefsHelper.useGraceAttempt();
     if (success) {
-      const platform = MethodChannel('brainlock.channel');
+      const platform = MethodChannel('flashpass.channel');
       try {
         await platform.invokeMethod('unlockApp', {'seconds': 60, 'maxCap': 60});
         if (mounted) SystemNavigator.pop();

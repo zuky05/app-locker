@@ -134,14 +134,14 @@ class _HomeScreenState extends State<HomeScreen> {
             Icon(Icons.star_rounded, size: 50, color: isNeo ? Colors.black : currentTheme.warningColor),
             const SizedBox(height: 10),
             Text(
-              "Odomkni Brainlock Premium!",
+              "Odomkni FlashPass Premium!",
               textAlign: TextAlign.center,
               style: TextStyle(fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold, color: dialogTextColor),
             ),
           ],
         ),
         content: Text(
-          "Dosiahol si limit 3 vlastných balíčkov zadarmo.\n\nPre import ďalších balíčkov si aktivuj Premium.",
+          "Dosiahol si limit 3 vlastných balíčkov zadarmo.\n\nPre neobmedzené vytváranie balíčkov si aktivuj Premium.",
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 15, fontWeight: isNeo ? FontWeight.w600 : FontWeight.normal, color: dialogTextColor.withValues(alpha: 0.8)),
         ),
@@ -252,6 +252,77 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildShipatonFooterBadge(BuildContext context) {
+    final currentTheme = Provider.of<ThemeProvider>(context).currentThemeData;
+    final bool isCyberpunk = currentTheme.id == 0 || currentTheme.name.toLowerCase().contains('cyberpunk');
+    final bool isNeo = currentTheme.id == 2;
+    final bool isSoft = currentTheme.id == 1;
+    final bool isGlass = currentTheme.id == 4 || currentTheme.id.toString() == '4';
+
+    final Color textColor = isCyberpunk
+        ? const Color(0xFF00F0FF)
+        : (isNeo
+            ? Colors.black
+            : (isSoft
+                ? const Color(0xFF4A5568)
+                : (isGlass 
+                    ? Colors.white.withValues(alpha: 0.85)
+                    : currentTheme.theme.colorScheme.onSurface.withValues(alpha: 0.65))));
+
+    final Color badgeBg = isCyberpunk
+        ? const Color(0xFF120E24).withValues(alpha: 0.85)
+        : (isNeo
+            ? const Color(0xFFF7EED2)
+            : (isSoft
+                ? const Color(0xFFD1D9E6)
+                : (isGlass
+                    ? Colors.white.withValues(alpha: 0.10)
+                    : currentTheme.theme.cardColor.withValues(alpha: 0.60))));
+
+    final Border border = isCyberpunk
+        ? Border.all(color: const Color(0xFF00F0FF).withValues(alpha: 0.5), width: 1.2)
+        : (isNeo
+            ? Border.all(color: Colors.black, width: 2.5)
+            : (isGlass
+                ? Border.all(color: Colors.white.withValues(alpha: 0.25), width: 1.0)
+                : Border.all(color: textColor.withValues(alpha: 0.20), width: 1.0)));
+
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: badgeBg,
+          borderRadius: BorderRadius.circular(20),
+          border: border,
+          boxShadow: isNeo 
+              ? const [BoxShadow(color: Colors.black, offset: Offset(2, 2))] 
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.rocket_launch_rounded, 
+              size: 13, 
+              color: isCyberpunk ? const Color(0xFFFF007F) : textColor,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              "Created for Shipaton 2026 by RevenueCat",
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isNeo || isCyberpunk ? FontWeight.w900 : FontWeight.w600,
+                fontFamily: isCyberpunk ? 'monospace' : null,
+                color: textColor,
+                letterSpacing: isCyberpunk ? 0.6 : 0.2,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -261,7 +332,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
     final bool isCyber = currentTheme.id == 0;
-    final bool isLimitReached = customDeckCount >= 3 && !isPremium; 
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -273,7 +343,7 @@ class _HomeScreenState extends State<HomeScreen> {
         title: Row(
           children: [
             Text(
-              'Brainlock Decks',
+              'FlashPass Decks',
               style: theme.appBarTheme.titleTextStyle ?? TextStyle(
                 color: isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : theme.colorScheme.onSurface),
                 fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
@@ -693,23 +763,19 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           Expanded(
                             child: _buildImportTile(
-                              title: 'Quizlet',
-                              icon: Icons.language,
+                              title: 'CSV Import',
+                              icon: Icons.description_rounded,
                               accentColor: currentTheme.quickImportColor,
                               socketBgColor: isSoft ? const Color(0xFFD6E4FF) : null,
                               socketIconColor: isSoft ? const Color(0xFF2563EB) : null,
-                              isLocked: isLimitReached,
+                              isLocked: false,
                               currentTheme: currentTheme,
                               isCyber: isCyber,
                               onTap: () {
-                                if (isLimitReached) {
-                                  _showPremiumDialog();
-                                } else {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => const QuizletPlaygroundScreen()),
-                                  ).then((_) => _refreshAllData());
-                                }
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const QuizletPlaygroundScreen()),
+                                ).then((_) => _refreshAllData());
                               },
                             ),
                           ),
@@ -721,22 +787,23 @@ class _HomeScreenState extends State<HomeScreen> {
                               accentColor: currentTheme.quickImportColor,
                               socketBgColor: isSoft ? const Color(0xFFE0F2FE) : null,
                               socketIconColor: isSoft ? const Color(0xFF0284C7) : null,
-                              isLocked: isLimitReached,
+                              isLocked: false,
                               currentTheme: currentTheme,
                               isCyber: isCyber,
                               onTap: () {
-                                if (isLimitReached) {
-                                  _showPremiumDialog();
-                                } else {
-                                  _handleAnkiImport();
-                                }
+                                _handleAnkiImport();
                               },
                             ),
                           ),
                         ],
                       ),
 
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 24),
+
+                      // SHIPATON 2026 BADGE
+                      _buildShipatonFooterBadge(context),
+
+                      const SizedBox(height: 24),
                     ],
                   );
                 },

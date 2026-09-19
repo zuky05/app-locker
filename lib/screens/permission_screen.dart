@@ -15,7 +15,7 @@ class PermissionScreen extends StatefulWidget {
 }
 
 class _PermissionScreenState extends State<PermissionScreen> with WidgetsBindingObserver {
-  static const platform = MethodChannel('brainlock.channel');
+  static const platform = MethodChannel('flashpass.channel');
   
   bool isOverlayGranted = false;
   bool isAccessibilityGranted = false;

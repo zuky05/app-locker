@@ -344,6 +344,7 @@ class _MyAppState extends State<MyApp> {
       builder: (context, themeProvider, child) {
         return MaterialApp(
           navigatorKey: navigatorKey,
+          debugShowCheckedModeBanner: false,
           title: 'flashpass',
           
           // Tu sa aplikuje zvolená téma z tvojho katalógu app_themes.dart

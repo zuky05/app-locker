@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'deck_manager_screen.dart';
 import 'app_selector_screen.dart';
-import 'quizlet_playground_screen.dart';
+import '../services/csv_service.dart';
 import '../services/database_helper.dart';
 import '../services/anki_importer.dart';
 import '../themes/theme_provider.dart';
@@ -104,7 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result)));
-    _checkDeckCount();
+    await _checkDeckCount();
   }
 
   void _showPremiumDialog() {
@@ -166,7 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
               final success = await RevenueCatService.presentPaywall();
               
               if (success) {
-                _checkDeckCount();
+                await _checkDeckCount();
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -333,6 +333,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final bool isSoft = currentTheme.id == 1;
     final bool isCyber = currentTheme.id == 0;
 
+    // Pridávame kontrolu na blokovanie importov
+    final bool isLimitReached = (customDeckCount >= 3 && !isPremium);
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       extendBody: true,
@@ -378,7 +381,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 RevenueCatService.showCustomerCenter();
               } else {
                 final success = await RevenueCatService.presentPaywall();
-                if (success) _checkDeckCount();
+                if (success) await _checkDeckCount();
               }
             },
           ),
@@ -528,7 +531,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             RevenueCatService.showCustomerCenter();
                           } else {
                             final success = await RevenueCatService.presentPaywall();
-                            if (success) _checkDeckCount();
+                            if (success) await _checkDeckCount();
                           }
                         },
                         borderRadius: currentTheme.cardBorderRadius,
@@ -595,9 +598,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         onTap: () async {
                           await Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => DeckManagerScreen()),
+                            MaterialPageRoute(builder: (context) => const DeckManagerScreen()),
                           );
-                          _refreshAllData();
+                          await _refreshAllData(); // Oživí HomeScreen po návrate
                         },
                         borderRadius: currentTheme.cardBorderRadius,
                         child: Container(
@@ -768,14 +771,21 @@ class _HomeScreenState extends State<HomeScreen> {
                               accentColor: currentTheme.quickImportColor,
                               socketBgColor: isSoft ? const Color(0xFFD6E4FF) : null,
                               socketIconColor: isSoft ? const Color(0xFF2563EB) : null,
-                              isLocked: false,
+                              isLocked: isLimitReached, // <-- Blokovanie
                               currentTheme: currentTheme,
                               isCyber: isCyber,
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => const QuizletPlaygroundScreen()),
-                                ).then((_) => _refreshAllData());
+                              onTap: () async {
+                                if (isLimitReached) {
+                                  _showPremiumDialog();
+                                  return;
+                                }
+                                final result = await CsvService.importDeckFromCsv();
+                                if (result != null && mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(result)),
+                                  );
+                                  await _refreshAllData();
+                                }
                               },
                             ),
                           ),
@@ -787,10 +797,14 @@ class _HomeScreenState extends State<HomeScreen> {
                               accentColor: currentTheme.quickImportColor,
                               socketBgColor: isSoft ? const Color(0xFFE0F2FE) : null,
                               socketIconColor: isSoft ? const Color(0xFF0284C7) : null,
-                              isLocked: false,
+                              isLocked: isLimitReached, // <-- Blokovanie
                               currentTheme: currentTheme,
                               isCyber: isCyber,
                               onTap: () {
+                                if (isLimitReached) {
+                                  _showPremiumDialog();
+                                  return;
+                                }
                                 _handleAnkiImport();
                               },
                             ),
@@ -811,6 +825,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
+  // (Tu pokračujú tvoje metódy _buildDailyGoalCard, _buildDailyChallengeCard, _buildTimeEarnedCard, _buildAccuracyMasteryCard, _buildActionTile, _buildImportTile úplne bez zmeny)
 
   Widget _buildDailyGoalCard({
     required BuildContext context,
@@ -989,30 +1005,30 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-            if (_challengeStreak > 0)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: isNeobrutalism ? Colors.white : (isSoft ? const Color(0xFFE2E8F0) : Colors.black),
-                  borderRadius: BorderRadius.circular(isCyber ? 3 : 10),
-                  border: Border.all(color: isNeobrutalism ? Colors.black : Colors.orange, width: isCyber ? 1.0 : 2.0),
-                ),
-                child: Row(
-                  children: [
-                    const Text('🔥', style: TextStyle(fontSize: 12)),
-                    const SizedBox(width: 4),
-                    Text(
-                      '$_challengeStreak d',
-                      style: TextStyle(
-                        color: isNeobrutalism ? Colors.black : Colors.orange,
-                        fontWeight: FontWeight.w900,
-                        fontFamily: isCyber ? 'monospace' : null,
-                        fontSize: 12,
+              if (_challengeStreak > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: isNeobrutalism ? Colors.white : (isSoft ? const Color(0xFFE2E8F0) : Colors.black),
+                    borderRadius: BorderRadius.circular(isCyber ? 3 : 10),
+                    border: Border.all(color: isNeobrutalism ? Colors.black : Colors.orange, width: isCyber ? 1.0 : 2.0),
+                  ),
+                  child: Row(
+                    children: [
+                      const Text('🔥', style: TextStyle(fontSize: 12)),
+                      const SizedBox(width: 4),
+                      Text(
+                        '$_challengeStreak d',
+                        style: TextStyle(
+                          color: isNeobrutalism ? Colors.black : Colors.orange,
+                          fontWeight: FontWeight.w900,
+                          fontFamily: isCyber ? 'monospace' : null,
+                          fontSize: 12,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
             ],
           ),
           const SizedBox(height: 8),

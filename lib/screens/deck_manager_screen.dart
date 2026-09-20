@@ -10,7 +10,6 @@ import '../themes/theme_provider.dart';
 import 'deck_detail_screen.dart';
 import 'create_deck_screen.dart';
 import 'quiz_overlay_screen.dart';
-import 'quizlet_playground_screen.dart';
 import '../services/anki_importer.dart';
 import '../services/revenuecat_service.dart';
 import '../themes/themed_background.dart';
@@ -132,7 +131,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result)));
-    _loadDecks();
+    await _loadDecks();
   }
 
   IconData _getCategoryIcon(String category) {
@@ -319,7 +318,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                 Navigator.pop(dialogContext);
                 final success = await RevenueCatService.presentPaywall();
                 if (success) {
-                  _loadDecks();
+                  await _loadDecks();
                   if (!mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -438,23 +437,28 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
             ),
             const SizedBox(height: 10),
             buildOptionButton(
-              icon: Icons.school,
-              label: "Import z Quizletu",
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const QuizletPlaygroundScreen()),
-                ).then((_) => _loadDecks());
+              icon: Icons.description_rounded,
+              label: "Import z CSV",
+              onTap: () async {
+                Navigator.pop(context); // Zavrieme dialóg
+                final result = await CsvService.importDeckFromCsv(); // Zavoláme import
+                
+                if (result != null && mounted) {
+                  // Po importe okamžite obnovíme list
+                  await _loadDecks();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(result)),
+                  );
+                }
               },
             ),
             const SizedBox(height: 10),
             buildOptionButton(
               icon: Icons.upload_file,
               label: "Import z Anki",
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(context);
-                _handleAnkiImport();
+                await _handleAnkiImport();
               },
             ),
           ],
@@ -542,7 +546,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
               if (nameController.text.isNotEmpty && categoryController.text.isNotEmpty) {
                 Navigator.pop(context);
                 await DatabaseHelper.instance.updateDeck(deck.id!, nameController.text, categoryController.text);
-                _loadDecks();
+                await _loadDecks();
               }
             },
           ),

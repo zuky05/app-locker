@@ -1151,17 +1151,16 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             ),
           ),
           
-          // 💥 CENTRÁLNY 360° VÝBUCH S VYSOKOU POČIATOČNOU RÝCHLOSŤOU
           Align(
             alignment: Alignment.center,
             child: ConfettiWidget(
               confettiController: _confettiController,
-              blastDirectionality: BlastDirectionality.explosive, // Strieľa do všetkých 360°
-              minBlastForce: 35, // Vysoká štartovacia rýchlosť
-              maxBlastForce: 90, // Vystrelí vysoko nahor a ďaleko do strán
-              emissionFrequency: 0.01, // Bleskový nával častíc naraz
-              numberOfParticles: 100, // Poriadne bohatá nálož konfiet
-              gravity: 0.35, // Vyvážená gravitácia pre prirodzený, no rýchly oblúk a pád
+              blastDirectionality: BlastDirectionality.explosive,
+              minBlastForce: 35,
+              maxBlastForce: 90,
+              emissionFrequency: 0.01,
+              numberOfParticles: 100,
+              gravity: 0.35,
               shouldLoop: false,
               colors: const [
                 Colors.green,

@@ -8,6 +8,7 @@ import '../themes/app_themes.dart';
 import '../themes/theme_provider.dart';
 import '../services/revenuecat_service.dart';
 import '../themes/themed_background.dart';
+import '../services/locale_provider.dart';
 
 class AppSelectorScreen extends StatefulWidget {
   const AppSelectorScreen({super.key});
@@ -227,6 +228,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
   }
 
   Future<void> _resetAllBlockedApps() async {
+    final t = context.read<LocaleProvider>().t;
     final currentTheme = Provider.of<ThemeProvider>(context, listen: false).currentThemeData;
     final bool isVibrant = currentTheme.id == 5;
     final bool isNeo = currentTheme.id == 2;
@@ -254,7 +256,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
           side: isNeo ? const BorderSide(color: Colors.black, width: 3.5) : currentTheme.buttonBorder,
         ),
         title: Text(
-          "Odblokovať všetko?",
+          t.dialogUnblockAllTitle,
           textAlign: TextAlign.center,
           style: TextStyle(
             fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
@@ -262,7 +264,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
           ),
         ),
         content: Text(
-          "Naozaj chceš odblokovať všetky zablokované aplikácie?",
+          t.dialogUnblockAllContent,
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 15,
@@ -273,7 +275,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
         actionsAlignment: MainAxisAlignment.center,
         actions: [
           _buildDialogButton(
-            label: "Zrušiť",
+            label: t.buttonCancel,
             accentColor: currentTheme.errorColor,
             currentTheme: currentTheme,
             isSecondary: true,
@@ -281,7 +283,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
           ),
           const SizedBox(width: 8),
           _buildDialogButton(
-            label: "Odblokovať",
+            label: t.buttonUnblock,
             accentColor: currentTheme.errorColor,
             currentTheme: currentTheme,
             onTap: () => Navigator.pop(dialogContext, true),
@@ -299,6 +301,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
   }
 
   Future<void> _toggleApp(String packageName) async {
+    final t = context.read<LocaleProvider>().t;
     final currentTheme = Provider.of<ThemeProvider>(context, listen: false).currentThemeData;
     final bool isVibrant = currentTheme.id == 5;
     final bool isNeo = currentTheme.id == 2;
@@ -336,7 +339,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
                 Icon(Icons.star_rounded, size: 50, color: isNeo ? Colors.black : currentTheme.warningColor),
                 const SizedBox(height: 10),
                 Text(
-                  "Odomkni FlashPass Premium!",
+                  t.dialogPremiumTitle,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
@@ -346,7 +349,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
               ],
             ),
             content: Text(
-              "Dosiahol si limit 3 zablokovaných aplikácií zadarmo.\n\nPre neobmedzené blokovanie aplikácií si aktivuj Premium.",
+              t.dialogPremiumContent,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 15,
@@ -357,7 +360,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
             actionsAlignment: MainAxisAlignment.center,
             actions: [
               _buildDialogButton(
-                label: "Zrušiť",
+                label: t.buttonCancel,
                 accentColor: currentTheme.errorColor,
                 currentTheme: currentTheme,
                 isSecondary: true,
@@ -365,7 +368,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
               ),
               const SizedBox(width: 8),
               _buildDialogButton(
-                label: "Odomknúť Premium",
+                label: t.buttonUnlockPremium,
                 accentColor: currentTheme.warningColor,
                 currentTheme: currentTheme,
                 onTap: () async {
@@ -392,6 +395,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.watch<LocaleProvider>().t;
     final themeProvider = Provider.of<ThemeProvider>(context);
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
@@ -452,7 +456,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
         backgroundColor: Colors.transparent,
         appBar: AppBar(
           title: Text(
-            'Blokované aplikácie',
+            t.blockedAppsTitle,
             style: TextStyle(
               fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
               color: isNeo ? Colors.black : theme.colorScheme.onSurface,
@@ -466,7 +470,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
             if (blockedPackages.isNotEmpty)
               IconButton(
                 icon: Icon(Icons.restart_alt_rounded, size: 24, color: isNeo ? Colors.black : null),
-                tooltip: 'Odblokovať všetko',
+                tooltip: t.tooltipUnblockAll,
                 onPressed: _resetAllBlockedApps,
               ),
             const SizedBox(width: 8),
@@ -488,7 +492,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                "Aplikácie na uzamknutie",
+                                t.appsToLockTitle,
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
@@ -543,7 +547,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            "Zvolené aplikácie sa sprístupnia až po vyriešení vedomostného testu.",
+                            t.appsToLockDescription,
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: isNeo ? FontWeight.bold : FontWeight.normal,
@@ -568,7 +572,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
                           fontSize: 14,
                         ),
                         decoration: InputDecoration(
-                          hintText: "Hľadať aplikáciu...",
+                          hintText: t.searchAppHint,
                           hintStyle: TextStyle(
                             fontSize: 14,
                             fontFamily: isCyber ? 'monospace' : null,
@@ -590,7 +594,7 @@ class _AppSelectorScreenState extends State<AppSelectorScreen> {
                     child: filteredApps.isEmpty
                         ? Center(
                             child: Text(
-                              "Žiadna aplikácia sa nenašla",
+                              t.noAppFound,
                               style: TextStyle(
                                 fontWeight: isNeo ? FontWeight.w900 : FontWeight.normal,
                                 color: isNeo ? Colors.black : (isVibrant ? Colors.white.withValues(alpha: 0.7) : theme.colorScheme.onSurface.withValues(alpha: 0.6)),

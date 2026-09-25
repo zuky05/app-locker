@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:country_flags/country_flags.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/stats_provider.dart';
 import '../themes/theme_provider.dart';
 import '../themes/app_themes.dart';
 import '../themes/themed_background.dart';
+import '../services/languages.dart';
 
 class StatsDetailScreen extends StatefulWidget {
   const StatsDetailScreen({super.key});
@@ -18,6 +20,22 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
   int _selectedFilterIndex = 0; // 0: Dnes, 1: Týždeň, 2: Všetok čas
   double _dragOffset = 0.0;
   bool _isSwipingRight = false;
+  String _currentLanguageCode = 'sk';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLanguagePreference();
+  }
+
+  Future<void> _loadLanguagePreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _currentLanguageCode = prefs.getString('app_language') ?? 'sk';
+      });
+    }
+  }
 
   String _formatDuration(int totalSeconds) {
     if (totalSeconds <= 0) return '0 s';
@@ -35,26 +53,9 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
     }
   }
 
-  String _getAccuracyMessage(int accuracy) {
-    if (accuracy <= 20) {
-      return 'Treba viac trénovať 😅';
-    } else if (accuracy <= 40) {
-      return 'Niekam sa už dostávame... 📈';
-    } else if (accuracy <= 60) {
-      return 'Dobrá práca, len tak ďalej ⚡';
-    } else if (accuracy <= 80) {
-      return 'Už ti to ide super! 🧠';
-    } else if (accuracy < 100) {
-      return 'Skvelá pamäť, ideš ako stroj! 🔥';
-    } else {
-      return 'Perfektný výkon! Absolútny master 👑';
-    }
-  }
-
   void _onDragEnd(DragEndDetails details) {
     final double velocity = details.primaryVelocity ?? 0;
 
-    // Sledovanie vzdialenosti (vhodné pre myš na PC) aj rýchlosti (pre dotyk)
     if (_dragOffset > 40 || velocity > 120) {
       setState(() {
         _isSwipingRight = true;
@@ -77,6 +78,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
     final bool isVibrant = currentTheme.id == 5;
     final bool isSoft = currentTheme.id == 1;
     final bool isCyber = currentTheme.id == 0;
+    final AppTexts texts = _currentLanguageCode == 'en' ? textsEn : textsSk;
 
     return ThemedBackground(
       child: Scaffold(
@@ -87,7 +89,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
           title: Row(
             children: [
               Text(
-                'Štatistiky učenia',
+                texts.statsTitle,
                 style: theme.appBarTheme.titleTextStyle ?? TextStyle(
                   color: theme.colorScheme.onSurface,
                   fontWeight: FontWeight.bold,
@@ -130,8 +132,12 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
             final int accuracy = stats['accuracy'] ?? 0;
             final int streak = statsProvider.currentStreak;
 
-            final String favoriteDeck = stats['favoriteDeck'] ?? 'Žiadny';
-            final String nemesisPrompt = stats['nemesisPrompt'] ?? stats['nemesisCard'] ?? 'Žiadna';
+            final String rawFavDeck = stats['favoriteDeck'] ?? '';
+            final String favoriteDeck = (rawFavDeck.isEmpty || rawFavDeck == 'Žiadny' || rawFavDeck == 'None') 
+                ? (_currentLanguageCode == 'en' ? 'None' : 'Žiadny') 
+                : rawFavDeck;
+
+            final String nemesisPrompt = stats['nemesisPrompt'] ?? stats['nemesisCard'] ?? '';
             final String nemesisAnswer = stats['nemesisAnswer'] ?? '';
 
             final int savedProcrastinationSeconds = (studySeconds * 2.5).round();
@@ -160,7 +166,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
                   physics: const BouncingScrollPhysics(),
                   children: [
                     // 1. PREPÍNAČ OBDOBIA
-                    _buildSegmentedFilter(currentTheme, isCyber),
+                    _buildSegmentedFilter(currentTheme, isCyber, texts),
                     const SizedBox(height: 24),
 
                     // 2. STREAK KARTA
@@ -188,7 +194,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                isCyber ? '// ACTIVE_STREAK' : 'AKTÍVNY STREAK',
+                                isCyber ? '// ACTIVE_STREAK' : texts.statsActiveStreak,
                                 style: TextStyle(
                                   color: isVibrant 
                                       ? Colors.white.withValues(alpha: 0.8) 
@@ -201,7 +207,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '$streak ${streak == 1 ? 'deň' : (streak >= 2 && streak <= 4 ? 'dni' : 'dní')}',
+                                texts.statsStreakFormat(streak),
                                 style: TextStyle(
                                   color: isVibrant ? Colors.white : (isSoft ? const Color(0xFF2D3748) : theme.colorScheme.onSurface),
                                   fontSize: 26,
@@ -221,7 +227,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
                       children: [
                         Expanded(
                           child: _buildStatTile(
-                            title: 'Čas učenia',
+                            title: texts.statsStudyTime,
                             value: _formatDuration(studySeconds),
                             icon: Icons.timer_rounded,
                             color: currentTheme.blockedAppsColor,
@@ -232,7 +238,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
                         const SizedBox(width: 16),
                         Expanded(
                           child: _buildStatTile(
-                            title: 'Zarobený čas',
+                            title: texts.statsEarnedTime,
                             value: _formatDuration(earnedSeconds),
                             icon: Icons.lock_open_rounded,
                             color: Colors.amber.shade700,
@@ -249,7 +255,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
                       children: [
                         Expanded(
                           child: _buildStatTile(
-                            title: 'Prebratých kartičiek',
+                            title: texts.statsCardsReviewed,
                             value: '$cardsCount',
                             icon: Icons.style_rounded,
                             color: currentTheme.testSetupColor,
@@ -260,7 +266,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
                         const SizedBox(width: 16),
                         Expanded(
                           child: _buildStatTile(
-                            title: 'Ušetrený čas',
+                            title: texts.statsSavedTime,
                             value: _formatDuration(savedProcrastinationSeconds),
                             icon: Icons.hourglass_top_rounded,
                             color: Colors.teal,
@@ -309,7 +315,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    isCyber ? '// PRIEMERNÁ ÚSPEŠNOSŤ' : 'Priemerná úspešnosť',
+                                    isCyber ? '// AVERAGE_ACCURACY' : texts.statsAvgAccuracy,
                                     style: TextStyle(
                                       color: isVibrant ? Colors.white : (isSoft ? const Color(0xFF2D3748) : theme.colorScheme.onSurface),
                                       fontSize: 16,
@@ -319,7 +325,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    _getAccuracyMessage(accuracy),
+                                    texts.statsAccuracyMessage(accuracy),
                                     style: TextStyle(
                                       color: isVibrant 
                                           ? Colors.white.withValues(alpha: 0.75) 
@@ -385,7 +391,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  isCyber ? '// NAJOBĽÚBENEJŠÍ BALÍČEK' : 'Najobľúbenejší balíček',
+                                  isCyber ? '// FAVORITE_DECK' : texts.statsFavoriteDeckTitle,
                                   style: TextStyle(
                                     color: isVibrant 
                                         ? Colors.white.withValues(alpha: 0.8) 
@@ -409,7 +415,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
                               ],
                             ),
                           ),
-                          if (favoriteDeck != 'Žiadny')
+                          if (favoriteDeck != 'Žiadny' && favoriteDeck != 'None')
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                               decoration: isSoft
@@ -433,7 +439,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
                                       ),
                                     ),
                               child: Text(
-                                isCyber ? '[$cardsCount KARTIČIEK]' : '$cardsCount kartičiek',
+                                isCyber ? '[$cardsCount CARDS]' : texts.deckCardCount(cardsCount),
                                 style: TextStyle(
                                   color: isVibrant || currentTheme.id == 4 
                                       ? Colors.white 
@@ -455,6 +461,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
                       correctAnswer: nemesisAnswer,
                       currentTheme: currentTheme,
                       isCyber: isCyber,
+                      texts: texts,
                     ),
                   ],
                 ),
@@ -541,7 +548,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
     );
   }
 
-  Widget _buildSegmentedFilter(AppThemeData currentTheme, bool isCyber) {
+  Widget _buildSegmentedFilter(AppThemeData currentTheme, bool isCyber, AppTexts texts) {
     final theme = currentTheme.theme;
     final bool isVibrant = currentTheme.id == 5;
     final bool isGlass = currentTheme.id == 4;
@@ -614,7 +621,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
       );
     }
 
-    final filters = ['Dnes', 'Týždeň', 'Všetko'];
+    final filters = [texts.statsFilterToday, texts.statsFilterWeek, texts.statsFilterAll];
 
     return Container(
       padding: const EdgeInsets.all(5),
@@ -755,12 +762,14 @@ class _NemesisInteractiveCard extends StatefulWidget {
   final String correctAnswer;
   final AppThemeData currentTheme;
   final bool isCyber;
+  final AppTexts texts;
 
   const _NemesisInteractiveCard({
     required this.prompt,
     required this.correctAnswer,
     required this.currentTheme,
     required this.isCyber,
+    required this.texts,
   });
 
   @override
@@ -791,7 +800,7 @@ class _NemesisInteractiveCardState extends State<_NemesisInteractiveCard> {
   @override
   Widget build(BuildContext context) {
     final theme = widget.currentTheme.theme;
-    final bool hasNemesis = widget.prompt != 'Žiadna' && widget.prompt.isNotEmpty;
+    final bool hasNemesis = widget.prompt != 'Žiadna' && widget.prompt != 'None' && widget.prompt.trim().isNotEmpty;
     final bool isVibrant = widget.currentTheme.id == 5;
     final bool isSoft = widget.currentTheme.id == 1;
 
@@ -834,7 +843,7 @@ class _NemesisInteractiveCardState extends State<_NemesisInteractiveCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.isCyber ? '// NEMESIS KARTA' : 'Nemesis karta',
+                    widget.isCyber ? '// NEMESIS_CARD' : widget.texts.statsNemesisTitle,
                     style: TextStyle(
                       color: isVibrant 
                           ? Colors.white.withValues(alpha: 0.8) 
@@ -846,7 +855,7 @@ class _NemesisInteractiveCardState extends State<_NemesisInteractiveCard> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Zatiaľ nemáš žiadnu úhlavnú nepriateľskú kartu 🎉',
+                    widget.texts.statsNemesisEmpty,
                     style: TextStyle(
                       color: isVibrant ? Colors.white : (isSoft ? const Color(0xFF2D3748) : theme.colorScheme.onSurface),
                       fontSize: 15,
@@ -931,8 +940,8 @@ class _NemesisInteractiveCardState extends State<_NemesisInteractiveCard> {
                       const SizedBox(width: 10),
                       Text(
                         _isFlipped 
-                            ? (widget.isCyber ? '// ODPOVEĎ' : 'ODPOVEĎ') 
-                            : (widget.isCyber ? '// NEMESIS_TARGET [MOST_ERRORS]' : 'NEMESIS KARTA (NAJVIAC CHÝB)'),
+                            ? (widget.isCyber ? '// ANSWER' : widget.texts.statsNemesisAnswerLabel) 
+                            : (widget.isCyber ? '// NEMESIS_TARGET [MOST_ERRORS]' : widget.texts.statsNemesisSubtitle),
                         style: TextStyle(
                           color: isVibrant 
                               ? Colors.white.withValues(alpha: 0.9) 
@@ -985,8 +994,8 @@ class _NemesisInteractiveCardState extends State<_NemesisInteractiveCard> {
               Center(
                 child: Text(
                   _isFlipped 
-                      ? (widget.isCyber ? '// Ťukni pre návrat' : 'Ťukni pre návrat na otázku') 
-                      : (widget.isCyber ? '// Ťukni pre zobrazenie odpovede' : 'Ťukni pre otočenie a zobrazenie odpovede'),
+                      ? (widget.isCyber ? '// Tap to return' : widget.texts.statsNemesisFlipToQuestion) 
+                      : (widget.isCyber ? '// Tap to reveal answer' : widget.texts.statsNemesisFlipToAnswer),
                   style: TextStyle(
                     color: isVibrant ? Colors.white.withValues(alpha: 0.7) : (isSoft ? const Color(0xFF718096) : theme.colorScheme.onSurface.withValues(alpha: 0.5)),
                     fontSize: 11,

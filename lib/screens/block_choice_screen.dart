@@ -6,6 +6,7 @@ import '../services/prefs_helper.dart';
 import '../themes/theme_provider.dart';
 import 'quiz_overlay_screen.dart';
 import '../services/revenuecat_service.dart';
+import '../services/locale_provider.dart';
 
 class BlockChoiceScreen extends StatefulWidget {
   final bool isTimeout;
@@ -86,6 +87,7 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.watch<LocaleProvider>().t;
     final themeProvider = Provider.of<ThemeProvider>(context);
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
@@ -219,7 +221,7 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
                               ),
                         const SizedBox(height: 16),
                         Text(
-                          "Zablokované!",
+                          t.blockChoiceTitle,
                           style: TextStyle(
                             fontSize: 24, 
                             fontWeight: isCyberpunk || isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
@@ -290,7 +292,7 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
                                           boxShadow: isNeo ? const [BoxShadow(color: Colors.black, offset: Offset(3, 3), blurRadius: 0)] : null,
                                         )),
                               child: Text(
-                                isLearningMode ? "Spustiť UČENIE" : "Spustiť TEST", 
+                                isLearningMode ? t.blockChoiceStartLearning : t.blockChoiceStartTest, 
                                 style: TextStyle(
                                   fontSize: 16, 
                                   fontWeight: isCyberpunk || isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
@@ -311,8 +313,8 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
                               padding: const EdgeInsets.only(top: 8),
                               child: Text(
                                 isLearningMode 
-                                    ? "Čas vypršal! Teraz ťa zachráni už len učenie." 
-                                    : "Čas vypršal! Teraz ťa zachráni už len test.",
+                                    ? t.blockChoiceTimeoutLearning 
+                                    : t.blockChoiceTimeoutTest,
                                 style: TextStyle(
                                   color: isCyberpunk 
                                       ? const Color(0xFFFF007F) 
@@ -364,8 +366,8 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
                                             )),
                                   child: Text(
                                     isPremium 
-                                        ? "Odomknúť na 1 minútu"
-                                        : "Odpustok na 1 min. ($remainingGrace/3 dnes)", 
+                                        ? t.blockChoiceUnlock1Min
+                                        : t.blockChoiceGracePeriod(remainingGrace), 
                                     style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: isCyberpunk || isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
@@ -382,7 +384,7 @@ class _BlockChoiceScreenState extends State<BlockChoiceScreen> {
                             Padding(
                               padding: const EdgeInsets.only(top: 8),
                               child: Text(
-                                "Dnešné odpustky si už vyčerpal!",
+                                t.blockChoiceGraceExhausted,
                                 style: TextStyle(
                                   color: isCyberpunk 
                                       ? const Color(0xFFFF007F) 

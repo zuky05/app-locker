@@ -5,6 +5,7 @@ import '../services/database_helper.dart';
 import '../themes/app_themes.dart';
 import '../themes/theme_provider.dart';
 import '../themes/themed_background.dart';
+import '../services/locale_provider.dart';
 import 'deck_detail_screen.dart';
 
 class CreateDeckScreen extends StatefulWidget {
@@ -178,6 +179,7 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.watch<LocaleProvider>().t;
     final themeProvider = Provider.of<ThemeProvider>(context);
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
@@ -231,7 +233,7 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
         backgroundColor: Colors.transparent,
         appBar: AppBar(
           title: Text(
-            "Nový balíček",
+            t.createDeckTitle,
             style: TextStyle(
               fontWeight: isNeo || isCyber ? FontWeight.w900 : FontWeight.bold,
               fontFamily: isCyber ? 'monospace' : null,
@@ -261,7 +263,7 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
                     fontWeight: isNeo || isCyber ? FontWeight.w900 : FontWeight.w600,
                   ),
                   decoration: InputDecoration(
-                    labelText: isCyber ? "// NÁZOV BALÍČKA (NAPR. NEMČINA)" : "Názov balíčka (napr. Nemčina)",
+                    labelText: isCyber ? t.createDeckNameHintCyber : t.createDeckNameHint,
                     labelStyle: TextStyle(
                       color: labelTextColor,
                       fontFamily: isCyber ? 'monospace' : null,
@@ -287,7 +289,7 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
                     fontWeight: isNeo || isCyber ? FontWeight.w900 : FontWeight.w600,
                   ),
                   decoration: InputDecoration(
-                    labelText: isCyber ? "// KATEGÓRIA (NAPR. JAZYKY)" : "Kategória (napr. Jazyky)",
+                    labelText: isCyber ? t.createDeckCategoryHintCyber : t.createDeckCategoryHint,
                     labelStyle: TextStyle(
                       color: labelTextColor,
                       fontFamily: isCyber ? 'monospace' : null,
@@ -302,7 +304,7 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
 
               // 3. TLAČIDLO: PRIDAŤ KARTIČKY
               _buildThemeButton(
-                label: "Pridať kartičky",
+                label: t.createDeckBtnAddCards,
                 icon: Icons.add_circle_outline_rounded,
                 onTap: _saveAndAddCards,
                 currentTheme: currentTheme,
@@ -313,7 +315,7 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
 
               // 4. TLAČIDLO: ULOŽIŤ BALÍČEK
               _buildThemeButton(
-                label: "Uložiť balíček",
+                label: t.createDeckBtnSave,
                 icon: Icons.check_circle_outline_rounded,
                 onTap: _saveDeckOnly,
                 currentTheme: currentTheme,

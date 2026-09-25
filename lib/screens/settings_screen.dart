@@ -2,10 +2,12 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:country_flags/country_flags.dart';
 import '../themes/app_themes.dart';
 import '../themes/theme_provider.dart';
 import '../services/revenuecat_service.dart';
 import '../themes/themed_background.dart';
+import '../services/locale_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -44,6 +46,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     });
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('vibration_enabled', value);
+  }
+
+  // 🟢 Zmena jazyka priamo cez Provider (jediný zdroj pravdy)
+  Future<void> _saveLanguageSetting(String langCode) async {
+    if (mounted) {
+      context.read<LocaleProvider>().setLocale(langCode);
+    }
   }
 
   Future<void> _onThemeTap(AppThemeData appTheme, ThemeProvider themeProvider) async {
@@ -237,6 +246,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
 
+    // 🟢 Načítanie aktuálneho jazyka priamo z LocaleProvider
+    final localeProvider = Provider.of<LocaleProvider>(context);
+    final String currentLanguageCode = localeProvider.locale;
+
     final bool isNeo = currentTheme.id == 2;
     final bool isVibrant = currentTheme.id == 5;
     final bool isSoft = currentTheme.id == 1;
@@ -253,7 +266,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         backgroundColor: Colors.transparent,
         appBar: AppBar(
           title: Text(
-            'Settings',
+            currentLanguageCode == 'sk' ? "Nastavenia" : "Settings",
             style: TextStyle(
               fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
               color: isNeo ? Colors.black : theme.colorScheme.onSurface,
@@ -269,6 +282,109 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 padding: const EdgeInsets.all(16.0),
                 physics: const BouncingScrollPhysics(),
                 children: [
+                  // --- SEKCIA: VÝBER JAZYKA (VLAJKY) ---
+                  Container(
+                    decoration: currentTheme.getCardDecoration(currentTheme.decksColor),
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          currentLanguageCode == 'sk' ? "Jazyk aplikácie" : "Language",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
+                            color: isNeo 
+                                ? Colors.black 
+                                : (isSoft 
+                                    ? const Color(0xFF2D3748) 
+                                    : (isVibrant ? Colors.white : theme.colorScheme.onSurface)),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            // SLOVENSKÁ VLAJKA
+                            GestureDetector(
+                              onTap: () => _saveLanguageSetting('sk'),
+                              child: Opacity(
+                                opacity: currentLanguageCode == 'sk' ? 1.0 : 0.5,
+                                child: Column(
+                                  children: [
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: currentLanguageCode == 'sk' 
+                                              ? (isNeo ? Colors.black : currentTheme.decksColor) 
+                                              : Colors.transparent,
+                                          width: 3.0,
+                                        ),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: CountryFlag.fromCountryCode(
+                                        'SK',
+                                        height: 40,
+                                        width: 60,
+                                        shape: const Rectangle(),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      currentLanguageCode == 'sk' ? "Slovenčina" : "Slovak",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: isNeo ? Colors.black : (isVibrant ? Colors.white : theme.colorScheme.onSurface),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            // ANGLICKÁ VLAJKA
+                            GestureDetector(
+                              onTap: () => _saveLanguageSetting('en'),
+                              child: Opacity(
+                                opacity: currentLanguageCode == 'en' ? 1.0 : 0.5,
+                                child: Column(
+                                  children: [
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: currentLanguageCode == 'en' 
+                                              ? (isNeo ? Colors.black : currentTheme.decksColor) 
+                                              : Colors.transparent,
+                                          width: 3.0,
+                                        ),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: CountryFlag.fromCountryCode(
+                                        'GB',
+                                        height: 40,
+                                        width: 60,
+                                        shape: const Rectangle(),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      currentLanguageCode == 'sk' ? "Angličtina" : "English",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: isNeo ? Colors.black : (isVibrant ? Colors.white : theme.colorScheme.onSurface),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
                   // --- SEKCIA: VIBRÁCIE ---
                   Container(
                     decoration: currentTheme.getCardDecoration(currentTheme.decksColor),
@@ -282,7 +398,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 : (isVibrant ? Colors.white : currentTheme.getIconColor(currentTheme.decksColor))),
                       ),
                       title: Text(
-                        "Vibrovanie pri chybe",
+                        currentLanguageCode == 'sk' ? "Vibrovanie pri chybe" : "Vibration on error",
                         style: TextStyle(
                           fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
                           color: isNeo 
@@ -293,7 +409,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                       ),
                       subtitle: Text(
-                        "Zavibruje pri nesprávnej odpovedi v kvíze a pri otočení kartičky",
+                        currentLanguageCode == 'sk' 
+                            ? "Zavibruje pri nesprávnej odpovedi v kvíze a pri otočení kartičky" 
+                            : "Vibrates on incorrect quiz answers and card flips",
                         style: TextStyle(
                           fontWeight: isNeo ? FontWeight.bold : FontWeight.normal,
                           color: isNeo 
@@ -325,7 +443,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   // --- SEKCIA: VÝBER TÉMY ---
                   Text(
-                    "Vizuálny štýl aplikácie",
+                    currentLanguageCode == 'sk' ? "Vizuálny štýl aplikácie" : "App Visual Style",
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
@@ -459,7 +577,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                           ),
                                           const SizedBox(height: 2),
                                           Text(
-                                            appTheme.isPremium ? "Premium štýl" : "Základný štýl",
+                                            appTheme.isPremium 
+                                                ? (currentLanguageCode == 'sk' ? "Premium štýl" : "Premium style") 
+                                                : (currentLanguageCode == 'sk' ? "Základný štýl" : "Basic style"),
                                             style: TextStyle(
                                               fontSize: 11,
                                               fontWeight: isBrutalism ? FontWeight.w900 : FontWeight.normal,

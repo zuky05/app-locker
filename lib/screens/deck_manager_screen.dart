@@ -14,6 +14,7 @@ import '../services/anki_importer.dart';
 import '../services/revenuecat_service.dart';
 import '../themes/themed_background.dart';
 import '../services/csv_service.dart';
+import '../services/locale_provider.dart';
 
 class DeckManagerScreen extends StatefulWidget {
   const DeckManagerScreen({super.key});
@@ -82,7 +83,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
 
       if (defaultDeck == null) {
         for (var d in loadedDecks) {
-          if (d.isPremade == 1 || d.isPremade == true) {
+          if (d.isPremade) {
             final count = await DatabaseHelper.instance.getCardCountForDeck(d.id!);
             if (count >= 5) {
               defaultDeck = d;
@@ -102,27 +103,35 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     if (!mounted) return;
 
     setState(() {
-      myDecks = loadedDecks.where((d) => d.isPremade == 0 || d.isPremade == false).toList();
-      premadeDecks = loadedDecks.where((d) => d.isPremade == 1 || d.isPremade == true).toList();
+      myDecks = loadedDecks.where((d) => !d.isPremade).toList();
+      premadeDecks = loadedDecks.where((d) => d.isPremade).toList();
       activeBlockerDeckId = activeId;
       isPremium = premiumStatus;
       isLoading = false;
     });
   }
 
-  String _getCategoryDescription(String category) {
-    switch (category.toLowerCase().trim()) {
-      case 'geography':
-        return 'Otestuj svoje znalosti hlavných miest, vlajok a geografie sveta.';
-      case 'language':
-        return 'Rozšír si slovnú zásobu v najpoužívanejších svetových jazykoch.';
-      case 'technology':
-      case 'tech':
-      case 'it':
-        return 'Ovládni HTTP status kódy, Linux príkazy a základné vývojárske koncepty.';
-      default:
-        return 'Pripravené kolekcie kartičiek pre rýchle učenie.';
+  // 🟢 DYNAMICKÝ POPIS KATEGÓRIÍ PODĽA ZVOLENÉHO JAZYKA
+  String _getCategoryDescription(String category, bool isEn) {
+    final cleanCategory = category.toLowerCase().trim();
+    if (cleanCategory.contains('geography') || cleanCategory.contains('geografia')) {
+      return isEn
+          ? 'Test your knowledge of capitals, flags, and world geography.'
+          : 'Otestuj svoje znalosti hlavných miest, vlajok a geografie sveta.';
     }
+    if (cleanCategory.contains('language') || cleanCategory.contains('jazyk')) {
+      return isEn
+          ? 'Expand your vocabulary in the most spoken world languages.'
+          : 'Rozšír si slovnú zásobu v najpoužívanejších svetových jazykoch.';
+    }
+    if (cleanCategory.contains('tech') || cleanCategory.contains('it') || cleanCategory.contains('computer') || cleanCategory.contains('informa')) {
+      return isEn
+          ? 'Master HTTP status codes, Linux commands, and developer concepts.'
+          : 'Ovládni HTTP status kódy, Linux príkazy a základné vývojárske koncepty.';
+    }
+    return isEn
+        ? 'Ready-to-use card collections for fast learning.'
+        : 'Pripravené kolekcie kartičiek pre rýchle učenie.';
   }
 
   Future<void> _handleAnkiImport() async {
@@ -136,9 +145,9 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
 
   IconData _getCategoryIcon(String category) {
     final cleanCategory = category.trim().toLowerCase();
-    if (cleanCategory.contains('geography')) return Icons.public;
-    if (cleanCategory.contains('language')) return Icons.translate;
-    if (cleanCategory.contains('tech')) return Icons.terminal;
+    if (cleanCategory.contains('geography') || cleanCategory.contains('geografia')) return Icons.public;
+    if (cleanCategory.contains('language') || cleanCategory.contains('jazyk')) return Icons.translate;
+    if (cleanCategory.contains('tech') || cleanCategory.contains('it') || cleanCategory.contains('computer') || cleanCategory.contains('informa')) return Icons.terminal;
     return Icons.folder_special;
   }
 
@@ -251,6 +260,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
   }
 
   void _showAddDeckDialog() async {
+    final t = context.read<LocaleProvider>().t;
     final int customCount = await DatabaseHelper.instance.getCustomDeckCount();
     final currentTheme = Provider.of<ThemeProvider>(context, listen: false).currentThemeData;
     final theme = currentTheme.theme;
@@ -289,21 +299,21 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
               Icon(Icons.star_rounded, size: 50, color: isNeo ? Colors.black : currentTheme.warningColor),
               const SizedBox(height: 10),
               Text(
-                "Odomkni FlashPass Premium!",
+                t.premiumLimitTitle,
                 textAlign: TextAlign.center,
                 style: TextStyle(fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold, color: dialogTextColor),
               ),
             ],
           ),
           content: Text(
-            "Dosiahol si limit 3 vlastných balíčkov zadarmo.\n\nPre neobmedzené vytváranie kartičiek a prístup ku všetkým balíčkom si aktivuj Premium.",
+            t.premiumLimitCustomDecks,
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 15, fontWeight: isNeo ? FontWeight.bold : FontWeight.normal, color: isNeo ? Colors.black87 : dialogTextColor.withValues(alpha: 0.8)),
           ),
           actionsAlignment: MainAxisAlignment.center,
           actions: [
             _buildDialogButton(
-              label: "Zrušiť",
+              label: t.buttonCancel,
               accentColor: currentTheme.errorColor,
               currentTheme: currentTheme,
               isSecondary: true,
@@ -311,7 +321,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
             ),
             const SizedBox(width: 8),
             _buildDialogButton(
-              label: "Odomknúť Premium",
+              label: t.buttonUnlockPremium,
               accentColor: currentTheme.warningColor,
               currentTheme: currentTheme,
               onTap: () async {
@@ -322,7 +332,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                   if (!mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: const Text("Vitaj v Premium klube! 🎉"), 
+                      content: Text(t.premiumSuccessToast), 
                       backgroundColor: currentTheme.successColor,
                     ),
                   );
@@ -417,7 +427,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
           side: isNeo ? const BorderSide(color: Colors.black, width: 3.5) : (isCyber ? const BorderSide(color: Color(0xFF00F5FF), width: 1.5) : currentTheme.buttonBorder),
         ),
         title: Text(
-          'Pridať nový balíček', 
+          t.addDeckDialogTitle, 
           textAlign: TextAlign.center, 
           style: TextStyle(fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold, color: dialogTextColor, fontSize: 18),
         ),
@@ -426,7 +436,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
           children: [
             buildOptionButton(
               icon: Icons.add_circle_outline,
-              label: "Pridať vlastný balíček",
+              label: t.optionCustomDeck,
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -438,13 +448,12 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
             const SizedBox(height: 10),
             buildOptionButton(
               icon: Icons.description_rounded,
-              label: "Import z CSV",
+              label: t.optionCsvImport,
               onTap: () async {
-                Navigator.pop(context); // Zavrieme dialóg
-                final result = await CsvService.importDeckFromCsv(); // Zavoláme import
+                Navigator.pop(context);
+                final result = await CsvService.importDeckFromCsv();
                 
                 if (result != null && mounted) {
-                  // Po importe okamžite obnovíme list
                   await _loadDecks();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text(result)),
@@ -455,7 +464,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
             const SizedBox(height: 10),
             buildOptionButton(
               icon: Icons.upload_file,
-              label: "Import z Anki",
+              label: t.optionAnkiImport,
               onTap: () async {
                 Navigator.pop(context);
                 await _handleAnkiImport();
@@ -468,6 +477,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
   }
 
   void _showRenameDeckDialog(Deck deck) {
+    final t = context.read<LocaleProvider>().t;
     final nameController = TextEditingController(text: deck.name);
     final categoryController = TextEditingController(text: deck.category);
     final currentTheme = Provider.of<ThemeProvider>(context, listen: false).currentThemeData;
@@ -501,7 +511,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
           side: isNeo ? const BorderSide(color: Colors.black, width: 3.5) : (isCyber ? const BorderSide(color: Color(0xFF00F5FF), width: 1.5) : currentTheme.buttonBorder),
         ),
         title: Text(
-          'Upraviť balíček', 
+          t.renameDeckTitle, 
           style: TextStyle(color: dialogTextColor, fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold),
         ),
         content: Column(
@@ -511,7 +521,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
               controller: nameController, 
               style: TextStyle(color: dialogTextColor, fontWeight: isNeo ? FontWeight.w900 : FontWeight.normal),
               decoration: InputDecoration(
-                labelText: 'Názov balíčka',
+                labelText: t.fieldDeckName,
                 labelStyle: TextStyle(color: dialogTextColor.withValues(alpha: 0.6)),
                 focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: isCyber ? const Color(0xFF00F5FF) : sectionColor, width: 2)),
               ),
@@ -521,7 +531,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
               controller: categoryController, 
               style: TextStyle(color: dialogTextColor, fontWeight: isNeo ? FontWeight.w900 : FontWeight.normal),
               decoration: InputDecoration(
-                labelText: 'Kategória',
+                labelText: t.fieldCategory,
                 labelStyle: TextStyle(color: dialogTextColor.withValues(alpha: 0.6)),
                 focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: isCyber ? const Color(0xFF00F5FF) : sectionColor, width: 2)),
               ),
@@ -531,7 +541,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
         actionsAlignment: MainAxisAlignment.end,
         actions: [
           _buildDialogButton(
-            label: 'Zrušiť',
+            label: t.buttonCancel,
             accentColor: currentTheme.errorColor,
             currentTheme: currentTheme,
             isSecondary: true,
@@ -539,7 +549,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
           ),
           const SizedBox(width: 8),
           _buildDialogButton(
-            label: 'Uložiť',
+            label: t.btnSave,
             accentColor: sectionColor,
             currentTheme: currentTheme,
             onTap: () async {
@@ -556,6 +566,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
   }
 
   void _showDeleteConfirmDialog(Deck deck) {
+    final t = context.read<LocaleProvider>().t;
     final currentTheme = Provider.of<ThemeProvider>(context, listen: false).currentThemeData;
     final theme = currentTheme.theme;
     final bool isVibrant = currentTheme.id == 5;
@@ -585,15 +596,15 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
           borderRadius: currentTheme.cardBorderRadius,
           side: isNeo ? const BorderSide(color: Colors.black, width: 3.5) : (isCyber ? const BorderSide(color: Color(0xFF00F5FF), width: 1.5) : currentTheme.buttonBorder),
         ),
-        title: Text('Vymazať balíček?', style: TextStyle(color: dialogTextColor, fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold)),
+        title: Text(t.deleteDeckTitle, style: TextStyle(color: dialogTextColor, fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold)),
         content: Text(
-          'Naozaj chceš vymazať balíček "${deck.name}"? Táto akcia je nenávratná a vymaže aj všetky kartičky v ňom.',
+          t.deleteDeckContent(deck.name),
           style: TextStyle(color: isNeo ? Colors.black87 : dialogTextColor.withValues(alpha: 0.8), fontWeight: isNeo ? FontWeight.bold : FontWeight.normal),
         ),
         actionsAlignment: MainAxisAlignment.end,
         actions: [
           _buildDialogButton(
-            label: 'Zrušiť',
+            label: t.buttonCancel,
             accentColor: currentTheme.errorColor,
             currentTheme: currentTheme,
             isSecondary: true,
@@ -601,7 +612,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
           ),
           const SizedBox(width: 8),
           _buildDialogButton(
-            label: 'Vymazať',
+            label: t.btnDeleteAction,
             accentColor: currentTheme.errorColor,
             currentTheme: currentTheme,
             onTap: () async {
@@ -695,8 +706,9 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
   }
 
   Widget _buildDeckCard(Deck deck) {
+    final t = context.watch<LocaleProvider>().t;
     final isExpanded = expandedDeckId == deck.id;
-    final bool isCustom = deck.isPremade == 0 || deck.isPremade == false;
+    final bool isCustom = !deck.isPremade;
     final themeProvider = Provider.of<ThemeProvider>(context);
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
@@ -770,7 +782,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                     children: [
                       Flexible(
                         child: Text(
-                          deck.name, 
+                          deck.getLocalizedName(context), 
                           style: TextStyle(
                             fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
                             fontSize: 16,
@@ -804,7 +816,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                                       border: isNeo ? Border.all(color: Colors.black, width: 2.0) : Border.fromBorderSide(currentTheme.buttonBorder),
                                     )),
                           child: Text(
-                            'AKTÍVNY', 
+                            t.activeBadge, 
                             style: TextStyle(
                               color: isSoft ? currentTheme.successColor : (isCyber ? const Color(0xFF00FF66) : (isNeo ? Colors.black : currentTheme.getContrastTextColor(currentTheme.successColor))), 
                               fontSize: 10, 
@@ -816,7 +828,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                     ],
                   ),
                   subtitle: Text(
-                    "${deck.category} • Karty: $cardCount",
+                    "${deck.getLocalizedCategory(context)} • ${context.read<LocaleProvider>().locale == 'en' ? 'Cards' : 'Karty'}: $cardCount",
                     style: TextStyle(
                       fontWeight: isNeo ? FontWeight.bold : FontWeight.normal,
                       fontSize: 12,
@@ -863,12 +875,12 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                           children: [
                             _buildActionButton(
                               icon: isActive ? Icons.check_circle : Icons.radio_button_unchecked,
-                              label: isActive ? "Aktívny" : "Zvoliť",
+                              label: isActive ? t.btnActive : t.btnSelect,
                               color: isNeo ? Colors.black : (isActive ? currentTheme.successColor : (isSoft ? const Color(0xFF2D3748) : theme.colorScheme.onSurface)),
                               onTap: () async {
                                 if (!hasEnoughCards) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text("Na blokovanie musíte mať aspoň 5 kariet.")),
+                                    SnackBar(content: Text(t.errorMinCardsBlock)),
                                   );
                                   return;
                                 }
@@ -879,7 +891,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                             ),
                             _buildActionButton(
                               icon: Icons.style,
-                              label: "Zobraziť",
+                              label: t.btnView,
                               color: isNeo ? Colors.black : currentTheme.blockedAppsColor,
                               onTap: () => Navigator.push(
                                 context,
@@ -890,24 +902,26 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                               opacity: hasEnoughCards ? 1.0 : 0.4,
                               child: _buildActionButton(
                                 icon: Icons.quiz,
-                                label: "Test",
+                                label: t.btnTest,
                                 color: isNeo ? Colors.black : currentTheme.decksColor,
                                 onTap: hasEnoughCards ? () => Navigator.push(
                                   context,
                                   MaterialPageRoute(builder: (context) => QuizOverlayScreen(practiceDeckId: deck.id)),
                                 ) : () {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text("Na spustenie testu musíte mať aspoň 5 kariet.")),
+                                    SnackBar(content: Text(t.errorMinCardsTest)),
                                   );
                                 },
                               ),
                             ),
                             _buildActionButton(
                               icon: Icons.share,
-                              label: "Zdieľať",
+                              label: t.btnShare,
                               color: isNeo ? Colors.black : currentTheme.decksColor,
                               onTap: () async {
-                                final cards = await DatabaseHelper.instance.getCardsForDeck(deck.id!);
+                                final currentLocale = context.read<LocaleProvider>().locale;
+                                final cards = await DatabaseHelper.instance.getCardsForDeck(deck.id!, locale: currentLocale);
+                                final isEn = currentLocale == 'en';
 
                                 final mapData = {
                                   'title': deck.name,
@@ -922,7 +936,9 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                                 String base64Data = base64Url.encode(utf8.encode(jsonString));
 
                                 final String shareLink = 'flashpass://share?data=$base64Data';
-                                final String message = 'Poď sa učiť balíček "${deck.name}" vo FlashPasse! Klikni pre import: $shareLink';
+                                final String message = isEn
+                                    ? 'Come learn the deck "${deck.getLocalizedName(context)}" on FlashPass! Click to import: $shareLink'
+                                    : 'Poď sa učiť balíček "${deck.getLocalizedName(context)}" vo FlashPasse! Klikni pre import: $shareLink';
 
                                 Share.share(message);
                               },
@@ -936,7 +952,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                             children: [
                               _buildActionButton(
                                 icon: Icons.add_circle_outline_outlined,
-                                label: "Upraviť karty",
+                                label: t.btnEditCards,
                                 color: isNeo ? Colors.black : currentTheme.dailyGoalColor,
                                 onTap: () => Navigator.push(
                                   context,
@@ -945,13 +961,13 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                               ),
                               _buildActionButton(
                                 icon: Icons.edit,
-                                label: "Pomenovať",
+                                label: t.btnRename,
                                 color: isNeo ? Colors.black : currentTheme.warningColor,
                                 onTap: () => _showRenameDeckDialog(deck),
                               ),
                               _buildActionButton(
                                 icon: Icons.delete,
-                                label: "Vymazať",
+                                label: t.btnDelete,
                                 color: isNeo ? Colors.black : currentTheme.errorColor,
                                 onTap: () => _showDeleteConfirmDialog(deck),
                               ),
@@ -973,6 +989,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
   }
 
   Widget _buildCustomDeckList(List<Deck> deckList) {
+    final t = context.watch<LocaleProvider>().t;
     final theme = Theme.of(context);
     final currentTheme = Provider.of<ThemeProvider>(context).currentThemeData;
     final bool isNeo = currentTheme.id == 2;
@@ -981,7 +998,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     if (deckList.isEmpty) {
       return Center(
         child: Text(
-          "Nenašli sa žiadne vlastné balíčky. Skús nejaký vytvoriť!",
+          t.emptyMyDecks,
           style: TextStyle(
             fontWeight: isNeo ? FontWeight.w900 : FontWeight.normal,
             color: isNeo ? Colors.black : (isSoft ? const Color(0xFF718096) : theme.colorScheme.onSurface.withValues(alpha: 0.7)),
@@ -997,6 +1014,8 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
   }
 
   Widget _buildGroupedPremadeDeckList(List<Deck> deckList) {
+    final t = context.watch<LocaleProvider>().t;
+    final isEn = context.watch<LocaleProvider>().locale == 'en';
     final themeProvider = Provider.of<ThemeProvider>(context);
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
@@ -1009,7 +1028,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     if (deckList.isEmpty) {
       return Center(
         child: Text(
-          "Žiadne predpripravené balíčky.",
+          t.emptyPremadeDecks,
           style: TextStyle(
             fontWeight: isNeo ? FontWeight.w900 : FontWeight.normal,
             color: isNeo ? Colors.black : (isSoft ? const Color(0xFF718096) : theme.colorScheme.onSurface.withValues(alpha: 0.7)),
@@ -1020,14 +1039,26 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
 
     final Map<String, List<Deck>> groupedDecks = {};
     for (var deck in deckList) {
-      groupedDecks.putIfAbsent(deck.category, () => []).add(deck);
+      groupedDecks.putIfAbsent(deck.getLocalizedCategory(context), () => []).add(deck);
     }
+
+    // 🟢 Zoradenie kategórií: Informatika / Technology bude VŽDY úplne na spodku
+    final categories = groupedDecks.keys.toList();
+    categories.sort((a, b) {
+      final aClean = a.toLowerCase();
+      final bClean = b.toLowerCase();
+      final aIsTech = aClean.contains('informa') || aClean.contains('tech') || aClean.contains('computer');
+      final bIsTech = bClean.contains('informa') || bClean.contains('tech') || bClean.contains('computer');
+
+      if (aIsTech && !bIsTech) return 1;
+      if (!aIsTech && bIsTech) return -1;
+      return a.compareTo(b);
+    });
 
     return ListView(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-      children: groupedDecks.entries.map((entry) {
-        final categoryName = entry.key;
-        final categoryDecks = entry.value;
+      children: categories.map((categoryName) {
+        final categoryDecks = groupedDecks[categoryName]!;
 
         final cardDeco = isCyber
             ? BoxDecoration(
@@ -1083,7 +1114,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
               subtitle: Padding(
                 padding: const EdgeInsets.only(top: 2),
                 child: Text(
-                  _getCategoryDescription(categoryName),
+                  _getCategoryDescription(categoryName, isEn),
                   style: TextStyle(
                     fontSize: 12, 
                     fontWeight: isNeo ? FontWeight.bold : FontWeight.normal,
@@ -1108,6 +1139,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
 
   @override
   Widget build(BuildContext context) {
+    final t = context.watch<LocaleProvider>().t;
     final themeProvider = Provider.of<ThemeProvider>(context);
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
@@ -1176,7 +1208,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
         backgroundColor: Colors.transparent,
         appBar: AppBar(
           title: Text(
-            'FlashPass Balíčky ',
+            t.deckManagerTitle,
             style: TextStyle(
               fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
               color: isNeo ? Colors.black : theme.colorScheme.onSurface,
@@ -1206,14 +1238,14 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                   labelStyle: TextStyle(fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold, fontSize: 13),
                   unselectedLabelStyle: TextStyle(fontWeight: isNeo ? FontWeight.bold : FontWeight.w600, fontSize: 13),
                   dividerColor: Colors.transparent,
-                  tabs: const [
+                  tabs: [
                     Tab(
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.person_rounded, size: 16),
-                          SizedBox(width: 6),
-                          Text('Moje balíčky'),
+                          const Icon(Icons.person_rounded, size: 16),
+                          const SizedBox(width: 6),
+                          Text(t.tabMyDecks),
                         ],
                       ),
                     ),
@@ -1221,9 +1253,9 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.library_books_rounded, size: 16),
-                          SizedBox(width: 6),
-                          Text('Pripravené'),
+                          const Icon(Icons.library_books_rounded, size: 16),
+                          const SizedBox(width: 6),
+                          Text(t.tabPremadeDecks),
                         ],
                       ),
                     ),

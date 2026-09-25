@@ -64,6 +64,14 @@ class AppBlockerService : AccessibilityService() {
         }
     }
 
+    /**
+     * Načíta aktuálne nastavený jazyk z Flutter SharedPreferences ("sk" alebo "en")
+     */
+    private fun getAppLanguage(): String {
+        val prefs = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+        return prefs.getString("flutter.app_language", "sk") ?: "sk"
+    }
+
     override fun onServiceConnected() {
         super.onServiceConnected()
         instance = this
@@ -79,9 +87,12 @@ class AppBlockerService : AccessibilityService() {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val isEn = getAppLanguage() == "en"
+            val channelName = if (isEn) "FlashPass Timer" else "FlashPass Časovač"
+
             val channel = NotificationChannel(
                 channelId,
-                "FlashPass Časovač",
+                channelName,
                 NotificationManager.IMPORTANCE_DEFAULT
             )
             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -153,16 +164,21 @@ class AppBlockerService : AccessibilityService() {
         val seconds = secondsLeft % 60
         val timeFormatted = String.format("%02d:%02d", minutes, seconds)
 
+        val isEn = getAppLanguage() == "en"
+        val titleText = if (isEn) "FlashPass: App Unlocked" else "FlashPass: Aplikácia odomknutá"
+        val bodyText = if (isEn) "Remaining time: $timeFormatted" else "Zostávajúci čas: $timeFormatted"
+        val actionBtnText = if (isEn) "Add time (Test)" else "Pridať čas (Test)"
+
         val notification = NotificationCompat.Builder(this, channelId)
-            .setContentTitle("Flashpass: Aplikácia odomknutá")
-            .setContentText("Zostávajúci čas: $timeFormatted")
+            .setContentTitle(titleText)
+            .setContentText(bodyText)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setColor(themeColor)
             .setColorized(true)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .addAction(android.R.drawable.ic_input_add, "Pridať čas (Test)", pendingIntent)
+            .addAction(android.R.drawable.ic_input_add, actionBtnText, pendingIntent)
             .build()
 
         notificationManager.notify(notificationId, notification)

@@ -96,6 +96,15 @@ All of these choices affect your final time multiplier, so remember, no risk, no
 
 ---
 
+## 🗺️ Roadmap
+
+- [ ] **Leaderboards & Friend Lists:** Compete with friends, compare daily streaks, and see who spends the most time productively learning.
+- [ ] **Home Screen Widgets:** Interactive Android widgets for a quick overview of your current streak, daily goals, or instant mini-quizzes right from your home screen.
+- [ ] **Advanced Spaced Repetition (SM-2):** Implement scientific interval algorithms to optimize long-term memory retention for difficult cards.
+- [ ] **iOS Support:** Expand FlashPass beyond Android restriction blocking to reach Apple users.
+
+---
+
 ## ✍️ Author & Credits
 
 Created by **[Peter Žukovský]** ([@zuky05](https://github.com/zuky05)) and **[Viktor Slašťan]** ([@ViktorSlastan](https://github.com/ViktorSlastan)) for the **RevenueCat Shipaton 2026**.
@@ -104,6 +113,7 @@ Created by **[Peter Žukovský]** ([@zuky05](https://github.com/zuky05)) and **[
 * Built with [Flutter](https://flutter.dev) and [SQLite](https://www.sqlite.org).
 
 ---
+
 
 ## 🤝 Feedback and Contributions
 

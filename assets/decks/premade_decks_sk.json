@@ -1,0 +1,5374 @@
+[
+  {
+    "name": "Hlavné mestá sveta",
+    "category": "Geografia",
+    "is_premade": 1,
+    "front_lang": "sk-SK",
+    "back_lang": "sk-SK",
+    "cards": [
+      {
+        "prompt": "Hlavné mesto: Afganistan 🇦🇫",
+        "correct_answer": "Kábul"
+      },
+      {
+        "prompt": "Hlavné mesto: Albánsko 🇦🇱",
+        "correct_answer": "Tirana"
+      },
+      {
+        "prompt": "Hlavné mesto: Alžírsko 🇩🇿",
+        "correct_answer": "Alžír"
+      },
+      {
+        "prompt": "Hlavné mesto: Andorra 🇦🇩",
+        "correct_answer": "Andorra la Vella"
+      },
+      {
+        "prompt": "Hlavné mesto: Angola 🇦🇴",
+        "correct_answer": "Luanda"
+      },
+      {
+        "prompt": "Hlavné mesto: Antigua a Barbuda 🇦🇬",
+        "correct_answer": "St. John's"
+      },
+      {
+        "prompt": "Hlavné mesto: Argentína 🇦🇷",
+        "correct_answer": "Buenos Aires"
+      },
+      {
+        "prompt": "Hlavné mesto: Arménsko 🇦🇲",
+        "correct_answer": "Jerevan"
+      },
+      {
+        "prompt": "Hlavné mesto: Austrália 🇦🇺",
+        "correct_answer": "Canberra"
+      },
+      {
+        "prompt": "Hlavné mesto: Rakúsko 🇦🇹",
+        "correct_answer": "Viedeň"
+      },
+      {
+        "prompt": "Hlavné mesto: Azerbajdžan 🇦🇿",
+        "correct_answer": "Baku"
+      },
+      {
+        "prompt": "Hlavné mesto: Bahamy 🇧🇸",
+        "correct_answer": "Nassau"
+      },
+      {
+        "prompt": "Hlavné mesto: Bahrajn 🇧🇭",
+        "correct_answer": "Manama"
+      },
+      {
+        "prompt": "Hlavné mesto: Bangladéš 🇧🇩",
+        "correct_answer": "Dhaka"
+      },
+      {
+        "prompt": "Hlavné mesto: Barbados 🇧🇧",
+        "correct_answer": "Bridgetown"
+      },
+      {
+        "prompt": "Hlavné mesto: Bielorusko 🇧🇾",
+        "correct_answer": "Minsk"
+      },
+      {
+        "prompt": "Hlavné mesto: Belgicko 🇧🇪",
+        "correct_answer": "Brusel"
+      },
+      {
+        "prompt": "Hlavné mesto: Belize 🇧🇿",
+        "correct_answer": "Belmopan"
+      },
+      {
+        "prompt": "Hlavné mesto: Benin 🇧🇯",
+        "correct_answer": "Porto-Novo"
+      },
+      {
+        "prompt": "Hlavné mesto: Bhután 🇧🇹",
+        "correct_answer": "Thimphu"
+      },
+      {
+        "prompt": "Hlavné mesto: Bolívia 🇧🇴",
+        "correct_answer": "Sucre"
+      },
+      {
+        "prompt": "Hlavné mesto: Bosna a Hercegovina 🇧🇦",
+        "correct_answer": "Sarajevo"
+      },
+      {
+        "prompt": "Hlavné mesto: Botswana 🇧🇼",
+        "correct_answer": "Gaborone"
+      },
+      {
+        "prompt": "Hlavné mesto: Brazília 🇧🇷",
+        "correct_answer": "Brasília"
+      },
+      {
+        "prompt": "Hlavné mesto: Brunej 🇧🇳",
+        "correct_answer": "Bandar Seri Begawan"
+      },
+      {
+        "prompt": "Hlavné mesto: Bulharsko 🇧🇬",
+        "correct_answer": "Sofia"
+      },
+      {
+        "prompt": "Hlavné mesto: Burkina Faso 🇧🇫",
+        "correct_answer": "Ouagadougou"
+      },
+      {
+        "prompt": "Hlavné mesto: Burundi 🇧🇮",
+        "correct_answer": "Gitega"
+      },
+      {
+        "prompt": "Hlavné mesto: Kapverdy 🇨🇻",
+        "correct_answer": "Praia"
+      },
+      {
+        "prompt": "Hlavné mesto: Kambodža 🇰🇭",
+        "correct_answer": "Phnom Pénh"
+      },
+      {
+        "prompt": "Hlavné mesto: Kamerun 🇨🇲",
+        "correct_answer": "Yaoundé"
+      },
+      {
+        "prompt": "Hlavné mesto: Kanada 🇨🇦",
+        "correct_answer": "Ottawa"
+      },
+      {
+        "prompt": "Hlavné mesto: Stredoafrická republika 🇨🇫",
+        "correct_answer": "Bangui"
+      },
+      {
+        "prompt": "Hlavné mesto: Čad 🇹🇩",
+        "correct_answer": "N'Djamena"
+      },
+      {
+        "prompt": "Hlavné mesto: Čile 🇨🇱",
+        "correct_answer": "Santiago"
+      },
+      {
+        "prompt": "Hlavné mesto: Čína 🇨🇳",
+        "correct_answer": "Peking"
+      },
+      {
+        "prompt": "Hlavné mesto: Kolumbia 🇨🇴",
+        "correct_answer": "Bogota"
+      },
+      {
+        "prompt": "Hlavné mesto: Komory 🇰🇲",
+        "correct_answer": "Moroni"
+      },
+      {
+        "prompt": "Hlavné mesto: Kongo 🇨🇬",
+        "correct_answer": "Brazzaville"
+      },
+      {
+        "prompt": "Hlavné mesto: Kostarika 🇨🇷",
+        "correct_answer": "San José"
+      },
+      {
+        "prompt": "Hlavné mesto: Chorvátsko 🇭🇷",
+        "correct_answer": "Záhreb"
+      },
+      {
+        "prompt": "Hlavné mesto: Kuba 🇨🇺",
+        "correct_answer": "Havana"
+      },
+      {
+        "prompt": "Hlavné mesto: Cyprus 🇨🇾",
+        "correct_answer": "Nikózia"
+      },
+      {
+        "prompt": "Hlavné mesto: Česko 🇨🇿",
+        "correct_answer": "Praha"
+      },
+      {
+        "prompt": "Hlavné mesto: Kongo (DRK) 🇨🇩",
+        "correct_answer": "Kinshasa"
+      },
+      {
+        "prompt": "Hlavné mesto: Dánsko 🇩🇰",
+        "correct_answer": "Kodaň"
+      },
+      {
+        "prompt": "Hlavné mesto: Džibutsko 🇩🇯",
+        "correct_answer": "Džibuti"
+      },
+      {
+        "prompt": "Hlavné mesto: Dominika 🇩🇲",
+        "correct_answer": "Roseau"
+      },
+      {
+        "prompt": "Hlavné mesto: Dominikánska republika 🇩🇴",
+        "correct_answer": "Santo Domingo"
+      },
+      {
+        "prompt": "Hlavné mesto: Východný Timor 🇹🇱",
+        "correct_answer": "Dili"
+      },
+      {
+        "prompt": "Hlavné mesto: Ekvádor 🇪🇨",
+        "correct_answer": "Quito"
+      },
+      {
+        "prompt": "Hlavné mesto: Egypt 🇪🇬",
+        "correct_answer": "Káhira"
+      },
+      {
+        "prompt": "Hlavné mesto: Salvádor 🇸🇻",
+        "correct_answer": "San Salvador"
+      },
+      {
+        "prompt": "Hlavné mesto: Rovníková Guinea 🇬🇶",
+        "correct_answer": "Malabo"
+      },
+      {
+        "prompt": "Hlavné mesto: Eritrea 🇪🇷",
+        "correct_answer": "Asmara"
+      },
+      {
+        "prompt": "Hlavné mesto: Estónsko 🇪🇪",
+        "correct_answer": "Tallinn"
+      },
+      {
+        "prompt": "Hlavné mesto: Eswatini 🇸🇿",
+        "correct_answer": "Mbabane"
+      },
+      {
+        "prompt": "Hlavné mesto: Etiópia 🇪🇹",
+        "correct_answer": "Addis Ababa"
+      },
+      {
+        "prompt": "Hlavné mesto: Fidži 🇫🇯",
+        "correct_answer": "Suva"
+      },
+      {
+        "prompt": "Hlavné mesto: Fínsko 🇫🇮",
+        "correct_answer": "Helsinki"
+      },
+      {
+        "prompt": "Hlavné mesto: Francúzsko 🇫🇷",
+        "correct_answer": "Paris"
+      },
+      {
+        "prompt": "Hlavné mesto: Gabon 🇬🇦",
+        "correct_answer": "Libreville"
+      },
+      {
+        "prompt": "Hlavné mesto: Gambia 🇬🇲",
+        "correct_answer": "Banjul"
+      },
+      {
+        "prompt": "Hlavné mesto: Gruzínsko 🇬🇪",
+        "correct_answer": "Tbilisi"
+      },
+      {
+        "prompt": "Hlavné mesto: Nemecko 🇩🇪",
+        "correct_answer": "Berlin"
+      },
+      {
+        "prompt": "Hlavné mesto: Ghana 🇬🇭",
+        "correct_answer": "Accra"
+      },
+      {
+        "prompt": "Hlavné mesto: Grécko 🇬🇷",
+        "correct_answer": "Atény"
+      },
+      {
+        "prompt": "Hlavné mesto: Grenada 🇬🇩",
+        "correct_answer": "St. George's"
+      },
+      {
+        "prompt": "Hlavné mesto: Guatemala 🇬🇹",
+        "correct_answer": "Guatemala"
+      },
+      {
+        "prompt": "Hlavné mesto: Guinea 🇬🇳",
+        "correct_answer": "Konakry"
+      },
+      {
+        "prompt": "Hlavné mesto: Guinea-Bissau 🇬🇼",
+        "correct_answer": "Bissau"
+      },
+      {
+        "prompt": "Hlavné mesto: Guyana 🇬🇾",
+        "correct_answer": "Georgetown"
+      },
+      {
+        "prompt": "Hlavné mesto: Haiti 🇭🇹",
+        "correct_answer": "Port-au-Prince"
+      },
+      {
+        "prompt": "Hlavné mesto: Honduras 🇭🇳",
+        "correct_answer": "Tegucigalpa"
+      },
+      {
+        "prompt": "Hlavné mesto: Maďarsko 🇭🇺",
+        "correct_answer": "Budapešť"
+      },
+      {
+        "prompt": "Hlavné mesto: Island 🇮🇸",
+        "correct_answer": "Reykjavík"
+      },
+      {
+        "prompt": "Hlavné mesto: India 🇮🇳",
+        "correct_answer": "Nové Dillí"
+      },
+      {
+        "prompt": "Hlavné mesto: Indonézia 🇮🇩",
+        "correct_answer": "Jakarta"
+      },
+      {
+        "prompt": "Hlavné mesto: Irán 🇮🇷",
+        "correct_answer": "Teherán"
+      },
+      {
+        "prompt": "Hlavné mesto: Irak 🇮🇶",
+        "correct_answer": "Bagdad"
+      },
+      {
+        "prompt": "Hlavné mesto: Írsko 🇮🇪",
+        "correct_answer": "Dublin"
+      },
+      {
+        "prompt": "Hlavné mesto: Izrael 🇮🇱",
+        "correct_answer": "Jeruzalem"
+      },
+      {
+        "prompt": "Hlavné mesto: Taliansko 🇮🇹",
+        "correct_answer": "Rím"
+      },
+      {
+        "prompt": "Hlavné mesto: Pobrežie Slonoviny 🇨🇮",
+        "correct_answer": "Yamoussoukro"
+      },
+      {
+        "prompt": "Hlavné mesto: Jamajka 🇯🇲",
+        "correct_answer": "Kingston"
+      },
+      {
+        "prompt": "Hlavné mesto: Japonsko 🇯🇵",
+        "correct_answer": "Tokio"
+      },
+      {
+        "prompt": "Hlavné mesto: Jordánsko 🇯🇴",
+        "correct_answer": "Ammán"
+      },
+      {
+        "prompt": "Hlavné mesto: Kazachstan 🇰🇿",
+        "correct_answer": "Astana"
+      },
+      {
+        "prompt": "Hlavné mesto: Keňa 🇰🇪",
+        "correct_answer": "Nairobi"
+      },
+      {
+        "prompt": "Hlavné mesto: Kiribati 🇰🇮",
+        "correct_answer": "Tarawa"
+      },
+      {
+        "prompt": "Hlavné mesto: Kuvajt 🇰🇼",
+        "correct_answer": "Kuvajt"
+      },
+      {
+        "prompt": "Hlavné mesto: Kirgizsko 🇰🇬",
+        "correct_answer": "Biškek"
+      },
+      {
+        "prompt": "Hlavné mesto: Laos 🇱🇦",
+        "correct_answer": "Vientiane"
+      },
+      {
+        "prompt": "Hlavné mesto: Lotyšsko 🇱🇻",
+        "correct_answer": "Riga"
+      },
+      {
+        "prompt": "Hlavné mesto: Libanon 🇱🇧",
+        "correct_answer": "Bejrút"
+      },
+      {
+        "prompt": "Hlavné mesto: Lesotho 🇱🇸",
+        "correct_answer": "Maseru"
+      },
+      {
+        "prompt": "Hlavné mesto: Libéria 🇱🇷",
+        "correct_answer": "Monrovia"
+      },
+      {
+        "prompt": "Hlavné mesto: Líbya 🇱🇾",
+        "correct_answer": "Tripolis"
+      },
+      {
+        "prompt": "Hlavné mesto: Lichtenštajnsko 🇱🇮",
+        "correct_answer": "Vaduz"
+      },
+      {
+        "prompt": "Hlavné mesto: Litva 🇱🇹",
+        "correct_answer": "Vilnius"
+      },
+      {
+        "prompt": "Hlavné mesto: Luxembursko 🇱🇺",
+        "correct_answer": "Luxemburg"
+      },
+      {
+        "prompt": "Hlavné mesto: Madagaskar 🇲🇬",
+        "correct_answer": "Antananarivo"
+      },
+      {
+        "prompt": "Hlavné mesto: Malawi 🇲🇼",
+        "correct_answer": "Lilongwe"
+      },
+      {
+        "prompt": "Hlavné mesto: Malajzia 🇲🇾",
+        "correct_answer": "Kuala Lumpur"
+      },
+      {
+        "prompt": "Hlavné mesto: Maledivy 🇲🇻",
+        "correct_answer": "Malé"
+      },
+      {
+        "prompt": "Hlavné mesto: Mali 🇲🇱",
+        "correct_answer": "Bamako"
+      },
+      {
+        "prompt": "Hlavné mesto: Malta 🇲🇹",
+        "correct_answer": "Valletta"
+      },
+      {
+        "prompt": "Hlavné mesto: Marshallove ostrovy 🇲🇭",
+        "correct_answer": "Majuro"
+      },
+      {
+        "prompt": "Hlavné mesto: Mauritánia 🇲🇷",
+        "correct_answer": "Nouakchott"
+      },
+      {
+        "prompt": "Hlavné mesto: Maurícius 🇲🇺",
+        "correct_answer": "Port Louis"
+      },
+      {
+        "prompt": "Hlavné mesto: Mexiko 🇲🇽",
+        "correct_answer": "Mexiko"
+      },
+      {
+        "prompt": "Hlavné mesto: Mikronézia 🇫🇲",
+        "correct_answer": "Palikir"
+      },
+      {
+        "prompt": "Hlavné mesto: Moldavsko 🇲🇩",
+        "correct_answer": "Kišiňov"
+      },
+      {
+        "prompt": "Hlavné mesto: Monako 🇲🇨",
+        "correct_answer": "Monako"
+      },
+      {
+        "prompt": "Hlavné mesto: Mongolsko 🇲🇳",
+        "correct_answer": "Ulanbátar"
+      },
+      {
+        "prompt": "Hlavné mesto: Čierna Hora 🇲🇪",
+        "correct_answer": "Podgorica"
+      },
+      {
+        "prompt": "Hlavné mesto: Maroko 🇲🇦",
+        "correct_answer": "Rabat"
+      },
+      {
+        "prompt": "Hlavné mesto: Mozambik 🇲🇿",
+        "correct_answer": "Maputo"
+      },
+      {
+        "prompt": "Hlavné mesto: Mjanmarsko 🇲🇲",
+        "correct_answer": "Naypyidaw"
+      },
+      {
+        "prompt": "Hlavné mesto: Namíbia 🇳🇦",
+        "correct_answer": "Windhoek"
+      },
+      {
+        "prompt": "Hlavné mesto: Nauru 🇳🇷",
+        "correct_answer": "Yaren"
+      },
+      {
+        "prompt": "Hlavné mesto: Nepál 🇳🇵",
+        "correct_answer": "Kathmandu"
+      },
+      {
+        "prompt": "Hlavné mesto: Holandsko 🇳🇱",
+        "correct_answer": "Amsterdam"
+      },
+      {
+        "prompt": "Hlavné mesto: Nový Zéland 🇳🇿",
+        "correct_answer": "Wellington"
+      },
+      {
+        "prompt": "Hlavné mesto: Nikaragua 🇳🇮",
+        "correct_answer": "Managua"
+      },
+      {
+        "prompt": "Hlavné mesto: Niger 🇳🇪",
+        "correct_answer": "Niamey"
+      },
+      {
+        "prompt": "Hlavné mesto: Nigéria 🇳🇬",
+        "correct_answer": "Abuja"
+      },
+      {
+        "prompt": "Hlavné mesto: Severná Kórea 🇰🇵",
+        "correct_answer": "Pyongyang"
+      },
+      {
+        "prompt": "Hlavné mesto: Severné Macedónsko 🇲🇰",
+        "correct_answer": "Skopje"
+      },
+      {
+        "prompt": "Hlavné mesto: Nórsko 🇳🇴",
+        "correct_answer": "Oslo"
+      },
+      {
+        "prompt": "Hlavné mesto: Omán 🇴🇲",
+        "correct_answer": "Muscat"
+      },
+      {
+        "prompt": "Hlavné mesto: Pakistan 🇵🇰",
+        "correct_answer": "Islamabad"
+      },
+      {
+        "prompt": "Hlavné mesto: Palau 🇵🇼",
+        "correct_answer": "Ngerulmud"
+      },
+      {
+        "prompt": "Hlavné mesto: Palestína 🇵🇸",
+        "correct_answer": "Jeruzalem"
+      },
+      {
+        "prompt": "Hlavné mesto: Panama 🇵🇦",
+        "correct_answer": "Panama"
+      },
+      {
+        "prompt": "Hlavné mesto: Papua-Nová Guinea 🇵🇬",
+        "correct_answer": "Port Moresby"
+      },
+      {
+        "prompt": "Hlavné mesto: Paraguaj 🇵🇾",
+        "correct_answer": "Asunción"
+      },
+      {
+        "prompt": "Hlavné mesto: Peru 🇵🇪",
+        "correct_answer": "Lima"
+      },
+      {
+        "prompt": "Hlavné mesto: Filipíny 🇵🇭",
+        "correct_answer": "Manila"
+      },
+      {
+        "prompt": "Hlavné mesto: Poľsko 🇵🇱",
+        "correct_answer": "Varšava"
+      },
+      {
+        "prompt": "Hlavné mesto: Portugalsko 🇵🇹",
+        "correct_answer": "Lisabon"
+      },
+      {
+        "prompt": "Hlavné mesto: Katar 🇶🇦",
+        "correct_answer": "Dauha"
+      },
+      {
+        "prompt": "Hlavné mesto: Rumunsko 🇷🇴",
+        "correct_answer": "Bukurešť"
+      },
+      {
+        "prompt": "Hlavné mesto: Rusko 🇷🇺",
+        "correct_answer": "Moskva"
+      },
+      {
+        "prompt": "Hlavné mesto: Rwanda 🇷🇼",
+        "correct_answer": "Kigali"
+      },
+      {
+        "prompt": "Hlavné mesto: Svätý Krištof a Nevis 🇰🇳",
+        "correct_answer": "Basseterre"
+      },
+      {
+        "prompt": "Hlavné mesto: Svätá Lucia 🇱🇨",
+        "correct_answer": "Castries"
+      },
+      {
+        "prompt": "Hlavné mesto: Svätý Vincent a Grenadíny 🇻🇨",
+        "correct_answer": "Kingstown"
+      },
+      {
+        "prompt": "Hlavné mesto: Samoa 🇼🇸",
+        "correct_answer": "Apia"
+      },
+      {
+        "prompt": "Hlavné mesto: San Maríno 🇸🇲",
+        "correct_answer": "San Marino"
+      },
+      {
+        "prompt": "Hlavné mesto: Svätý Tomáš a Princov ostrov 🇸🇹",
+        "correct_answer": "São Tomé"
+      },
+      {
+        "prompt": "Hlavné mesto: Saudská Arábia 🇸🇦",
+        "correct_answer": "Rijád"
+      },
+      {
+        "prompt": "Hlavné mesto: Senegal 🇸🇳",
+        "correct_answer": "Dakar"
+      },
+      {
+        "prompt": "Hlavné mesto: Srbsko 🇷🇸",
+        "correct_answer": "Belehrad"
+      },
+      {
+        "prompt": "Hlavné mesto: Seychely 🇸🇨",
+        "correct_answer": "Victoria"
+      },
+      {
+        "prompt": "Hlavné mesto: Sierra Leone 🇸🇱",
+        "correct_answer": "Freetown"
+      },
+      {
+        "prompt": "Hlavné mesto: Singapur 🇸🇬",
+        "correct_answer": "Singapur"
+      },
+      {
+        "prompt": "Hlavné mesto: Slovensko 🇸🇰",
+        "correct_answer": "Bratislava"
+      },
+      {
+        "prompt": "Hlavné mesto: Slovinsko 🇸🇮",
+        "correct_answer": "Ľubľana"
+      },
+      {
+        "prompt": "Hlavné mesto: Šalamúnove ostrovy 🇸🇧",
+        "correct_answer": "Honiara"
+      },
+      {
+        "prompt": "Hlavné mesto: Somálsko 🇸🇴",
+        "correct_answer": "Mogadišo"
+      },
+      {
+        "prompt": "Hlavné mesto: Južná Afrika 🇿🇦",
+        "correct_answer": "Pretória"
+      },
+      {
+        "prompt": "Hlavné mesto: Južná Kórea 🇰🇷",
+        "correct_answer": "Soul"
+      },
+      {
+        "prompt": "Hlavné mesto: Južný Sudán 🇸🇸",
+        "correct_answer": "Juba"
+      },
+      {
+        "prompt": "Hlavné mesto: Španielsko 🇪🇸",
+        "correct_answer": "Madrid"
+      },
+      {
+        "prompt": "Hlavné mesto: Srí Lanka 🇱🇰",
+        "correct_answer": "Sri Jayawardenepura Kotte"
+      },
+      {
+        "prompt": "Hlavné mesto: Sudán 🇸🇩",
+        "correct_answer": "Chartúm"
+      },
+      {
+        "prompt": "Hlavné mesto: Surinam 🇸🇷",
+        "correct_answer": "Paramaribo"
+      },
+      {
+        "prompt": "Hlavné mesto: Švédsko 🇸🇪",
+        "correct_answer": "Štokholm"
+      },
+      {
+        "prompt": "Hlavné mesto: Švajčiarsko 🇨🇭",
+        "correct_answer": "Bern"
+      },
+      {
+        "prompt": "Hlavné mesto: Sýria 🇸🇾",
+        "correct_answer": "Damašok"
+      },
+      {
+        "prompt": "Hlavné mesto: Tadžikistan 🇹🇯",
+        "correct_answer": "Dušanbe"
+      },
+      {
+        "prompt": "Hlavné mesto: Tanzánia 🇹🇿",
+        "correct_answer": "Dodoma"
+      },
+      {
+        "prompt": "Hlavné mesto: Thajsko 🇹🇭",
+        "correct_answer": "Bangkok"
+      },
+      {
+        "prompt": "Hlavné mesto: Togo 🇹🇬",
+        "correct_answer": "Lomé"
+      },
+      {
+        "prompt": "Hlavné mesto: Tonga 🇹🇴",
+        "correct_answer": "Nuku'alofa"
+      },
+      {
+        "prompt": "Hlavné mesto: Trinidad a Tobago 🇹🇹",
+        "correct_answer": "Port of Spain"
+      },
+      {
+        "prompt": "Hlavné mesto: Tunisko 🇹🇳",
+        "correct_answer": "Tunis"
+      },
+      {
+        "prompt": "Hlavné mesto: Turecko 🇹🇷",
+        "correct_answer": "Ankara"
+      },
+      {
+        "prompt": "Hlavné mesto: Turkménsko 🇹🇲",
+        "correct_answer": "Ašchabad"
+      },
+      {
+        "prompt": "Hlavné mesto: Tuvalu 🇹🇻",
+        "correct_answer": "Funafuti"
+      },
+      {
+        "prompt": "Hlavné mesto: Uganda 🇺🇬",
+        "correct_answer": "Kampala"
+      },
+      {
+        "prompt": "Hlavné mesto: Ukrajina 🇺🇦",
+        "correct_answer": "Kyjev"
+      },
+      {
+        "prompt": "Hlavné mesto: Spojené arabské emiráty 🇦🇪",
+        "correct_answer": "Abú Zabí"
+      },
+      {
+        "prompt": "Hlavné mesto: Spojené kráľovstvo 🇬🇧",
+        "correct_answer": "Londýn"
+      },
+      {
+        "prompt": "Hlavné mesto: Spojené štáty 🇺🇸",
+        "correct_answer": "Washington, D.C."
+      },
+      {
+        "prompt": "Hlavné mesto: Uruguaj 🇺🇾",
+        "correct_answer": "Montevideo"
+      },
+      {
+        "prompt": "Hlavné mesto: Uzbekistan 🇺🇿",
+        "correct_answer": "Taškent"
+      },
+      {
+        "prompt": "Hlavné mesto: Vanuatu 🇻🇺",
+        "correct_answer": "Port Vila"
+      },
+      {
+        "prompt": "Hlavné mesto: Vatikán 🇻🇦",
+        "correct_answer": "Vatikán"
+      },
+      {
+        "prompt": "Hlavné mesto: Venezuela 🇻🇪",
+        "correct_answer": "Caracas"
+      },
+      {
+        "prompt": "Hlavné mesto: Vietnam 🇻🇳",
+        "correct_answer": "Hanoj"
+      },
+      {
+        "prompt": "Hlavné mesto: Jemen 🇾🇪",
+        "correct_answer": "Saná"
+      },
+      {
+        "prompt": "Hlavné mesto: Zambia 🇿🇲",
+        "correct_answer": "Lusaka"
+      },
+      {
+        "prompt": "Hlavné mesto: Zimbabwe 🇿🇼",
+        "correct_answer": "Harare"
+      }
+    ]
+  },
+  {
+    "name": "Vlajky sveta",
+    "category": "Geografia",
+    "is_premade": 1,
+    "front_lang": "en-US",
+    "back_lang": "sk-SK",
+    "cards": [
+      {
+        "prompt": "assets/flags/af.svg",
+        "correct_answer": "Afganistan"
+      },
+      {
+        "prompt": "assets/flags/al.svg",
+        "correct_answer": "Albánsko"
+      },
+      {
+        "prompt": "assets/flags/dz.svg",
+        "correct_answer": "Alžírsko"
+      },
+      {
+        "prompt": "assets/flags/ad.svg",
+        "correct_answer": "Andorra"
+      },
+      {
+        "prompt": "assets/flags/ao.svg",
+        "correct_answer": "Angola"
+      },
+      {
+        "prompt": "assets/flags/ag.svg",
+        "correct_answer": "Antigua a Barbuda"
+      },
+      {
+        "prompt": "assets/flags/ar.svg",
+        "correct_answer": "Argentína"
+      },
+      {
+        "prompt": "assets/flags/am.svg",
+        "correct_answer": "Arménsko"
+      },
+      {
+        "prompt": "assets/flags/au.svg",
+        "correct_answer": "Austrália"
+      },
+      {
+        "prompt": "assets/flags/at.svg",
+        "correct_answer": "Rakúsko"
+      },
+      {
+        "prompt": "assets/flags/az.svg",
+        "correct_answer": "Azerbajdžan"
+      },
+      {
+        "prompt": "assets/flags/bs.svg",
+        "correct_answer": "Bahamy"
+      },
+      {
+        "prompt": "assets/flags/bh.svg",
+        "correct_answer": "Bahrajn"
+      },
+      {
+        "prompt": "assets/flags/bd.svg",
+        "correct_answer": "Bangladéš"
+      },
+      {
+        "prompt": "assets/flags/bb.svg",
+        "correct_answer": "Barbados"
+      },
+      {
+        "prompt": "assets/flags/by.svg",
+        "correct_answer": "Bielorusko"
+      },
+      {
+        "prompt": "assets/flags/be.svg",
+        "correct_answer": "Belgicko"
+      },
+      {
+        "prompt": "assets/flags/bz.svg",
+        "correct_answer": "Belize"
+      },
+      {
+        "prompt": "assets/flags/bj.svg",
+        "correct_answer": "Benin"
+      },
+      {
+        "prompt": "assets/flags/bt.svg",
+        "correct_answer": "Bhután"
+      },
+      {
+        "prompt": "assets/flags/bo.svg",
+        "correct_answer": "Bolívia"
+      },
+      {
+        "prompt": "assets/flags/ba.svg",
+        "correct_answer": "Bosna a Hercegovina"
+      },
+      {
+        "prompt": "assets/flags/bw.svg",
+        "correct_answer": "Botswana"
+      },
+      {
+        "prompt": "assets/flags/br.svg",
+        "correct_answer": "Brazília"
+      },
+      {
+        "prompt": "assets/flags/bn.svg",
+        "correct_answer": "Brunej"
+      },
+      {
+        "prompt": "assets/flags/bg.svg",
+        "correct_answer": "Bulharsko"
+      },
+      {
+        "prompt": "assets/flags/bf.svg",
+        "correct_answer": "Burkina Faso"
+      },
+      {
+        "prompt": "assets/flags/bi.svg",
+        "correct_answer": "Burundi"
+      },
+      {
+        "prompt": "assets/flags/cv.svg",
+        "correct_answer": "Kapverdy"
+      },
+      {
+        "prompt": "assets/flags/kh.svg",
+        "correct_answer": "Kambodža"
+      },
+      {
+        "prompt": "assets/flags/cm.svg",
+        "correct_answer": "Kamerun"
+      },
+      {
+        "prompt": "assets/flags/ca.svg",
+        "correct_answer": "Kanada"
+      },
+      {
+        "prompt": "assets/flags/cf.svg",
+        "correct_answer": "Stredoafrická republika"
+      },
+      {
+        "prompt": "assets/flags/td.svg",
+        "correct_answer": "Čad"
+      },
+      {
+        "prompt": "assets/flags/cl.svg",
+        "correct_answer": "Čile"
+      },
+      {
+        "prompt": "assets/flags/cn.svg",
+        "correct_answer": "Čína"
+      },
+      {
+        "prompt": "assets/flags/co.svg",
+        "correct_answer": "Kolumbia"
+      },
+      {
+        "prompt": "assets/flags/km.svg",
+        "correct_answer": "Komory"
+      },
+      {
+        "prompt": "assets/flags/cg.svg",
+        "correct_answer": "Kongo"
+      },
+      {
+        "prompt": "assets/flags/cd.svg",
+        "correct_answer": "Kongo (DRK)"
+      },
+      {
+        "prompt": "assets/flags/cr.svg",
+        "correct_answer": "Kostarika"
+      },
+      {
+        "prompt": "assets/flags/hr.svg",
+        "correct_answer": "Chorvátsko"
+      },
+      {
+        "prompt": "assets/flags/cu.svg",
+        "correct_answer": "Kuba"
+      },
+      {
+        "prompt": "assets/flags/cy.svg",
+        "correct_answer": "Cyprus"
+      },
+      {
+        "prompt": "assets/flags/cz.svg",
+        "correct_answer": "Česko"
+      },
+      {
+        "prompt": "assets/flags/dk.svg",
+        "correct_answer": "Dánsko"
+      },
+      {
+        "prompt": "assets/flags/dj.svg",
+        "correct_answer": "Džibutsko"
+      },
+      {
+        "prompt": "assets/flags/dm.svg",
+        "correct_answer": "Dominika"
+      },
+      {
+        "prompt": "assets/flags/do.svg",
+        "correct_answer": "Dominikánska republika"
+      },
+      {
+        "prompt": "assets/flags/tl.svg",
+        "correct_answer": "Východný Timor"
+      },
+      {
+        "prompt": "assets/flags/ec.svg",
+        "correct_answer": "Ekvádor"
+      },
+      {
+        "prompt": "assets/flags/eg.svg",
+        "correct_answer": "Egypt"
+      },
+      {
+        "prompt": "assets/flags/sv.svg",
+        "correct_answer": "Salvádor"
+      },
+      {
+        "prompt": "assets/flags/gq.svg",
+        "correct_answer": "Rovníková Guinea"
+      },
+      {
+        "prompt": "assets/flags/er.svg",
+        "correct_answer": "Eritrea"
+      },
+      {
+        "prompt": "assets/flags/ee.svg",
+        "correct_answer": "Estónsko"
+      },
+      {
+        "prompt": "assets/flags/sz.svg",
+        "correct_answer": "Eswatini"
+      },
+      {
+        "prompt": "assets/flags/et.svg",
+        "correct_answer": "Etiópia"
+      },
+      {
+        "prompt": "assets/flags/fj.svg",
+        "correct_answer": "Fidži"
+      },
+      {
+        "prompt": "assets/flags/fi.svg",
+        "correct_answer": "Fínsko"
+      },
+      {
+        "prompt": "assets/flags/fr.svg",
+        "correct_answer": "Francúzsko"
+      },
+      {
+        "prompt": "assets/flags/ga.svg",
+        "correct_answer": "Gabon"
+      },
+      {
+        "prompt": "assets/flags/gm.svg",
+        "correct_answer": "Gambia"
+      },
+      {
+        "prompt": "assets/flags/ge.svg",
+        "correct_answer": "Gruzínsko"
+      },
+      {
+        "prompt": "assets/flags/de.svg",
+        "correct_answer": "Nemecko"
+      },
+      {
+        "prompt": "assets/flags/gh.svg",
+        "correct_answer": "Ghana"
+      },
+      {
+        "prompt": "assets/flags/gr.svg",
+        "correct_answer": "Grécko"
+      },
+      {
+        "prompt": "assets/flags/gd.svg",
+        "correct_answer": "Grenada"
+      },
+      {
+        "prompt": "assets/flags/gt.svg",
+        "correct_answer": "Guatemala"
+      },
+      {
+        "prompt": "assets/flags/gn.svg",
+        "correct_answer": "Guinea"
+      },
+      {
+        "prompt": "assets/flags/gw.svg",
+        "correct_answer": "Guinea-Bissau"
+      },
+      {
+        "prompt": "assets/flags/gy.svg",
+        "correct_answer": "Guyana"
+      },
+      {
+        "prompt": "assets/flags/ht.svg",
+        "correct_answer": "Haiti"
+      },
+      {
+        "prompt": "assets/flags/hn.svg",
+        "correct_answer": "Honduras"
+      },
+      {
+        "prompt": "assets/flags/hu.svg",
+        "correct_answer": "Maďarsko"
+      },
+      {
+        "prompt": "assets/flags/is.svg",
+        "correct_answer": "Island"
+      },
+      {
+        "prompt": "assets/flags/in.svg",
+        "correct_answer": "India"
+      },
+      {
+        "prompt": "assets/flags/id.svg",
+        "correct_answer": "Indonézia"
+      },
+      {
+        "prompt": "assets/flags/ir.svg",
+        "correct_answer": "Irán"
+      },
+      {
+        "prompt": "assets/flags/iq.svg",
+        "correct_answer": "Irak"
+      },
+      {
+        "prompt": "assets/flags/ie.svg",
+        "correct_answer": "Írsko"
+      },
+      {
+        "prompt": "assets/flags/il.svg",
+        "correct_answer": "Izrael"
+      },
+      {
+        "prompt": "assets/flags/it.svg",
+        "correct_answer": "Taliansko"
+      },
+      {
+        "prompt": "assets/flags/ci.svg",
+        "correct_answer": "Pobrežie Slonoviny"
+      },
+      {
+        "prompt": "assets/flags/jm.svg",
+        "correct_answer": "Jamajka"
+      },
+      {
+        "prompt": "assets/flags/jp.svg",
+        "correct_answer": "Japonsko"
+      },
+      {
+        "prompt": "assets/flags/jo.svg",
+        "correct_answer": "Jordánsko"
+      },
+      {
+        "prompt": "assets/flags/kz.svg",
+        "correct_answer": "Kazachstan"
+      },
+      {
+        "prompt": "assets/flags/ke.svg",
+        "correct_answer": "Keňa"
+      },
+      {
+        "prompt": "assets/flags/ki.svg",
+        "correct_answer": "Kiribati"
+      },
+      {
+        "prompt": "assets/flags/kp.svg",
+        "correct_answer": "Severná Kórea"
+      },
+      {
+        "prompt": "assets/flags/kr.svg",
+        "correct_answer": "Južná Kórea"
+      },
+      {
+        "prompt": "assets/flags/kw.svg",
+        "correct_answer": "Kuvajt"
+      },
+      {
+        "prompt": "assets/flags/kg.svg",
+        "correct_answer": "Kirgizsko"
+      },
+      {
+        "prompt": "assets/flags/la.svg",
+        "correct_answer": "Laos"
+      },
+      {
+        "prompt": "assets/flags/lv.svg",
+        "correct_answer": "Lotyšsko"
+      },
+      {
+        "prompt": "assets/flags/lb.svg",
+        "correct_answer": "Libanon"
+      },
+      {
+        "prompt": "assets/flags/ls.svg",
+        "correct_answer": "Lesotho"
+      },
+      {
+        "prompt": "assets/flags/lr.svg",
+        "correct_answer": "Libéria"
+      },
+      {
+        "prompt": "assets/flags/ly.svg",
+        "correct_answer": "Líbya"
+      },
+      {
+        "prompt": "assets/flags/li.svg",
+        "correct_answer": "Lichtenštajnsko"
+      },
+      {
+        "prompt": "assets/flags/lt.svg",
+        "correct_answer": "Litva"
+      },
+      {
+        "prompt": "assets/flags/lu.svg",
+        "correct_answer": "Luxembursko"
+      },
+      {
+        "prompt": "assets/flags/mg.svg",
+        "correct_answer": "Madagaskar"
+      },
+      {
+        "prompt": "assets/flags/mw.svg",
+        "correct_answer": "Malawi"
+      },
+      {
+        "prompt": "assets/flags/my.svg",
+        "correct_answer": "Malajzia"
+      },
+      {
+        "prompt": "assets/flags/mv.svg",
+        "correct_answer": "Maledivy"
+      },
+      {
+        "prompt": "assets/flags/ml.svg",
+        "correct_answer": "Mali"
+      },
+      {
+        "prompt": "assets/flags/mt.svg",
+        "correct_answer": "Malta"
+      },
+      {
+        "prompt": "assets/flags/mh.svg",
+        "correct_answer": "Marshallove ostrovy"
+      },
+      {
+        "prompt": "assets/flags/mr.svg",
+        "correct_answer": "Mauritánia"
+      },
+      {
+        "prompt": "assets/flags/mu.svg",
+        "correct_answer": "Maurícius"
+      },
+      {
+        "prompt": "assets/flags/mx.svg",
+        "correct_answer": "Mexiko"
+      },
+      {
+        "prompt": "assets/flags/fm.svg",
+        "correct_answer": "Mikronézia"
+      },
+      {
+        "prompt": "assets/flags/md.svg",
+        "correct_answer": "Moldavsko"
+      },
+      {
+        "prompt": "assets/flags/mc.svg",
+        "correct_answer": "Monako"
+      },
+      {
+        "prompt": "assets/flags/mn.svg",
+        "correct_answer": "Mongolsko"
+      },
+      {
+        "prompt": "assets/flags/me.svg",
+        "correct_answer": "Čierna Hora"
+      },
+      {
+        "prompt": "assets/flags/ma.svg",
+        "correct_answer": "Maroko"
+      },
+      {
+        "prompt": "assets/flags/mz.svg",
+        "correct_answer": "Mozambik"
+      },
+      {
+        "prompt": "assets/flags/mm.svg",
+        "correct_answer": "Mjanmarsko"
+      },
+      {
+        "prompt": "assets/flags/na.svg",
+        "correct_answer": "Namíbia"
+      },
+      {
+        "prompt": "assets/flags/nr.svg",
+        "correct_answer": "Nauru"
+      },
+      {
+        "prompt": "assets/flags/np.svg",
+        "correct_answer": "Nepál"
+      },
+      {
+        "prompt": "assets/flags/nl.svg",
+        "correct_answer": "Holandsko"
+      },
+      {
+        "prompt": "assets/flags/nz.svg",
+        "correct_answer": "Nový Zéland"
+      },
+      {
+        "prompt": "assets/flags/ni.svg",
+        "correct_answer": "Nikaragua"
+      },
+      {
+        "prompt": "assets/flags/ne.svg",
+        "correct_answer": "Niger"
+      },
+      {
+        "prompt": "assets/flags/ng.svg",
+        "correct_answer": "Nigéria"
+      },
+      {
+        "prompt": "assets/flags/mk.svg",
+        "correct_answer": "Severné Macedónsko"
+      },
+      {
+        "prompt": "assets/flags/no.svg",
+        "correct_answer": "Nórsko"
+      },
+      {
+        "prompt": "assets/flags/om.svg",
+        "correct_answer": "Omán"
+      },
+      {
+        "prompt": "assets/flags/pk.svg",
+        "correct_answer": "Pakistan"
+      },
+      {
+        "prompt": "assets/flags/pw.svg",
+        "correct_answer": "Palau"
+      },
+      {
+        "prompt": "assets/flags/ps.svg",
+        "correct_answer": "Palestína"
+      },
+      {
+        "prompt": "assets/flags/pa.svg",
+        "correct_answer": "Panama"
+      },
+      {
+        "prompt": "assets/flags/pg.svg",
+        "correct_answer": "Papua-Nová Guinea"
+      },
+      {
+        "prompt": "assets/flags/py.svg",
+        "correct_answer": "Paraguaj"
+      },
+      {
+        "prompt": "assets/flags/pe.svg",
+        "correct_answer": "Peru"
+      },
+      {
+        "prompt": "assets/flags/ph.svg",
+        "correct_answer": "Filipíny"
+      },
+      {
+        "prompt": "assets/flags/pl.svg",
+        "correct_answer": "Poľsko"
+      },
+      {
+        "prompt": "assets/flags/pt.svg",
+        "correct_answer": "Portugalsko"
+      },
+      {
+        "prompt": "assets/flags/qa.svg",
+        "correct_answer": "Katar"
+      },
+      {
+        "prompt": "assets/flags/ro.svg",
+        "correct_answer": "Rumunsko"
+      },
+      {
+        "prompt": "assets/flags/ru.svg",
+        "correct_answer": "Rusko"
+      },
+      {
+        "prompt": "assets/flags/rw.svg",
+        "correct_answer": "Rwanda"
+      },
+      {
+        "prompt": "assets/flags/kn.svg",
+        "correct_answer": "Svätý Krištof a Nevis"
+      },
+      {
+        "prompt": "assets/flags/lc.svg",
+        "correct_answer": "Svätá Lucia"
+      },
+      {
+        "prompt": "assets/flags/vc.svg",
+        "correct_answer": "Svätý Vincent a Grenadíny"
+      },
+      {
+        "prompt": "assets/flags/ws.svg",
+        "correct_answer": "Samoa"
+      },
+      {
+        "prompt": "assets/flags/sm.svg",
+        "correct_answer": "San Maríno"
+      },
+      {
+        "prompt": "assets/flags/st.svg",
+        "correct_answer": "Svätý Tomáš a Princov ostrov"
+      },
+      {
+        "prompt": "assets/flags/sa.svg",
+        "correct_answer": "Saudská Arábia"
+      },
+      {
+        "prompt": "assets/flags/sn.svg",
+        "correct_answer": "Senegal"
+      },
+      {
+        "prompt": "assets/flags/rs.svg",
+        "correct_answer": "Srbsko"
+      },
+      {
+        "prompt": "assets/flags/sc.svg",
+        "correct_answer": "Seychely"
+      },
+      {
+        "prompt": "assets/flags/sl.svg",
+        "correct_answer": "Sierra Leone"
+      },
+      {
+        "prompt": "assets/flags/sg.svg",
+        "correct_answer": "Singapur"
+      },
+      {
+        "prompt": "assets/flags/sk.svg",
+        "correct_answer": "Slovensko"
+      },
+      {
+        "prompt": "assets/flags/si.svg",
+        "correct_answer": "Slovinsko"
+      },
+      {
+        "prompt": "assets/flags/sb.svg",
+        "correct_answer": "Šalamúnove ostrovy"
+      },
+      {
+        "prompt": "assets/flags/so.svg",
+        "correct_answer": "Somálsko"
+      },
+      {
+        "prompt": "assets/flags/za.svg",
+        "correct_answer": "Južná Afrika"
+      },
+      {
+        "prompt": "assets/flags/ss.svg",
+        "correct_answer": "Južný Sudán"
+      },
+      {
+        "prompt": "assets/flags/es.svg",
+        "correct_answer": "Španielsko"
+      },
+      {
+        "prompt": "assets/flags/lk.svg",
+        "correct_answer": "Srí Lanka"
+      },
+      {
+        "prompt": "assets/flags/sd.svg",
+        "correct_answer": "Sudán"
+      },
+      {
+        "prompt": "assets/flags/sr.svg",
+        "correct_answer": "Surinam"
+      },
+      {
+        "prompt": "assets/flags/se.svg",
+        "correct_answer": "Švédsko"
+      },
+      {
+        "prompt": "assets/flags/ch.svg",
+        "correct_answer": "Švajčiarsko"
+      },
+      {
+        "prompt": "assets/flags/sy.svg",
+        "correct_answer": "Sýria"
+      },
+      {
+        "prompt": "assets/flags/tj.svg",
+        "correct_answer": "Tadžikistan"
+      },
+      {
+        "prompt": "assets/flags/tz.svg",
+        "correct_answer": "Tanzánia"
+      },
+      {
+        "prompt": "assets/flags/th.svg",
+        "correct_answer": "Thajsko"
+      },
+      {
+        "prompt": "assets/flags/tg.svg",
+        "correct_answer": "Togo"
+      },
+      {
+        "prompt": "assets/flags/to.svg",
+        "correct_answer": "Tonga"
+      },
+      {
+        "prompt": "assets/flags/tt.svg",
+        "correct_answer": "Trinidad a Tobago"
+      },
+      {
+        "prompt": "assets/flags/tn.svg",
+        "correct_answer": "Tunisko"
+      },
+      {
+        "prompt": "assets/flags/tr.svg",
+        "correct_answer": "Turecko"
+      },
+      {
+        "prompt": "assets/flags/tm.svg",
+        "correct_answer": "Turkménsko"
+      },
+      {
+        "prompt": "assets/flags/tv.svg",
+        "correct_answer": "Tuvalu"
+      },
+      {
+        "prompt": "assets/flags/ug.svg",
+        "correct_answer": "Uganda"
+      },
+      {
+        "prompt": "assets/flags/ua.svg",
+        "correct_answer": "Ukrajina"
+      },
+      {
+        "prompt": "assets/flags/ae.svg",
+        "correct_answer": "Spojené arabské emiráty"
+      },
+      {
+        "prompt": "assets/flags/gb.svg",
+        "correct_answer": "Spojené kráľovstvo"
+      },
+      {
+        "prompt": "assets/flags/us.svg",
+        "correct_answer": "Spojené štáty"
+      },
+      {
+        "prompt": "assets/flags/uy.svg",
+        "correct_answer": "Uruguaj"
+      },
+      {
+        "prompt": "assets/flags/uz.svg",
+        "correct_answer": "Uzbekistan"
+      },
+      {
+        "prompt": "assets/flags/vu.svg",
+        "correct_answer": "Vanuatu"
+      },
+      {
+        "prompt": "assets/flags/va.svg",
+        "correct_answer": "Vatikán"
+      },
+      {
+        "prompt": "assets/flags/ve.svg",
+        "correct_answer": "Venezuela"
+      },
+      {
+        "prompt": "assets/flags/vn.svg",
+        "correct_answer": "Vietnam"
+      },
+      {
+        "prompt": "assets/flags/ye.svg",
+        "correct_answer": "Jemen"
+      },
+      {
+        "prompt": "assets/flags/zm.svg",
+        "correct_answer": "Zambia"
+      },
+      {
+        "prompt": "assets/flags/zw.svg",
+        "correct_answer": "Zimbabwe"
+      }
+    ]
+  },
+  {
+    "name": "Španielčina – Top 200 slov",
+    "category": "Jazyky",
+    "is_premade": 1,
+    "front_lang": "es-ES",
+    "back_lang": "sk-SK",
+    "cards": [
+      {
+        "prompt": "'El tiempo'",
+        "correct_answer": "Čas / Počasie"
+      },
+      {
+        "prompt": "'El año'",
+        "correct_answer": "Rok"
+      },
+      {
+        "prompt": "'La gente'",
+        "correct_answer": "Ľudia"
+      },
+      {
+        "prompt": "'El hombre'",
+        "correct_answer": "Muž"
+      },
+      {
+        "prompt": "'La mujer'",
+        "correct_answer": "Žena"
+      },
+      {
+        "prompt": "'La vida'",
+        "correct_answer": "Život"
+      },
+      {
+        "prompt": "'El día'",
+        "correct_answer": "Deň"
+      },
+      {
+        "prompt": "'La cosa'",
+        "correct_answer": "Vec"
+      },
+      {
+        "prompt": "'El mundo'",
+        "correct_answer": "Svet"
+      },
+      {
+        "prompt": "'La casa'",
+        "correct_answer": "Dom"
+      },
+      {
+        "prompt": "'El trabajo'",
+        "correct_answer": "Práca / Zamestnanie"
+      },
+      {
+        "prompt": "'La parte'",
+        "correct_answer": "Časť"
+      },
+      {
+        "prompt": "'El lugar'",
+        "correct_answer": "Miesto"
+      },
+      {
+        "prompt": "'El gobierno'",
+        "correct_answer": "Vláda"
+      },
+      {
+        "prompt": "'El caso'",
+        "correct_answer": "Prípad"
+      },
+      {
+        "prompt": "'El grupo'",
+        "correct_answer": "Skupina"
+      },
+      {
+        "prompt": "'El problema'",
+        "correct_answer": "Problém"
+      },
+      {
+        "prompt": "'El hecho'",
+        "correct_answer": "Fakt / Skutočnosť"
+      },
+      {
+        "prompt": "'La mano'",
+        "correct_answer": "Ruka"
+      },
+      {
+        "prompt": "'El ojo'",
+        "correct_answer": "Oko"
+      },
+      {
+        "prompt": "'La hora'",
+        "correct_answer": "Hodina / Čas"
+      },
+      {
+        "prompt": "'La verdad'",
+        "correct_answer": "Pravda"
+      },
+      {
+        "prompt": "'El agua'",
+        "correct_answer": "Voda"
+      },
+      {
+        "prompt": "'La madre'",
+        "correct_answer": "Matka"
+      },
+      {
+        "prompt": "'El padre'",
+        "correct_answer": "Otec"
+      },
+      {
+        "prompt": "'El amigo'",
+        "correct_answer": "Priateľ"
+      },
+      {
+        "prompt": "'La familia'",
+        "correct_answer": "Rodina"
+      },
+      {
+        "prompt": "'El dinero'",
+        "correct_answer": "Peniaze"
+      },
+      {
+        "prompt": "'La noche'",
+        "correct_answer": "Noc"
+      },
+      {
+        "prompt": "'La ciudad'",
+        "correct_answer": "Mesto"
+      },
+      {
+        "prompt": "'El nombre'",
+        "correct_answer": "Meno"
+      },
+      {
+        "prompt": "'El país'",
+        "correct_answer": "Krajina"
+      },
+      {
+        "prompt": "'La pregunta'",
+        "correct_answer": "Otázka"
+      },
+      {
+        "prompt": "'La puerta'",
+        "correct_answer": "Dvere"
+      },
+      {
+        "prompt": "'La calle'",
+        "correct_answer": "Ulica"
+      },
+      {
+        "prompt": "'El libro'",
+        "correct_answer": "Kniha"
+      },
+      {
+        "prompt": "'La palabra'",
+        "correct_answer": "Slovo"
+      },
+      {
+        "prompt": "'El lado'",
+        "correct_answer": "Strana"
+      },
+      {
+        "prompt": "'El hijo'",
+        "correct_answer": "Syn / Dieťa"
+      },
+      {
+        "prompt": "'El momento'",
+        "correct_answer": "Chvíľa / Moment"
+      },
+      {
+        "prompt": "'El cuerpo'",
+        "correct_answer": "Telo"
+      },
+      {
+        "prompt": "'La cabeza'",
+        "correct_answer": "Hlava"
+      },
+      {
+        "prompt": "'El sol'",
+        "correct_answer": "Slnko"
+      },
+      {
+        "prompt": "'La luz'",
+        "correct_answer": "Svetlo"
+      },
+      {
+        "prompt": "'El perro'",
+        "correct_answer": "Pes"
+      },
+      {
+        "prompt": "'El gato'",
+        "correct_answer": "Mačka"
+      },
+      {
+        "prompt": "'La comida'",
+        "correct_answer": "Jedlo"
+      },
+      {
+        "prompt": "'El amor'",
+        "correct_answer": "Láska"
+      },
+      {
+        "prompt": "'El aire'",
+        "correct_answer": "Vzduch"
+      },
+      {
+        "prompt": "'El mar'",
+        "correct_answer": "More"
+      },
+      {
+        "prompt": "'Ser'",
+        "correct_answer": "Byť (trvalo)"
+      },
+      {
+        "prompt": "'Estar'",
+        "correct_answer": "Byť (prechodne)"
+      },
+      {
+        "prompt": "'Hacer'",
+        "correct_answer": "Robiť / Urobiť"
+      },
+      {
+        "prompt": "'Tener'",
+        "correct_answer": "Mať"
+      },
+      {
+        "prompt": "'Ir'",
+        "correct_answer": "Ísť"
+      },
+      {
+        "prompt": "'Decir'",
+        "correct_answer": "Povedať / Hovoriť"
+      },
+      {
+        "prompt": "'Poder'",
+        "correct_answer": "Môcť / Vedieť"
+      },
+      {
+        "prompt": "'Ver'",
+        "correct_answer": "Vidieť"
+      },
+      {
+        "prompt": "'Comer'",
+        "correct_answer": "Jesť"
+      },
+      {
+        "prompt": "'Beber'",
+        "correct_answer": "Piť"
+      },
+      {
+        "prompt": "'Hablar'",
+        "correct_answer": "Hovoriť / Rozprávať"
+      },
+      {
+        "prompt": "'Saber'",
+        "correct_answer": "Vedieť (fakty)"
+      },
+      {
+        "prompt": "'Querer'",
+        "correct_answer": "Chcieť / Ľúbiť"
+      },
+      {
+        "prompt": "'Llegar'",
+        "correct_answer": "Prísť / Doraziť"
+      },
+      {
+        "prompt": "'Pasar'",
+        "correct_answer": "Prejsť / Stať sa"
+      },
+      {
+        "prompt": "'Deber'",
+        "correct_answer": "Musiť / Mal by"
+      },
+      {
+        "prompt": "'Poner'",
+        "correct_answer": "Položiť / Dať"
+      },
+      {
+        "prompt": "'Parecer'",
+        "correct_answer": "Zdať sa"
+      },
+      {
+        "prompt": "'Quedar'",
+        "correct_answer": "Ostať / Zostať"
+      },
+      {
+        "prompt": "'Creer'",
+        "correct_answer": "Veriť"
+      },
+      {
+        "prompt": "'Llevar'",
+        "correct_answer": "Nosiť"
+      },
+      {
+        "prompt": "'Dejar'",
+        "correct_answer": "Nechať / Dovoliť"
+      },
+      {
+        "prompt": "'Seguir'",
+        "correct_answer": "Sledovať / Pokračovať"
+      },
+      {
+        "prompt": "'Encontrar'",
+        "correct_answer": "Nájsť"
+      },
+      {
+        "prompt": "'Llamar'",
+        "correct_answer": "Motať / Volať"
+      },
+      {
+        "prompt": "'Pensar'",
+        "correct_answer": "Myslieť"
+      },
+      {
+        "prompt": "'Salir'",
+        "correct_answer": "Odisť / Vyjsť"
+      },
+      {
+        "prompt": "'Volver'",
+        "correct_answer": "Vrátiť sa"
+      },
+      {
+        "prompt": "'Tomar'",
+        "correct_answer": "Vziať / Piť"
+      },
+      {
+        "prompt": "'Conocer'",
+        "correct_answer": "Poznať (ľudí/miesta)"
+      },
+      {
+        "prompt": "'Vivir'",
+        "correct_answer": "Žiť"
+      },
+      {
+        "prompt": "'Sentir'",
+        "correct_answer": "Cítiť"
+      },
+      {
+        "prompt": "'Escribir'",
+        "correct_answer": "Písať"
+      },
+      {
+        "prompt": "'Leer'",
+        "correct_answer": "Čítať"
+      },
+      {
+        "prompt": "'Abrir'",
+        "correct_answer": "Otvoriť"
+      },
+      {
+        "prompt": "'Cerrar'",
+        "correct_answer": "Zatvoriť"
+      },
+      {
+        "prompt": "'Comprar'",
+        "correct_answer": "Kúpiť"
+      },
+      {
+        "prompt": "'Vender'",
+        "correct_answer": "Predať"
+      },
+      {
+        "prompt": "'Trabajar'",
+        "correct_answer": "Pracovať"
+      },
+      {
+        "prompt": "'Estudiar'",
+        "correct_answer": "Študovať"
+      },
+      {
+        "prompt": "'Aprender'",
+        "correct_answer": "Učiť sa"
+      },
+      {
+        "prompt": "'Entender'",
+        "correct_answer": "Rozumieť"
+      },
+      {
+        "prompt": "'Ayudar'",
+        "correct_answer": "Pomôcť"
+      },
+      {
+        "prompt": "'Jugar'",
+        "correct_answer": "Hrať (hry/športy)"
+      },
+      {
+        "prompt": "'Escuchar'",
+        "correct_answer": "Počúvať"
+      },
+      {
+        "prompt": "'Mirar'",
+        "correct_answer": "Poerať sa na"
+      },
+      {
+        "prompt": "'Buscar'",
+        "correct_answer": "Hľadať"
+      },
+      {
+        "prompt": "'Pagar'",
+        "correct_answer": "Platiť"
+      },
+      {
+        "prompt": "'Dormir'",
+        "correct_answer": "Spať"
+      },
+      {
+        "prompt": "'Cambiar'",
+        "correct_answer": "Zmeniť"
+      },
+      {
+        "prompt": "'Grande'",
+        "correct_answer": "Veľký"
+      },
+      {
+        "prompt": "'Pequeño'",
+        "correct_answer": "Malý"
+      },
+      {
+        "prompt": "'Bueno'",
+        "correct_answer": "Dobrý"
+      },
+      {
+        "prompt": "'Malo'",
+        "correct_answer": "Zlý"
+      },
+      {
+        "prompt": "'Nuevo'",
+        "correct_answer": "Nový"
+      },
+      {
+        "prompt": "'Viejo'",
+        "correct_answer": "Starý"
+      },
+      {
+        "prompt": "'Primer'",
+        "correct_answer": "Prvý"
+      },
+      {
+        "prompt": "'Último'",
+        "correct_answer": "Posledný"
+      },
+      {
+        "prompt": "'Largo'",
+        "correct_answer": "Dlhý"
+      },
+      {
+        "prompt": "'Alto'",
+        "correct_answer": "Vysoký"
+      },
+      {
+        "prompt": "'Bajo'",
+        "correct_answer": "Nízky"
+      },
+      {
+        "prompt": "'Joven'",
+        "correct_answer": "Mladý"
+      },
+      {
+        "prompt": "'Fácil'",
+        "correct_answer": "Ľahký"
+      },
+      {
+        "prompt": "'Difícil'",
+        "correct_answer": "Ťažký / Náročný"
+      },
+      {
+        "prompt": "'Importante'",
+        "correct_answer": "Dôležitý"
+      },
+      {
+        "prompt": "'Mismo'",
+        "correct_answer": "Rovnaký"
+      },
+      {
+        "prompt": "'Otro'",
+        "correct_answer": "Iný / Ďalší"
+      },
+      {
+        "prompt": "'Solo'",
+        "correct_answer": "Sám / Iba"
+      },
+      {
+        "prompt": "'Rápido'",
+        "correct_answer": "Rýchly"
+      },
+      {
+        "prompt": "'Lento'",
+        "correct_answer": "Pomalý"
+      },
+      {
+        "prompt": "'Feliz'",
+        "correct_answer": "Šťastný"
+      },
+      {
+        "prompt": "'Triste'",
+        "correct_answer": "Smutný"
+      },
+      {
+        "prompt": "'Cansado'",
+        "correct_answer": "Unavený"
+      },
+      {
+        "prompt": "'Bonito'",
+        "correct_answer": "Pekný"
+      },
+      {
+        "prompt": "'Feo'",
+        "correct_answer": "Škaredý"
+      },
+      {
+        "prompt": "'Caliente'",
+        "correct_answer": "Horúci"
+      },
+      {
+        "prompt": "'Frío'",
+        "correct_answer": "Studený"
+      },
+      {
+        "prompt": "'Limpio'",
+        "correct_answer": "Čistý"
+      },
+      {
+        "prompt": "'Sucio'",
+        "correct_answer": "Špinavý"
+      },
+      {
+        "prompt": "'Lleno'",
+        "correct_answer": "Plný"
+      },
+      {
+        "prompt": "'Vacío'",
+        "correct_answer": "Prázdny"
+      },
+      {
+        "prompt": "'Fuerte'",
+        "correct_answer": "Silný"
+      },
+      {
+        "prompt": "'Rico'",
+        "correct_answer": "Bohatý / Chutný"
+      },
+      {
+        "prompt": "'Pobre'",
+        "correct_answer": "Chudobný"
+      },
+      {
+        "prompt": "'Cerca'",
+        "correct_answer": "Blízko"
+      },
+      {
+        "prompt": "'Lejos'",
+        "correct_answer": "Ďaleko"
+      },
+      {
+        "prompt": "'Temprano'",
+        "correct_answer": "Skoro / Früh"
+      },
+      {
+        "prompt": "'Tarde'",
+        "correct_answer": "Neskoro"
+      },
+      {
+        "prompt": "'Siempre'",
+        "correct_answer": "Vždy"
+      },
+      {
+        "prompt": "'Nunca'",
+        "correct_answer": "Nikdy"
+      },
+      {
+        "prompt": "'A veces'",
+        "correct_answer": "Občas / Niekedy"
+      },
+      {
+        "prompt": "'Ahora'",
+        "correct_answer": "Teraz"
+      },
+      {
+        "prompt": "'Hoy'",
+        "correct_answer": "Dnes"
+      },
+      {
+        "prompt": "'Ayer'",
+        "correct_answer": "Včera"
+      },
+      {
+        "prompt": "'Mañana'",
+        "correct_answer": "Zajtra / Ráno"
+      },
+      {
+        "prompt": "'Aquí'",
+        "correct_answer": "Tu"
+      },
+      {
+        "prompt": "'Allí'",
+        "correct_answer": "Tam"
+      },
+      {
+        "prompt": "'Mucho'",
+        "correct_answer": "Veľa"
+      },
+      {
+        "prompt": "'Poco'",
+        "correct_answer": "Málo"
+      },
+      {
+        "prompt": "'Más'",
+        "correct_answer": "Viac"
+      },
+      {
+        "prompt": "'Menos'",
+        "correct_answer": "Menej"
+      },
+      {
+        "prompt": "'Muy'",
+        "correct_answer": "Veľmi"
+      },
+      {
+        "prompt": "'También'",
+        "correct_answer": "Taktiež / Aj"
+      },
+      {
+        "prompt": "'Tampoco'",
+        "correct_answer": "Anii (nie)"
+      },
+      {
+        "prompt": "'Sí'",
+        "correct_answer": "Áno"
+      },
+      {
+        "prompt": "'No'",
+        "correct_answer": "Nie"
+      },
+      {
+        "prompt": "'Quizás'",
+        "correct_answer": "Možno / Aďaj"
+      },
+      {
+        "prompt": "'Bien'",
+        "correct_answer": "Dobre"
+      },
+      {
+        "prompt": "'Mal'",
+        "correct_answer": "Zle"
+      },
+      {
+        "prompt": "'Hola'",
+        "correct_answer": "Ahoj / Dobrý deň"
+      },
+      {
+        "prompt": "'Adiós'",
+        "correct_answer": "Dovidenia"
+      },
+      {
+        "prompt": "'Por favor'",
+        "correct_answer": "Prosím"
+      },
+      {
+        "prompt": "'Gracias'",
+        "correct_answer": "Ďakujem"
+      },
+      {
+        "prompt": "'De nada'",
+        "correct_answer": "Nie je za čo"
+      },
+      {
+        "prompt": "'Lo siento'",
+        "correct_answer": "Prepáčte / Je mi to ľúto"
+      },
+      {
+        "prompt": "'Disculpe'",
+        "correct_answer": "Prepáčte"
+      },
+      {
+        "prompt": "'Yo'",
+        "correct_answer": "Ja"
+      },
+      {
+        "prompt": "'Tú'",
+        "correct_answer": "Ty"
+      },
+      {
+        "prompt": "'Él'",
+        "correct_answer": "On"
+      },
+      {
+        "prompt": "'Ella'",
+        "correct_answer": "Ona"
+      },
+      {
+        "prompt": "'Nosotros'",
+        "correct_answer": "My"
+      },
+      {
+        "prompt": "'Ellos'",
+        "correct_answer": "Oni"
+      },
+      {
+        "prompt": "'Usted'",
+        "correct_answer": "Vy"
+      },
+      {
+        "prompt": "'Qué'",
+        "correct_answer": "Čo"
+      },
+      {
+        "prompt": "'Quién'",
+        "correct_answer": "Kto"
+      },
+      {
+        "prompt": "'Dónde'",
+        "correct_answer": "Kde"
+      },
+      {
+        "prompt": "'Cuándo'",
+        "correct_answer": "Kedy"
+      },
+      {
+        "prompt": "'Por qué'",
+        "correct_answer": "Prečo"
+      },
+      {
+        "prompt": "'Cómo'",
+        "correct_answer": "Ako"
+      },
+      {
+        "prompt": "'Cuánto'",
+        "correct_answer": "Koľko"
+      },
+      {
+        "prompt": "'Y'",
+        "correct_answer": "A"
+      },
+      {
+        "prompt": "'O'",
+        "correct_answer": "Alebo"
+      },
+      {
+        "prompt": "'Pero'",
+        "correct_answer": "Ale"
+      },
+      {
+        "prompt": "'Porque'",
+        "correct_answer": "Pretože"
+      },
+      {
+        "prompt": "'Si'",
+        "correct_answer": "Ak"
+      },
+      {
+        "prompt": "'Como'",
+        "correct_answer": "Ako"
+      },
+      {
+        "prompt": "'Para'",
+        "correct_answer": "Pre / Na"
+      },
+      {
+        "prompt": "'Por'",
+        "correct_answer": "Pre / Od"
+      },
+      {
+        "prompt": "'Con'",
+        "correct_answer": "S"
+      },
+      {
+        "prompt": "'Sin'",
+        "correct_answer": "Bez"
+      },
+      {
+        "prompt": "'En'",
+        "correct_answer": "V / Na"
+      },
+      {
+        "prompt": "'De'",
+        "correct_answer": "Z / Od"
+      },
+      {
+        "prompt": "'A'",
+        "correct_answer": "K / Na"
+      },
+      {
+        "prompt": "'Sobre'",
+        "correct_answer": "O / Na"
+      },
+      {
+        "prompt": "'Entre'",
+        "correct_answer": "Medzi"
+      },
+      {
+        "prompt": "'Hasta'",
+        "correct_answer": "Až do"
+      },
+      {
+        "prompt": "'Desde'",
+        "correct_answer": "Od"
+      },
+      {
+        "prompt": "'El viaje'",
+        "correct_answer": "Cesta / Výlet"
+      },
+      {
+        "prompt": "'La escuela'",
+        "correct_answer": "Škola"
+      },
+      {
+        "prompt": "'La mesa'",
+        "correct_answer": "Stôl"
+      }
+    ]
+  },
+  {
+    "name": "Nemčina – Top 200 slov",
+    "category": "Jazyky",
+    "is_premade": 1,
+    "front_lang": "de-DE",
+    "back_lang": "sk-SK",
+    "cards": [
+      {
+        "prompt": "'Das Fenster'",
+        "correct_answer": "Okno"
+      },
+      {
+        "prompt": "'Der Schlüssel'",
+        "correct_answer": "Kľúč"
+      },
+      {
+        "prompt": "'Die Uhr'",
+        "correct_answer": "Hodiny / Hodinky"
+      },
+      {
+        "prompt": "'Das Bild'",
+        "correct_answer": "Obrázok"
+      },
+      {
+        "prompt": "'Die Zeitung'",
+        "correct_answer": "Noviny"
+      },
+      {
+        "prompt": "'Die Zeit'",
+        "correct_answer": "Time"
+      },
+      {
+        "prompt": "'Das Jahr'",
+        "correct_answer": "Rok"
+      },
+      {
+        "prompt": "'Der Mensch'",
+        "correct_answer": "Person / Human"
+      },
+      {
+        "prompt": "'Der Tag'",
+        "correct_answer": "Deň"
+      },
+      {
+        "prompt": "'Die Frau'",
+        "correct_answer": "Žena / Manželka"
+      },
+      {
+        "prompt": "'Der Mann'",
+        "correct_answer": "Muž / Manžel"
+      },
+      {
+        "prompt": "'Das Kind'",
+        "correct_answer": "Dieťa"
+      },
+      {
+        "prompt": "'Das Leben'",
+        "correct_answer": "Život"
+      },
+      {
+        "prompt": "'Die Welt'",
+        "correct_answer": "Svet"
+      },
+      {
+        "prompt": "'Das Haus'",
+        "correct_answer": "Dom"
+      },
+      {
+        "prompt": "'Die Hand'",
+        "correct_answer": "Ruka"
+      },
+      {
+        "prompt": "'Das Auge'",
+        "correct_answer": "Oko"
+      },
+      {
+        "prompt": "'Die Stadt'",
+        "correct_answer": "Mesto"
+      },
+      {
+        "prompt": "'Das Land'",
+        "correct_answer": "Krajina / Zem"
+      },
+      {
+        "prompt": "'Der Name'",
+        "correct_answer": "Meno"
+      },
+      {
+        "prompt": "'Die Mutter'",
+        "correct_answer": "Matka"
+      },
+      {
+        "prompt": "'Der Vater'",
+        "correct_answer": "Otec"
+      },
+      {
+        "prompt": "'Der Freund'",
+        "correct_answer": "Priateľ"
+      },
+      {
+        "prompt": "'Die Familie'",
+        "correct_answer": "Rodina"
+      },
+      {
+        "prompt": "'Das Geld'",
+        "correct_answer": "Peniaze"
+      },
+      {
+        "prompt": "'Die Nacht'",
+        "correct_answer": "Noc"
+      },
+      {
+        "prompt": "'Die Frage'",
+        "correct_answer": "Otázka"
+      },
+      {
+        "prompt": "'Die Tür'",
+        "correct_answer": "Dvere"
+      },
+      {
+        "prompt": "'Die Straße'",
+        "correct_answer": "Ulica"
+      },
+      {
+        "prompt": "'Das Buch'",
+        "correct_answer": "Kniha"
+      },
+      {
+        "prompt": "'Das Wort'",
+        "correct_answer": "Slovo"
+      },
+      {
+        "prompt": "'Die Seite'",
+        "correct_answer": "Strana / Stránka"
+      },
+      {
+        "prompt": "'Der Sohn'",
+        "correct_answer": "Syn"
+      },
+      {
+        "prompt": "'Die Tochter'",
+        "correct_answer": "Dcéra"
+      },
+      {
+        "prompt": "'Der Kopf'",
+        "correct_answer": "Hlava"
+      },
+      {
+        "prompt": "'Der Körper'",
+        "correct_answer": "Telo"
+      },
+      {
+        "prompt": "'Die Sonne'",
+        "correct_answer": "Slnko"
+      },
+      {
+        "prompt": "'Das Licht'",
+        "correct_answer": "Svetlo"
+      },
+      {
+        "prompt": "'Der Hund'",
+        "correct_answer": "Pes"
+      },
+      {
+        "prompt": "'Die Katze'",
+        "correct_answer": "Mačka"
+      },
+      {
+        "prompt": "'Das Essen'",
+        "correct_answer": "Jedlo"
+      },
+      {
+        "prompt": "'Die Liebe'",
+        "correct_answer": "Láska"
+      },
+      {
+        "prompt": "'Die Luft'",
+        "correct_answer": "Vzduch"
+      },
+      {
+        "prompt": "'Das Meer'",
+        "correct_answer": "More"
+      },
+      {
+        "prompt": "'Das Wasser'",
+        "correct_answer": "Voda"
+      },
+      {
+        "prompt": "'Die Arbeit'",
+        "correct_answer": "Práca / Zamestnanie"
+      },
+      {
+        "prompt": "'Der Ort'",
+        "correct_answer": "Miesto"
+      },
+      {
+        "prompt": "'Der Fall'",
+        "correct_answer": "Prípad"
+      },
+      {
+        "prompt": "'Die Gruppe'",
+        "correct_answer": "Skupina"
+      },
+      {
+        "prompt": "'Das Problem'",
+        "correct_answer": "Problém"
+      },
+      {
+        "prompt": "'Der Grund'",
+        "correct_answer": "Reason / Ground"
+      },
+      {
+        "prompt": "'Die Wahrheit'",
+        "correct_answer": "Pravda"
+      },
+      {
+        "prompt": "'Der Weg'",
+        "correct_answer": "Way / Path"
+      },
+      {
+        "prompt": "'Die Stunde'",
+        "correct_answer": "Hodina"
+      },
+      {
+        "prompt": "'Das Teil'",
+        "correct_answer": "Časť"
+      },
+      {
+        "prompt": "'Sein'",
+        "correct_answer": "Byť"
+      },
+      {
+        "prompt": "'Haben'",
+        "correct_answer": "Mať"
+      },
+      {
+        "prompt": "'Werden'",
+        "correct_answer": "To become"
+      },
+      {
+        "prompt": "'Können'",
+        "correct_answer": "Môcť / Vedieť"
+      },
+      {
+        "prompt": "'Müssen'",
+        "correct_answer": "Musiť"
+      },
+      {
+        "prompt": "'Sagen'",
+        "correct_answer": "Povedať / Hovoriť"
+      },
+      {
+        "prompt": "'Machen'",
+        "correct_answer": "Robiť / Urobiť"
+      },
+      {
+        "prompt": "'Geben'",
+        "correct_answer": "To give"
+      },
+      {
+        "prompt": "'Kommen'",
+        "correct_answer": "To come"
+      },
+      {
+        "prompt": "'Wollen'",
+        "correct_answer": "Chcieť"
+      },
+      {
+        "prompt": "'Gehen'",
+        "correct_answer": "To go / To walk"
+      },
+      {
+        "prompt": "'Wissen'",
+        "correct_answer": "Vedieť (fakty)"
+      },
+      {
+        "prompt": "'Sehen'",
+        "correct_answer": "Vidieť"
+      },
+      {
+        "prompt": "'Lassen'",
+        "correct_answer": "To let / To allow"
+      },
+      {
+        "prompt": "'Stehen'",
+        "correct_answer": "To stand"
+      },
+      {
+        "prompt": "'Finden'",
+        "correct_answer": "Nájsť"
+      },
+      {
+        "prompt": "'Bleiben'",
+        "correct_answer": "Ostať / Zostať"
+      },
+      {
+        "prompt": "'Liegen'",
+        "correct_answer": "To lie / To be situated"
+      },
+      {
+        "prompt": "'Heißen'",
+        "correct_answer": "To be called"
+      },
+      {
+        "prompt": "'Denken'",
+        "correct_answer": "Myslieť"
+      },
+      {
+        "prompt": "'Nehmen'",
+        "correct_answer": "Vziať"
+      },
+      {
+        "prompt": "'Tun'",
+        "correct_answer": "To do"
+      },
+      {
+        "prompt": "'Glauben'",
+        "correct_answer": "Veriť"
+      },
+      {
+        "prompt": "'Halten'",
+        "correct_answer": "To hold / To stop"
+      },
+      {
+        "prompt": "'Nennen'",
+        "correct_answer": "To call / To name"
+      },
+      {
+        "prompt": "'Mögen'",
+        "correct_answer": "To like"
+      },
+      {
+        "prompt": "'Zeigen'",
+        "correct_answer": "To show"
+      },
+      {
+        "prompt": "'Führen'",
+        "correct_answer": "To lead"
+      },
+      {
+        "prompt": "'Sprechen'",
+        "correct_answer": "Hovoriť"
+      },
+      {
+        "prompt": "'Bringen'",
+        "correct_answer": "To bring"
+      },
+      {
+        "prompt": "'Leben'",
+        "correct_answer": "Žiť"
+      },
+      {
+        "prompt": "'Fahren'",
+        "correct_answer": "To drive / To go (vehicle)"
+      },
+      {
+        "prompt": "'Meinen'",
+        "correct_answer": "To mean / To think"
+      },
+      {
+        "prompt": "'Fragen'",
+        "correct_answer": "To ask"
+      },
+      {
+        "prompt": "'Kennen'",
+        "correct_answer": "Poznať (ľudí/miesta)"
+      },
+      {
+        "prompt": "'Gelten'",
+        "correct_answer": "To apply / To be valid"
+      },
+      {
+        "prompt": "'Stellen'",
+        "correct_answer": "To place / To put"
+      },
+      {
+        "prompt": "'Spielen'",
+        "correct_answer": "Hrať"
+      },
+      {
+        "prompt": "'Arbeiten'",
+        "correct_answer": "Pracovať"
+      },
+      {
+        "prompt": "'Brauchen'",
+        "correct_answer": "To need"
+      },
+      {
+        "prompt": "'Folgen'",
+        "correct_answer": "Sledovať"
+      },
+      {
+        "prompt": "'Lernen'",
+        "correct_answer": "Učiť sa"
+      },
+      {
+        "prompt": "'Verstehen'",
+        "correct_answer": "Rozumieť"
+      },
+      {
+        "prompt": "'Essen'",
+        "correct_answer": "Jesť"
+      },
+      {
+        "prompt": "'Trinken'",
+        "correct_answer": "Piť"
+      },
+      {
+        "prompt": "'Schreiben'",
+        "correct_answer": "Písať"
+      },
+      {
+        "prompt": "'Lesen'",
+        "correct_answer": "Čítať"
+      },
+      {
+        "prompt": "'Kaufen'",
+        "correct_answer": "Kúpiť"
+      },
+      {
+        "prompt": "'Hören'",
+        "correct_answer": "To hear / To listen"
+      },
+      {
+        "prompt": "'Helfen'",
+        "correct_answer": "Pomôcť"
+      },
+      {
+        "prompt": "'Groß'",
+        "correct_answer": "Veľký / Vysoký"
+      },
+      {
+        "prompt": "'Klein'",
+        "correct_answer": "Malý"
+      },
+      {
+        "prompt": "'Gut'",
+        "correct_answer": "Dobrý"
+      },
+      {
+        "prompt": "'Schlecht'",
+        "correct_answer": "Zlý"
+      },
+      {
+        "prompt": "'Neu'",
+        "correct_answer": "Nový"
+      },
+      {
+        "prompt": "'Alt'",
+        "correct_answer": "Starý"
+      },
+      {
+        "prompt": "'Erste'",
+        "correct_answer": "Prvý"
+      },
+      {
+        "prompt": "'Letzte'",
+        "correct_answer": "Posledný"
+      },
+      {
+        "prompt": "'Lang'",
+        "correct_answer": "Dlhý"
+      },
+      {
+        "prompt": "'Hoch'",
+        "correct_answer": "Vysoký"
+      },
+      {
+        "prompt": "'Jung'",
+        "correct_answer": "Mladý"
+      },
+      {
+        "prompt": "'Einfach'",
+        "correct_answer": "Jednoduchý / Ľahký"
+      },
+      {
+        "prompt": "'Schwierig'",
+        "correct_answer": "Ťažký / Náročný"
+      },
+      {
+        "prompt": "'Wichtig'",
+        "correct_answer": "Dôležitý"
+      },
+      {
+        "prompt": "'Gleich'",
+        "correct_answer": "Rovnaký / Rovný"
+      },
+      {
+        "prompt": "'Anders'",
+        "correct_answer": "Iný"
+      },
+      {
+        "prompt": "'Allein'",
+        "correct_answer": "Sám"
+      },
+      {
+        "prompt": "'Schnell'",
+        "correct_answer": "Rýchly"
+      },
+      {
+        "prompt": "'Langsam'",
+        "correct_answer": "Pomalý"
+      },
+      {
+        "prompt": "'Glücklich'",
+        "correct_answer": "Šťastný"
+      },
+      {
+        "prompt": "'Traurig'",
+        "correct_answer": "Smutný"
+      },
+      {
+        "prompt": "'Müde'",
+        "correct_answer": "Unavený"
+      },
+      {
+        "prompt": "'Schön'",
+        "correct_answer": "Krásny / Pekný"
+      },
+      {
+        "prompt": "'Hässlich'",
+        "correct_answer": "Škaredý"
+      },
+      {
+        "prompt": "'Heiß'",
+        "correct_answer": "Horúci"
+      },
+      {
+        "prompt": "'Kalt'",
+        "correct_answer": "Studený"
+      },
+      {
+        "prompt": "'Sauber'",
+        "correct_answer": "Čistý"
+      },
+      {
+        "prompt": "'Schmutzig'",
+        "correct_answer": "Špinavý"
+      },
+      {
+        "prompt": "'Voll'",
+        "correct_answer": "Plný"
+      },
+      {
+        "prompt": "'Leer'",
+        "correct_answer": "Prázdny"
+      },
+      {
+        "prompt": "'Stark'",
+        "correct_answer": "Silný"
+      },
+      {
+        "prompt": "'Reich'",
+        "correct_answer": "Bohatý"
+      },
+      {
+        "prompt": "'Arm'",
+        "correct_answer": "Chudobný"
+      },
+      {
+        "prompt": "'Nah'",
+        "correct_answer": "Blízko"
+      },
+      {
+        "prompt": "'Weit'",
+        "correct_answer": "Ďaleko"
+      },
+      {
+        "prompt": "'Früh'",
+        "correct_answer": "Skoro / Früh"
+      },
+      {
+        "prompt": "'Spät'",
+        "correct_answer": "Neskoro"
+      },
+      {
+        "prompt": "'Immer'",
+        "correct_answer": "Vždy"
+      },
+      {
+        "prompt": "'Nie'",
+        "correct_answer": "Nikdy"
+      },
+      {
+        "prompt": "'Manchmal'",
+        "correct_answer": "Občas / Niekedy"
+      },
+      {
+        "prompt": "'Jetzt'",
+        "correct_answer": "Teraz"
+      },
+      {
+        "prompt": "'Heute'",
+        "correct_answer": "Dnes"
+      },
+      {
+        "prompt": "'Gestern'",
+        "correct_answer": "Včera"
+      },
+      {
+        "prompt": "'Morgen'",
+        "correct_answer": "Zajtra"
+      },
+      {
+        "prompt": "'Hier'",
+        "correct_answer": "Tu"
+      },
+      {
+        "prompt": "'Da'",
+        "correct_answer": "Tam"
+      },
+      {
+        "prompt": "'Viel'",
+        "correct_answer": "Veľa"
+      },
+      {
+        "prompt": "'Wenig'",
+        "correct_answer": "Málo"
+      },
+      {
+        "prompt": "'Mehr'",
+        "correct_answer": "Viac"
+      },
+      {
+        "prompt": "'Sehr'",
+        "correct_answer": "Veľmi"
+      },
+      {
+        "prompt": "'Auch'",
+        "correct_answer": "Taktiež / Aj"
+      },
+      {
+        "prompt": "'Ja'",
+        "correct_answer": "Áno"
+      },
+      {
+        "prompt": "'Nein'",
+        "correct_answer": "Nie"
+      },
+      {
+        "prompt": "'Vielleicht'",
+        "correct_answer": "Možno"
+      },
+      {
+        "prompt": "'Bitte'",
+        "correct_answer": "Prosím / Nie je za čo"
+      },
+      {
+        "prompt": "'Danke'",
+        "correct_answer": "Ďakujem"
+      },
+      {
+        "prompt": "'Hallo'",
+        "correct_answer": "Ahoj / Dobrý deň"
+      },
+      {
+        "prompt": "'Tschüss'",
+        "correct_answer": "Dovidenia"
+      },
+      {
+        "prompt": "'Entschuldigung'",
+        "correct_answer": "Prepáčte"
+      },
+      {
+        "prompt": "'Ich'",
+        "correct_answer": "Ja"
+      },
+      {
+        "prompt": "'Du'",
+        "correct_answer": "Ty"
+      },
+      {
+        "prompt": "'Er'",
+        "correct_answer": "On"
+      },
+      {
+        "prompt": "'Sie'",
+        "correct_answer": "Ona / Oni / Vy"
+      },
+      {
+        "prompt": "'Es'",
+        "correct_answer": "To"
+      },
+      {
+        "prompt": "'Wir'",
+        "correct_answer": "My"
+      },
+      {
+        "prompt": "'Ihr'",
+        "correct_answer": "Vy"
+      },
+      {
+        "prompt": "'Was'",
+        "correct_answer": "Čo"
+      },
+      {
+        "prompt": "'Wer'",
+        "correct_answer": "Kto"
+      },
+      {
+        "prompt": "'Wo'",
+        "correct_answer": "Kde"
+      },
+      {
+        "prompt": "'Wann'",
+        "correct_answer": "Kedy"
+      },
+      {
+        "prompt": "'Warum'",
+        "correct_answer": "Prečo"
+      },
+      {
+        "prompt": "'Wie'",
+        "correct_answer": "Ako"
+      },
+      {
+        "prompt": "'Und'",
+        "correct_answer": "A"
+      },
+      {
+        "prompt": "'Oder'",
+        "correct_answer": "Alebo"
+      },
+      {
+        "prompt": "'Aber'",
+        "correct_answer": "Ale"
+      },
+      {
+        "prompt": "'Weil'",
+        "correct_answer": "Pretože"
+      },
+      {
+        "prompt": "'Wenn'",
+        "correct_answer": "Ak / Keď"
+      },
+      {
+        "prompt": "'Dass'",
+        "correct_answer": "That (conjunction)"
+      },
+      {
+        "prompt": "'Mit'",
+        "correct_answer": "S"
+      },
+      {
+        "prompt": "'Ohne'",
+        "correct_answer": "Bez"
+      },
+      {
+        "prompt": "'In'",
+        "correct_answer": "V"
+      },
+      {
+        "prompt": "'Von'",
+        "correct_answer": "Od / Z"
+      },
+      {
+        "prompt": "'Zu'",
+        "correct_answer": "K"
+      },
+      {
+        "prompt": "'Auf'",
+        "correct_answer": "On / Upon"
+      },
+      {
+        "prompt": "'Für'",
+        "correct_answer": "Pre"
+      },
+      {
+        "prompt": "'Über'",
+        "correct_answer": "Nad / O"
+      },
+      {
+        "prompt": "'Unter'",
+        "correct_answer": "Under / Among"
+      },
+      {
+        "prompt": "'Vor'",
+        "correct_answer": "In front of / Before"
+      },
+      {
+        "prompt": "'Nach'",
+        "correct_answer": "After / To (a direction)"
+      },
+      {
+        "prompt": "'Durch'",
+        "correct_answer": "Through"
+      },
+      {
+        "prompt": "'Gegen'",
+        "correct_answer": "Against"
+      },
+      {
+        "prompt": "'Der Tisch'",
+        "correct_answer": "Stôl"
+      },
+      {
+        "prompt": "'Der Stuhl'",
+        "correct_answer": "Stolička"
+      },
+      {
+        "prompt": "'Das Auto'",
+        "correct_answer": "Auto"
+      },
+      {
+        "prompt": "'Die Schule'",
+        "correct_answer": "Škola"
+      }
+    ]
+  },
+  {
+    "name": "Francúzština – Top 200 slov",
+    "category": "Jazyky",
+    "is_premade": 1,
+    "front_lang": "fr-FR",
+    "back_lang": "sk-SK",
+    "cards": [
+      {
+        "prompt": "'Le temps'",
+        "correct_answer": "Čas / Počasie"
+      },
+      {
+        "prompt": "'L'année'",
+        "correct_answer": "Rok"
+      },
+      {
+        "prompt": "'L'homme'",
+        "correct_answer": "Muž"
+      },
+      {
+        "prompt": "'La femme'",
+        "correct_answer": "Žena / Manželka"
+      },
+      {
+        "prompt": "'L'enfant'",
+        "correct_answer": "Dieťa"
+      },
+      {
+        "prompt": "'La vie'",
+        "correct_answer": "Život"
+      },
+      {
+        "prompt": "'Le jour'",
+        "correct_answer": "Deň"
+      },
+      {
+        "prompt": "'La chose'",
+        "correct_answer": "Vec"
+      },
+      {
+        "prompt": "'Le monde'",
+        "correct_answer": "Svet"
+      },
+      {
+        "prompt": "'La maison'",
+        "correct_answer": "Dom"
+      },
+      {
+        "prompt": "'La main'",
+        "correct_answer": "Ruka"
+      },
+      {
+        "prompt": "'L'œil'",
+        "correct_answer": "Oko"
+      },
+      {
+        "prompt": "'La ville'",
+        "correct_answer": "Mesto"
+      },
+      {
+        "prompt": "'Le pays'",
+        "correct_answer": "Krajina"
+      },
+      {
+        "prompt": "'Le nom'",
+        "correct_answer": "Meno"
+      },
+      {
+        "prompt": "'La mère'",
+        "correct_answer": "Matka"
+      },
+      {
+        "prompt": "'Le père'",
+        "correct_answer": "Otec"
+      },
+      {
+        "prompt": "'L'ami'",
+        "correct_answer": "Priateľ"
+      },
+      {
+        "prompt": "'La famille'",
+        "correct_answer": "Rodina"
+      },
+      {
+        "prompt": "'L'argent'",
+        "correct_answer": "Peniaze / Striebro"
+      },
+      {
+        "prompt": "'La nuit'",
+        "correct_answer": "Noc"
+      },
+      {
+        "prompt": "'La question'",
+        "correct_answer": "Otázka"
+      },
+      {
+        "prompt": "'La porte'",
+        "correct_answer": "Dvere"
+      },
+      {
+        "prompt": "'La rue'",
+        "correct_answer": "Ulica"
+      },
+      {
+        "prompt": "'Le livre'",
+        "correct_answer": "Kniha"
+      },
+      {
+        "prompt": "'Le mot'",
+        "correct_answer": "Slovo"
+      },
+      {
+        "prompt": "'Le côté'",
+        "correct_answer": "Strana"
+      },
+      {
+        "prompt": "'Le fils'",
+        "correct_answer": "Syn"
+      },
+      {
+        "prompt": "'La fille'",
+        "correct_answer": "Dcéra / Dievča"
+      },
+      {
+        "prompt": "'La tête'",
+        "correct_answer": "Hlava"
+      },
+      {
+        "prompt": "'Le corps'",
+        "correct_answer": "Telo"
+      },
+      {
+        "prompt": "'Le soleil'",
+        "correct_answer": "Slnko"
+      },
+      {
+        "prompt": "'La lumière'",
+        "correct_answer": "Svetlo"
+      },
+      {
+        "prompt": "'Le chien'",
+        "correct_answer": "Pes"
+      },
+      {
+        "prompt": "'Le chat'",
+        "correct_answer": "Mačka"
+      },
+      {
+        "prompt": "'La nourriture'",
+        "correct_answer": "Jedlo"
+      },
+      {
+        "prompt": "'L'amour'",
+        "correct_answer": "Láska"
+      },
+      {
+        "prompt": "'L'air'",
+        "correct_answer": "Vzduch"
+      },
+      {
+        "prompt": "'La mer'",
+        "correct_answer": "More"
+      },
+      {
+        "prompt": "'L'eau'",
+        "correct_answer": "Voda"
+      },
+      {
+        "prompt": "'Le travail'",
+        "correct_answer": "Práca / Zamestnanie"
+      },
+      {
+        "prompt": "'Le lieu'",
+        "correct_answer": "Miesto"
+      },
+      {
+        "prompt": "'Le cas'",
+        "correct_answer": "Prípad"
+      },
+      {
+        "prompt": "'Le groupe'",
+        "correct_answer": "Skupina"
+      },
+      {
+        "prompt": "'Le problème'",
+        "correct_answer": "Problém"
+      },
+      {
+        "prompt": "'La raison'",
+        "correct_answer": "Reason"
+      },
+      {
+        "prompt": "'La vérité'",
+        "correct_answer": "Pravda"
+      },
+      {
+        "prompt": "'Le chemin'",
+        "correct_answer": "Path / Way"
+      },
+      {
+        "prompt": "'L'heure'",
+        "correct_answer": "Hodina / Čas"
+      },
+      {
+        "prompt": "'La partie'",
+        "correct_answer": "Časť"
+      },
+      {
+        "prompt": "'Être'",
+        "correct_answer": "Byť"
+      },
+      {
+        "prompt": "'Avoir'",
+        "correct_answer": "Mať"
+      },
+      {
+        "prompt": "'Faire'",
+        "correct_answer": "Robiť / Urobiť"
+      },
+      {
+        "prompt": "'Dire'",
+        "correct_answer": "Povedať / Hovoriť"
+      },
+      {
+        "prompt": "'Pouvoir'",
+        "correct_answer": "Môcť / Vedieť"
+      },
+      {
+        "prompt": "'Aller'",
+        "correct_answer": "Ísť"
+      },
+      {
+        "prompt": "'Voir'",
+        "correct_answer": "Vidieť"
+      },
+      {
+        "prompt": "'Savoir'",
+        "correct_answer": "Vedieť (fakty)"
+      },
+      {
+        "prompt": "'Vouloir'",
+        "correct_answer": "Chcieť"
+      },
+      {
+        "prompt": "'Venir'",
+        "correct_answer": "To come"
+      },
+      {
+        "prompt": "'Falloir'",
+        "correct_answer": "To be necessary / Must"
+      },
+      {
+        "prompt": "'Devoir'",
+        "correct_answer": "Musiť"
+      },
+      {
+        "prompt": "'Prendre'",
+        "correct_answer": "Vziať"
+      },
+      {
+        "prompt": "'Trouver'",
+        "correct_answer": "Nájsť"
+      },
+      {
+        "prompt": "'Donner'",
+        "correct_answer": "To give"
+      },
+      {
+        "prompt": "'Parler'",
+        "correct_answer": "Hovoriť / Rozprávať"
+      },
+      {
+        "prompt": "'Mettre'",
+        "correct_answer": "Položiť / Dať"
+      },
+      {
+        "prompt": "'Demander'",
+        "correct_answer": "To ask"
+      },
+      {
+        "prompt": "'Tenir'",
+        "correct_answer": "To hold"
+      },
+      {
+        "prompt": "'Aimer'",
+        "correct_answer": "To love / To like"
+      },
+      {
+        "prompt": "'Passer'",
+        "correct_answer": "Prejsť / Stráviť čas"
+      },
+      {
+        "prompt": "'Penser'",
+        "correct_answer": "Myslieť"
+      },
+      {
+        "prompt": "'Rester'",
+        "correct_answer": "Ostať / Zostať"
+      },
+      {
+        "prompt": "'Manger'",
+        "correct_answer": "Jesť"
+      },
+      {
+        "prompt": "'Boire'",
+        "correct_answer": "Piť"
+      },
+      {
+        "prompt": "'Comprendre'",
+        "correct_answer": "Rozumieť"
+      },
+      {
+        "prompt": "'Connaître'",
+        "correct_answer": "Poznať (ľudí/miesta)"
+      },
+      {
+        "prompt": "'Vivre'",
+        "correct_answer": "Žiť"
+      },
+      {
+        "prompt": "'Lire'",
+        "correct_answer": "Čítať"
+      },
+      {
+        "prompt": "'Écrire'",
+        "correct_answer": "Písať"
+      },
+      {
+        "prompt": "'Entendre'",
+        "correct_answer": "To hear"
+      },
+      {
+        "prompt": "'Écouter'",
+        "correct_answer": "Počúvať"
+      },
+      {
+        "prompt": "'Regarder'",
+        "correct_answer": "Pozerať sa / Sledovať"
+      },
+      {
+        "prompt": "'Acheter'",
+        "correct_answer": "Kúpiť"
+      },
+      {
+        "prompt": "'Travailler'",
+        "correct_answer": "Pracovať"
+      },
+      {
+        "prompt": "'Apprendre'",
+        "correct_answer": "Učiť sa"
+      },
+      {
+        "prompt": "'Aider'",
+        "correct_answer": "Pomôcť"
+      },
+      {
+        "prompt": "'Jouer'",
+        "correct_answer": "Hrať"
+      },
+      {
+        "prompt": "'Marcher'",
+        "correct_answer": "To walk / To function"
+      },
+      {
+        "prompt": "'Dormir'",
+        "correct_answer": "Spať"
+      },
+      {
+        "prompt": "'Ouvrir'",
+        "correct_answer": "Otvoriť"
+      },
+      {
+        "prompt": "'Fermer'",
+        "correct_answer": "Zatvoriť"
+      },
+      {
+        "prompt": "'Changer'",
+        "correct_answer": "Zmeniť"
+      },
+      {
+        "prompt": "'Attendre'",
+        "correct_answer": "To wait"
+      },
+      {
+        "prompt": "'Sortir'",
+        "correct_answer": "To go out / To exit"
+      },
+      {
+        "prompt": "'Entrer'",
+        "correct_answer": "To enter"
+      },
+      {
+        "prompt": "'Partir'",
+        "correct_answer": "To leave"
+      },
+      {
+        "prompt": "'Grand'",
+        "correct_answer": "Veľký / Vysoký"
+      },
+      {
+        "prompt": "'Petit'",
+        "correct_answer": "Malý"
+      },
+      {
+        "prompt": "'Bon'",
+        "correct_answer": "Dobrý"
+      },
+      {
+        "prompt": "'Mauvais'",
+        "correct_answer": "Zlý"
+      },
+      {
+        "prompt": "'Nouveau'",
+        "correct_answer": "Nový"
+      },
+      {
+        "prompt": "'Vieux'",
+        "correct_answer": "Starý"
+      },
+      {
+        "prompt": "'Premier'",
+        "correct_answer": "Prvý"
+      },
+      {
+        "prompt": "'Dernier'",
+        "correct_answer": "Posledný"
+      },
+      {
+        "prompt": "'Long'",
+        "correct_answer": "Dlhý"
+      },
+      {
+        "prompt": "'Haut'",
+        "correct_answer": "Vysoký"
+      },
+      {
+        "prompt": "'Jeune'",
+        "correct_answer": "Mladý"
+      },
+      {
+        "prompt": "'Facile'",
+        "correct_answer": "Ľahký"
+      },
+      {
+        "prompt": "'Difficile'",
+        "correct_answer": "Ťažký / Náročný"
+      },
+      {
+        "prompt": "'Important'",
+        "correct_answer": "Dôležitý"
+      },
+      {
+        "prompt": "'Même'",
+        "correct_answer": "Rovnaký"
+      },
+      {
+        "prompt": "'Autre'",
+        "correct_answer": "Iný / Ďalší"
+      },
+      {
+        "prompt": "'Seul'",
+        "correct_answer": "Sám / Iba"
+      },
+      {
+        "prompt": "'Rapide'",
+        "correct_answer": "Rýchly"
+      },
+      {
+        "prompt": "'Lent'",
+        "correct_answer": "Pomalý"
+      },
+      {
+        "prompt": "'Heureux'",
+        "correct_answer": "Šťastný"
+      },
+      {
+        "prompt": "'Triste'",
+        "correct_answer": "Smutný"
+      },
+      {
+        "prompt": "'Fatigué'",
+        "correct_answer": "Unavený"
+      },
+      {
+        "prompt": "'Beau'",
+        "correct_answer": "Krásny / Pekný"
+      },
+      {
+        "prompt": "'Laid'",
+        "correct_answer": "Škaredý"
+      },
+      {
+        "prompt": "'Chaud'",
+        "correct_answer": "Horúci"
+      },
+      {
+        "prompt": "'Froid'",
+        "correct_answer": "Studený"
+      },
+      {
+        "prompt": "'Propre'",
+        "correct_answer": "Čistý / Vlastný"
+      },
+      {
+        "prompt": "'Sale'",
+        "correct_answer": "Špinavý"
+      },
+      {
+        "prompt": "'Plein'",
+        "correct_answer": "Plný"
+      },
+      {
+        "prompt": "'Vide'",
+        "correct_answer": "Prázdny"
+      },
+      {
+        "prompt": "'Fort'",
+        "correct_answer": "Silný"
+      },
+      {
+        "prompt": "'Riche'",
+        "correct_answer": "Bohatý"
+      },
+      {
+        "prompt": "'Pauvre'",
+        "correct_answer": "Chudobný"
+      },
+      {
+        "prompt": "'Près'",
+        "correct_answer": "Blízko"
+      },
+      {
+        "prompt": "'Loin'",
+        "correct_answer": "Ďaleko"
+      },
+      {
+        "prompt": "'Tôt'",
+        "correct_answer": "Skoro / Früh"
+      },
+      {
+        "prompt": "'Tard'",
+        "correct_answer": "Neskoro"
+      },
+      {
+        "prompt": "'Toujours'",
+        "correct_answer": "Vždy / Stále"
+      },
+      {
+        "prompt": "'Jamais'",
+        "correct_answer": "Nikdy"
+      },
+      {
+        "prompt": "'Parfois'",
+        "correct_answer": "Občas / Niekedy"
+      },
+      {
+        "prompt": "'Maintenant'",
+        "correct_answer": "Teraz"
+      },
+      {
+        "prompt": "'Aujourd'hui'",
+        "correct_answer": "Dnes"
+      },
+      {
+        "prompt": "'Hier'",
+        "correct_answer": "Včera"
+      },
+      {
+        "prompt": "'Demain'",
+        "correct_answer": "Zajtra"
+      },
+      {
+        "prompt": "'Ici'",
+        "correct_answer": "Tu"
+      },
+      {
+        "prompt": "'Là'",
+        "correct_answer": "Tam"
+      },
+      {
+        "prompt": "'Beaucoup'",
+        "correct_answer": "Veľa"
+      },
+      {
+        "prompt": "'Peu'",
+        "correct_answer": "Málo"
+      },
+      {
+        "prompt": "'Plus'",
+        "correct_answer": "Viac"
+      },
+      {
+        "prompt": "'Moins'",
+        "correct_answer": "Menej"
+      },
+      {
+        "prompt": "'Très'",
+        "correct_answer": "Veľmi"
+      },
+      {
+        "prompt": "'Aussi'",
+        "correct_answer": "Taktiež / Aj"
+      },
+      {
+        "prompt": "'Oui'",
+        "correct_answer": "Áno"
+      },
+      {
+        "prompt": "'Non'",
+        "correct_answer": "Nie"
+      },
+      {
+        "prompt": "'Peut-être'",
+        "correct_answer": "Možno"
+      },
+      {
+        "prompt": "'S'il vous plaît'",
+        "correct_answer": "Prosím"
+      },
+      {
+        "prompt": "'Merci'",
+        "correct_answer": "Ďakujem"
+      },
+      {
+        "prompt": "'De rien'",
+        "correct_answer": "Nie je za čo"
+      },
+      {
+        "prompt": "'Bonjour'",
+        "correct_answer": "Dobrý deň"
+      },
+      {
+        "prompt": "'Au revoir'",
+        "correct_answer": "Dovidenia"
+      },
+      {
+        "prompt": "'Pardon'",
+        "correct_answer": "Prepáčte"
+      },
+      {
+        "prompt": "'Je'",
+        "correct_answer": "Ja"
+      },
+      {
+        "prompt": "'Tu'",
+        "correct_answer": "Ty"
+      },
+      {
+        "prompt": "'Il'",
+        "correct_answer": "On / To"
+      },
+      {
+        "prompt": "'Elle'",
+        "correct_answer": "Ona / To"
+      },
+      {
+        "prompt": "'Nous'",
+        "correct_answer": "My"
+      },
+      {
+        "prompt": "'Vous'",
+        "correct_answer": "Vy"
+      },
+      {
+        "prompt": "'Ils'",
+        "correct_answer": "Oni"
+      },
+      {
+        "prompt": "'Elles'",
+        "correct_answer": "Ony"
+      },
+      {
+        "prompt": "'Quoi'",
+        "correct_answer": "Čo"
+      },
+      {
+        "prompt": "'Qui'",
+        "correct_answer": "Kto"
+      },
+      {
+        "prompt": "'Où'",
+        "correct_answer": "Kde"
+      },
+      {
+        "prompt": "'Quand'",
+        "correct_answer": "Kedy"
+      },
+      {
+        "prompt": "'Pourquoi'",
+        "correct_answer": "Prečo"
+      },
+      {
+        "prompt": "'Comment'",
+        "correct_answer": "Ako"
+      },
+      {
+        "prompt": "'Combien'",
+        "correct_answer": "Koľko"
+      },
+      {
+        "prompt": "'Et'",
+        "correct_answer": "A"
+      },
+      {
+        "prompt": "'Ou'",
+        "correct_answer": "Alebo"
+      },
+      {
+        "prompt": "'Mais'",
+        "correct_answer": "Ale"
+      },
+      {
+        "prompt": "'Parce que'",
+        "correct_answer": "Pretože"
+      },
+      {
+        "prompt": "'Si'",
+        "correct_answer": "Ak"
+      },
+      {
+        "prompt": "'Comme'",
+        "correct_answer": "Ako"
+      },
+      {
+        "prompt": "'Pour'",
+        "correct_answer": "Pre / Aby"
+      },
+      {
+        "prompt": "'Avec'",
+        "correct_answer": "S"
+      },
+      {
+        "prompt": "'Sans'",
+        "correct_answer": "Bez"
+      },
+      {
+        "prompt": "'Dans'",
+        "correct_answer": "V / Vo vnútri"
+      },
+      {
+        "prompt": "'Sur'",
+        "correct_answer": "On / Upon"
+      },
+      {
+        "prompt": "'Sous'",
+        "correct_answer": "Under"
+      },
+      {
+        "prompt": "'De'",
+        "correct_answer": "Z / Od"
+      },
+      {
+        "prompt": "'À'",
+        "correct_answer": "K / Na"
+      },
+      {
+        "prompt": "'Entre'",
+        "correct_answer": "Medzi"
+      },
+      {
+        "prompt": "'Pendant'",
+        "correct_answer": "During"
+      },
+      {
+        "prompt": "'Avant'",
+        "correct_answer": "Before"
+      },
+      {
+        "prompt": "'Après'",
+        "correct_answer": "After"
+      },
+      {
+        "prompt": "'La table'",
+        "correct_answer": "Stôl"
+      },
+      {
+        "prompt": "'La chaise'",
+        "correct_answer": "Stolička"
+      },
+      {
+        "prompt": "'La voiture'",
+        "correct_answer": "Auto"
+      },
+      {
+        "prompt": "'L'école'",
+        "correct_answer": "Škola"
+      },
+      {
+        "prompt": "'Le voyage'",
+        "correct_answer": "Cesta / Výlet"
+      },
+      {
+        "prompt": "'La fenêtre'",
+        "correct_answer": "Okno"
+      },
+      {
+        "prompt": "'La clé'",
+        "correct_answer": "Kľúč"
+      },
+      {
+        "prompt": "'L'image'",
+        "correct_answer": "Obrázok"
+      },
+      {
+        "prompt": "'Le journal'",
+        "correct_answer": "Noviny"
+      }
+    ]
+  },
+  {
+    "name": "Fínština – Top 200 slov",
+    "category": "Jazyky",
+    "is_premade": 1,
+    "front_lang": "fi-FI",
+    "back_lang": "sk-SK",
+    "cards": [
+      {
+        "prompt": "'Aika'",
+        "correct_answer": "Time"
+      },
+      {
+        "prompt": "'Vuosi'",
+        "correct_answer": "Rok"
+      },
+      {
+        "prompt": "'Ihmiset'",
+        "correct_answer": "Ľudia"
+      },
+      {
+        "prompt": "'Mies'",
+        "correct_answer": "Muž"
+      },
+      {
+        "prompt": "'Nainen'",
+        "correct_answer": "Žena"
+      },
+      {
+        "prompt": "'Lapsi'",
+        "correct_answer": "Dieťa"
+      },
+      {
+        "prompt": "'Elämä'",
+        "correct_answer": "Život"
+      },
+      {
+        "prompt": "'Päivä'",
+        "correct_answer": "Deň"
+      },
+      {
+        "prompt": "'Asia'",
+        "correct_answer": "Vec / Záležitosť"
+      },
+      {
+        "prompt": "'Maailma'",
+        "correct_answer": "Svet"
+      },
+      {
+        "prompt": "'Talo'",
+        "correct_answer": "Dom / Budova"
+      },
+      {
+        "prompt": "'Käsi'",
+        "correct_answer": "Ruka"
+      },
+      {
+        "prompt": "'Silmä'",
+        "correct_answer": "Oko"
+      },
+      {
+        "prompt": "'Kaupunki'",
+        "correct_answer": "Mesto"
+      },
+      {
+        "prompt": "'Maa'",
+        "correct_answer": "Krajina / Zem"
+      },
+      {
+        "prompt": "'Nimi'",
+        "correct_answer": "Meno"
+      },
+      {
+        "prompt": "'Äiti'",
+        "correct_answer": "Matka"
+      },
+      {
+        "prompt": "'Isä'",
+        "correct_answer": "Otec"
+      },
+      {
+        "prompt": "'Ystävä'",
+        "correct_answer": "Priateľ"
+      },
+      {
+        "prompt": "'Perhe'",
+        "correct_answer": "Rodina"
+      },
+      {
+        "prompt": "'Raha'",
+        "correct_answer": "Peniaze"
+      },
+      {
+        "prompt": "'Yö'",
+        "correct_answer": "Noc"
+      },
+      {
+        "prompt": "'Kysymys'",
+        "correct_answer": "Otázka"
+      },
+      {
+        "prompt": "'Ovi'",
+        "correct_answer": "Dvere"
+      },
+      {
+        "prompt": "'Katu'",
+        "correct_answer": "Ulica"
+      },
+      {
+        "prompt": "'Kirja'",
+        "correct_answer": "Kniha"
+      },
+      {
+        "prompt": "'Sana'",
+        "correct_answer": "Slovo"
+      },
+      {
+        "prompt": "'Sivu'",
+        "correct_answer": "Stránka / Strana"
+      },
+      {
+        "prompt": "'Poika'",
+        "correct_answer": "Chlapec / Syn"
+      },
+      {
+        "prompt": "'Tyttö'",
+        "correct_answer": "Dievča / Dcéra"
+      },
+      {
+        "prompt": "'Pää'",
+        "correct_answer": "Hlava"
+      },
+      {
+        "prompt": "'Keho'",
+        "correct_answer": "Telo"
+      },
+      {
+        "prompt": "'Aurinko'",
+        "correct_answer": "Slnko"
+      },
+      {
+        "prompt": "'Valo'",
+        "correct_answer": "Svetlo"
+      },
+      {
+        "prompt": "'Koira'",
+        "correct_answer": "Pes"
+      },
+      {
+        "prompt": "'Kissa'",
+        "correct_answer": "Mačka"
+      },
+      {
+        "prompt": "'Ruoka'",
+        "correct_answer": "Jedlo"
+      },
+      {
+        "prompt": "'Rakkaus'",
+        "correct_answer": "Láska"
+      },
+      {
+        "prompt": "'Ilma'",
+        "correct_answer": "Vzduch / Počasie"
+      },
+      {
+        "prompt": "'Meri'",
+        "correct_answer": "More"
+      },
+      {
+        "prompt": "'Vesi'",
+        "correct_answer": "Voda"
+      },
+      {
+        "prompt": "'Työ'",
+        "correct_answer": "Práca / Zamestnanie"
+      },
+      {
+        "prompt": "'Paikka'",
+        "correct_answer": "Miesto"
+      },
+      {
+        "prompt": "'Ryhmä'",
+        "correct_answer": "Skupina"
+      },
+      {
+        "prompt": "'Ongelma'",
+        "correct_answer": "Problém"
+      },
+      {
+        "prompt": "'Syy'",
+        "correct_answer": "Reason / Cause"
+      },
+      {
+        "prompt": "'Totuus'",
+        "correct_answer": "Pravda"
+      },
+      {
+        "prompt": "'Tie'",
+        "correct_answer": "Road / Way"
+      },
+      {
+        "prompt": "'Tunti'",
+        "correct_answer": "Hodina / Lekcia"
+      },
+      {
+        "prompt": "'Osa'",
+        "correct_answer": "Časť"
+      },
+      {
+        "prompt": "'Olla'",
+        "correct_answer": "Byť / Mať"
+      },
+      {
+        "prompt": "'Tehdä'",
+        "correct_answer": "Robiť / Urobiť"
+      },
+      {
+        "prompt": "'Sanoa'",
+        "correct_answer": "Povedať"
+      },
+      {
+        "prompt": "'Voida'",
+        "correct_answer": "Môcť"
+      },
+      {
+        "prompt": "'Mennä'",
+        "correct_answer": "Ísť"
+      },
+      {
+        "prompt": "'Nähdä'",
+        "correct_answer": "Vidieť"
+      },
+      {
+        "prompt": "'Tietää'",
+        "correct_answer": "Vedieť (fakty)"
+      },
+      {
+        "prompt": "'Haluta'",
+        "correct_answer": "Chcieť"
+      },
+      {
+        "prompt": "'Tulla'",
+        "correct_answer": "To come / To become"
+      },
+      {
+        "prompt": "'Pitää'",
+        "correct_answer": "To must / To like / To hold"
+      },
+      {
+        "prompt": "'Ottaa'",
+        "correct_answer": "Vziať"
+      },
+      {
+        "prompt": "'Löytää'",
+        "correct_answer": "Nájsť"
+      },
+      {
+        "prompt": "'Antaa'",
+        "correct_answer": "To give"
+      },
+      {
+        "prompt": "'Puhua'",
+        "correct_answer": "Hovoriť / Rozprávať"
+      },
+      {
+        "prompt": "'Kysyä'",
+        "correct_answer": "To ask"
+      },
+      {
+        "prompt": "'Rakastaa'",
+        "correct_answer": "To love"
+      },
+      {
+        "prompt": "'Miettiä'",
+        "correct_answer": "Myslieť / Uvažovať"
+      },
+      {
+        "prompt": "'Jäädä'",
+        "correct_answer": "Ostať / Zostať"
+      },
+      {
+        "prompt": "'Syödä'",
+        "correct_answer": "Jesť"
+      },
+      {
+        "prompt": "'Juoda'",
+        "correct_answer": "Piť"
+      },
+      {
+        "prompt": "'Ymmärtää'",
+        "correct_answer": "Rozumieť"
+      },
+      {
+        "prompt": "'Tuntea'",
+        "correct_answer": "Cítiť / Poznať"
+      },
+      {
+        "prompt": "'Elää'",
+        "correct_answer": "Žiť"
+      },
+      {
+        "prompt": "'Lukea'",
+        "correct_answer": "Čítať"
+      },
+      {
+        "prompt": "'Kirjoittaa'",
+        "correct_answer": "Písať"
+      },
+      {
+        "prompt": "'Kuulla'",
+        "correct_answer": "To hear"
+      },
+      {
+        "prompt": "'Kuunnella'",
+        "correct_answer": "Počúvať"
+      },
+      {
+        "prompt": "'Katsoa'",
+        "correct_answer": "Sledovať / Pozerať"
+      },
+      {
+        "prompt": "'Ostaa'",
+        "correct_answer": "Kúpiť"
+      },
+      {
+        "prompt": "'Työskennellä'",
+        "correct_answer": "Pracovať"
+      },
+      {
+        "prompt": "'Oppia'",
+        "correct_answer": "Učiť sa"
+      },
+      {
+        "prompt": "'Auttaa'",
+        "correct_answer": "Pomôcť"
+      },
+      {
+        "prompt": "'Pelata'",
+        "correct_answer": "Hrať (hry/športy)"
+      },
+      {
+        "prompt": "'Kävellä'",
+        "correct_answer": "To walk"
+      },
+      {
+        "prompt": "'Nukkua'",
+        "correct_answer": "Spať"
+      },
+      {
+        "prompt": "'Avata'",
+        "correct_answer": "Otvoriť"
+      },
+      {
+        "prompt": "'Sulkea'",
+        "correct_answer": "Zatvoriť"
+      },
+      {
+        "prompt": "'Muuttaa'",
+        "correct_answer": "Zmeniť / Presťahovať"
+      },
+      {
+        "prompt": "'Odottaa'",
+        "correct_answer": "To wait / To expect"
+      },
+      {
+        "prompt": "'Lähteä'",
+        "correct_answer": "To leave / To depart"
+      },
+      {
+        "prompt": "'Istua'",
+        "correct_answer": "To sit"
+      },
+      {
+        "prompt": "'Seisoa'",
+        "correct_answer": "To stand"
+      },
+      {
+        "prompt": "'Maksaa'",
+        "correct_answer": "Platiť / Stáť (cenu)"
+      },
+      {
+        "prompt": "'Käyttää'",
+        "correct_answer": "To use"
+      },
+      {
+        "prompt": "'Aloittaa'",
+        "correct_answer": "To start"
+      },
+      {
+        "prompt": "'Lopettaa'",
+        "correct_answer": "To stop / To finish"
+      },
+      {
+        "prompt": "'Tapahtua'",
+        "correct_answer": "To happen"
+      },
+      {
+        "prompt": "'Ajaa'",
+        "correct_answer": "To drive"
+      },
+      {
+        "prompt": "'Matkustaa'",
+        "correct_answer": "To travel"
+      },
+      {
+        "prompt": "'Suuri'",
+        "correct_answer": "Veľký"
+      },
+      {
+        "prompt": "'Pieni'",
+        "correct_answer": "Malý"
+      },
+      {
+        "prompt": "'Hyvä'",
+        "correct_answer": "Dobrý"
+      },
+      {
+        "prompt": "'Paha'",
+        "correct_answer": "Zlý"
+      },
+      {
+        "prompt": "'Uusi'",
+        "correct_answer": "Nový"
+      },
+      {
+        "prompt": "'Vanha'",
+        "correct_answer": "Starý"
+      },
+      {
+        "prompt": "'Ensimmäinen'",
+        "correct_answer": "Prvý"
+      },
+      {
+        "prompt": "'Viimeinen'",
+        "correct_answer": "Posledný"
+      },
+      {
+        "prompt": "'Pitkä'",
+        "correct_answer": "Dlhý / Vysoký"
+      },
+      {
+        "prompt": "'Korkea'",
+        "correct_answer": "Vysoký"
+      },
+      {
+        "prompt": "'Nuori'",
+        "correct_answer": "Mladý"
+      },
+      {
+        "prompt": "'Helppo'",
+        "correct_answer": "Ľahký"
+      },
+      {
+        "prompt": "'Vaikea'",
+        "correct_answer": "Ťažký / Náročný"
+      },
+      {
+        "prompt": "'Tärkeä'",
+        "correct_answer": "Dôležitý"
+      },
+      {
+        "prompt": "'Sama'",
+        "correct_answer": "Rovnaký"
+      },
+      {
+        "prompt": "'Toinen'",
+        "correct_answer": "Iný / Druhý"
+      },
+      {
+        "prompt": "'Yksin'",
+        "correct_answer": "Sám"
+      },
+      {
+        "prompt": "'Nopea'",
+        "correct_answer": "Rýchly"
+      },
+      {
+        "prompt": "'Hidas'",
+        "correct_answer": "Pomalý"
+      },
+      {
+        "prompt": "'Onnellinen'",
+        "correct_answer": "Šťastný"
+      },
+      {
+        "prompt": "'Surullinen'",
+        "correct_answer": "Smutný"
+      },
+      {
+        "prompt": "'Väsynyt'",
+        "correct_answer": "Unavený"
+      },
+      {
+        "prompt": "'Kaunis'",
+        "correct_answer": "Krásny"
+      },
+      {
+        "prompt": "'Ruma'",
+        "correct_answer": "Škaredý"
+      },
+      {
+        "prompt": "'Kuuma'",
+        "correct_answer": "Horúci"
+      },
+      {
+        "prompt": "'Kylmä'",
+        "correct_answer": "Studený"
+      },
+      {
+        "prompt": "'Puhdas'",
+        "correct_answer": "Čistý"
+      },
+      {
+        "prompt": "'Likainen'",
+        "correct_answer": "Špinavý"
+      },
+      {
+        "prompt": "'Täysi'",
+        "correct_answer": "Plný"
+      },
+      {
+        "prompt": "'Tyhjä'",
+        "correct_answer": "Prázdny"
+      },
+      {
+        "prompt": "'Vahva'",
+        "correct_answer": "Silný"
+      },
+      {
+        "prompt": "'Rikas'",
+        "correct_answer": "Bohatý"
+      },
+      {
+        "prompt": "'Köyhä'",
+        "correct_answer": "Chudobný"
+      },
+      {
+        "prompt": "'Lähellä'",
+        "correct_answer": "Blízko"
+      },
+      {
+        "prompt": "'Kaukana'",
+        "correct_answer": "Ďaleko"
+      },
+      {
+        "prompt": "'Ajoissa'",
+        "correct_answer": "Na čas / Skoro"
+      },
+      {
+        "prompt": "'Myöhässä'",
+        "correct_answer": "Neskoro"
+      },
+      {
+        "prompt": "'Aina'",
+        "correct_answer": "Vždy"
+      },
+      {
+        "prompt": "'Ei koskaan'",
+        "correct_answer": "Nikdy"
+      },
+      {
+        "prompt": "'Joskus'",
+        "correct_answer": "Občas / Niekedy"
+      },
+      {
+        "prompt": "'Nyt'",
+        "correct_answer": "Teraz"
+      },
+      {
+        "prompt": "'Tänään'",
+        "correct_answer": "Dnes"
+      },
+      {
+        "prompt": "'Eilen'",
+        "correct_answer": "Včera"
+      },
+      {
+        "prompt": "'Huomenna'",
+        "correct_answer": "Zajtra"
+      },
+      {
+        "prompt": "'Täällä'",
+        "correct_answer": "Tu"
+      },
+      {
+        "prompt": "'Siellä'",
+        "correct_answer": "Tam"
+      },
+      {
+        "prompt": "'Paljon'",
+        "correct_answer": "Veľa"
+      },
+      {
+        "prompt": "'Vähän'",
+        "correct_answer": "Trochu / Málo"
+      },
+      {
+        "prompt": "'Enemmän'",
+        "correct_answer": "Viac"
+      },
+      {
+        "prompt": "'Vähemmän'",
+        "correct_answer": "Menej"
+      },
+      {
+        "prompt": "'Hyvin'",
+        "correct_answer": "Labi / Veľmi"
+      },
+      {
+        "prompt": "'Myös'",
+        "correct_answer": "Taktiež / Aj"
+      },
+      {
+        "prompt": "'Kyllä'",
+        "correct_answer": "Áno"
+      },
+      {
+        "prompt": "'Ei'",
+        "correct_answer": "Nie"
+      },
+      {
+        "prompt": "'Ehkä'",
+        "correct_answer": "Možno"
+      },
+      {
+        "prompt": "'Ole hyvä'",
+        "correct_answer": "Prosím / Nie je za čo"
+      },
+      {
+        "prompt": "'Kiitos'",
+        "correct_answer": "Ďakujem"
+      },
+      {
+        "prompt": "'Hei'",
+        "correct_answer": "Ahoj"
+      },
+      {
+        "prompt": "'Näkemiin'",
+        "correct_answer": "Dovidenia"
+      },
+      {
+        "prompt": "'Anteeksi'",
+        "correct_answer": "Prepáčte"
+      },
+      {
+        "prompt": "'Minä'",
+        "correct_answer": "Ja"
+      },
+      {
+        "prompt": "'Sinä'",
+        "correct_answer": "Ty"
+      },
+      {
+        "prompt": "'Hän'",
+        "correct_answer": "He / She"
+      },
+      {
+        "prompt": "'Me'",
+        "correct_answer": "My"
+      },
+      {
+        "prompt": "'Te'",
+        "correct_answer": "Vy"
+      },
+      {
+        "prompt": "'He'",
+        "correct_answer": "Oni"
+      },
+      {
+        "prompt": "'Se'",
+        "correct_answer": "To"
+      },
+      {
+        "prompt": "'Mikä'",
+        "correct_answer": "Čo"
+      },
+      {
+        "prompt": "'Kuka'",
+        "correct_answer": "Kto"
+      },
+      {
+        "prompt": "'Missä'",
+        "correct_answer": "Kde"
+      },
+      {
+        "prompt": "'Milloin'",
+        "correct_answer": "Kedy"
+      },
+      {
+        "prompt": "'Miksi'",
+        "correct_answer": "Prečo"
+      },
+      {
+        "prompt": "'Miten'",
+        "correct_answer": "Ako"
+      },
+      {
+        "prompt": "'Kuinka paljon'",
+        "correct_answer": "Koľko"
+      },
+      {
+        "prompt": "'Ja'",
+        "correct_answer": "A"
+      },
+      {
+        "prompt": "'Tai'",
+        "correct_answer": "Alebo"
+      },
+      {
+        "prompt": "'Mutta'",
+        "correct_answer": "Ale"
+      },
+      {
+        "prompt": "'Koska'",
+        "correct_answer": "Pretože"
+      },
+      {
+        "prompt": "'Jos'",
+        "correct_answer": "Ak"
+      },
+      {
+        "prompt": "'Kuin'",
+        "correct_answer": "Ako"
+      },
+      {
+        "prompt": "'Kanssa'",
+        "correct_answer": "S"
+      },
+      {
+        "prompt": "'Ilman'",
+        "correct_answer": "Bez"
+      },
+      {
+        "prompt": "'Jälkeen'",
+        "correct_answer": "After"
+      },
+      {
+        "prompt": "'Ennen'",
+        "correct_answer": "Before"
+      },
+      {
+        "prompt": "'Pöytä'",
+        "correct_answer": "Stôl"
+      },
+      {
+        "prompt": "'Tuoli'",
+        "correct_answer": "Stolička"
+      },
+      {
+        "prompt": "'Auto'",
+        "correct_answer": "Auto"
+      },
+      {
+        "prompt": "'Koulu'",
+        "correct_answer": "Škola"
+      },
+      {
+        "prompt": "'Matka'",
+        "correct_answer": "Cesta / Výlet"
+      },
+      {
+        "prompt": "'Ikkuna'",
+        "correct_answer": "Okno"
+      },
+      {
+        "prompt": "'Avain'",
+        "correct_answer": "Kľúč"
+      },
+      {
+        "prompt": "'Kello'",
+        "correct_answer": "Hodiny / Hodinky"
+      },
+      {
+        "prompt": "'Kuva'",
+        "correct_answer": "Obrázok"
+      },
+      {
+        "prompt": "'Sanomalehti'",
+        "correct_answer": "Noviny"
+      },
+      {
+        "prompt": "'Puhelin'",
+        "correct_answer": "Telefón"
+      },
+      {
+        "prompt": "'Tietokone'",
+        "correct_answer": "Počítač"
+      },
+      {
+        "prompt": "'Metsä'",
+        "correct_answer": "Les"
+      },
+      {
+        "prompt": "'Järvi'",
+        "correct_answer": "Jazero"
+      },
+      {
+        "prompt": "'Taivas'",
+        "correct_answer": "Nebo"
+      },
+      {
+        "prompt": "'Kukka'",
+        "correct_answer": "Kvet"
+      },
+      {
+        "prompt": "'Koti'",
+        "correct_answer": "Domov"
+      }
+    ]
+  },
+  {
+    "name": "HTTP stavové kódy",
+    "category": "Technológie",
+    "is_premade": 1,
+    "front_lang": "en-US",
+    "back_lang": "sk-SK",
+    "cards": [
+      {
+        "prompt": "HTTP 100",
+        "correct_answer": "Pokračovať"
+      },
+      {
+        "prompt": "HTTP 101",
+        "correct_answer": "Prepínanie protokolov"
+      },
+      {
+        "prompt": "HTTP 102",
+        "correct_answer": "Spracováva sa"
+      },
+      {
+        "prompt": "HTTP 103",
+        "correct_answer": "Skoré náznaky"
+      },
+      {
+        "prompt": "HTTP 200",
+        "correct_answer": "OK (Úspešné)"
+      },
+      {
+        "prompt": "HTTP 201",
+        "correct_answer": "Vytvorené"
+      },
+      {
+        "prompt": "HTTP 202",
+        "correct_answer": "Prijaté"
+      },
+      {
+        "prompt": "HTTP 203",
+        "correct_answer": "Neautorizované informácie"
+      },
+      {
+        "prompt": "HTTP 204",
+        "correct_answer": "Bez obsahu"
+      },
+      {
+        "prompt": "HTTP 205",
+        "correct_answer": "Obnoviť obsah"
+      },
+      {
+        "prompt": "HTTP 206",
+        "correct_answer": "Čiastočný obsah"
+      },
+      {
+        "prompt": "HTTP 207",
+        "correct_answer": "Viacero stavov"
+      },
+      {
+        "prompt": "HTTP 208",
+        "correct_answer": "Už nahlásené"
+      },
+      {
+        "prompt": "HTTP 226",
+        "correct_answer": "IM použité"
+      },
+      {
+        "prompt": "HTTP 300",
+        "correct_answer": "Viacero možností"
+      },
+      {
+        "prompt": "HTTP 301",
+        "correct_answer": "Trvalo presunuté"
+      },
+      {
+        "prompt": "HTTP 302",
+        "correct_answer": "Nájdené (Dočasné presmerovanie)"
+      },
+      {
+        "prompt": "HTTP 303",
+        "correct_answer": "Pozri iné"
+      },
+      {
+        "prompt": "HTTP 304",
+        "correct_answer": "Nezmenené"
+      },
+      {
+        "prompt": "HTTP 307",
+        "correct_answer": "Dočasné presmerovanie"
+      },
+      {
+        "prompt": "HTTP 308",
+        "correct_answer": "Trvalé presmerovanie"
+      },
+      {
+        "prompt": "HTTP 400",
+        "correct_answer": "Zlá požiadavka"
+      },
+      {
+        "prompt": "HTTP 401",
+        "correct_answer": "Neautorizované"
+      },
+      {
+        "prompt": "HTTP 402",
+        "correct_answer": "Vyžaduje sa platba"
+      },
+      {
+        "prompt": "HTTP 403",
+        "correct_answer": "Zakázané"
+      },
+      {
+        "prompt": "HTTP 404",
+        "correct_answer": "Nenájdené"
+      },
+      {
+        "prompt": "HTTP 405",
+        "correct_answer": "Metóda nie je povolená"
+      },
+      {
+        "prompt": "HTTP 406",
+        "correct_answer": "Neprijateľné"
+      },
+      {
+        "prompt": "HTTP 407",
+        "correct_answer": "Vyžaduje sa overenie proxy"
+      },
+      {
+        "prompt": "HTTP 408",
+        "correct_answer": "Časový limit požiadavky vypršal"
+      },
+      {
+        "prompt": "HTTP 409",
+        "correct_answer": "Konflikt"
+      },
+      {
+        "prompt": "HTTP 410",
+        "correct_answer": "Odstránené"
+      },
+      {
+        "prompt": "HTTP 411",
+        "correct_answer": "Vyžaduje sa dĺžka"
+      },
+      {
+        "prompt": "HTTP 412",
+        "correct_answer": "Zlyhala predbežná podmienka"
+      },
+      {
+        "prompt": "HTTP 413",
+        "correct_answer": "Príliš veľké dáta"
+      },
+      {
+        "prompt": "HTTP 414",
+        "correct_answer": "URI príliš dlhé"
+      },
+      {
+        "prompt": "HTTP 415",
+        "correct_answer": "Nepadporovaný typ média"
+      },
+      {
+        "prompt": "HTTP 416",
+        "correct_answer": "Rozsah nie je splniteľný"
+      },
+      {
+        "prompt": "HTTP 417",
+        "correct_answer": "Očakávanie zlyhalo"
+      },
+      {
+        "prompt": "HTTP 418",
+        "correct_answer": "Som kanvica na čaj"
+      },
+      {
+        "prompt": "HTTP 421",
+        "correct_answer": "Chybne nasmerovaná požiadavka"
+      },
+      {
+        "prompt": "HTTP 422",
+        "correct_answer": "Nespracovateľná entita"
+      },
+      {
+        "prompt": "HTTP 423",
+        "correct_answer": "Zamknuté"
+      },
+      {
+        "prompt": "HTTP 424",
+        "correct_answer": "Zlyhala závislosť"
+      },
+      {
+        "prompt": "HTTP 425",
+        "correct_answer": "Príliš skoro"
+      },
+      {
+        "prompt": "HTTP 426",
+        "correct_answer": "Vyžaduje sa aktualizácia"
+      },
+      {
+        "prompt": "HTTP 428",
+        "correct_answer": "Vyžaduje sa predbežná podmienka"
+      },
+      {
+        "prompt": "HTTP 429",
+        "correct_answer": "Príliš veľa požiadaviek"
+      },
+      {
+        "prompt": "HTTP 431",
+        "correct_answer": "Hlavičky požiadavky sú príliš veľké"
+      },
+      {
+        "prompt": "HTTP 451",
+        "correct_answer": "Nedostupné z právnych dôvodov"
+      },
+      {
+        "prompt": "HTTP 500",
+        "correct_answer": "Vnútorná chyba servera"
+      },
+      {
+        "prompt": "HTTP 501",
+        "correct_answer": "Neimplementované"
+      },
+      {
+        "prompt": "HTTP 502",
+        "correct_answer": "Zlá brána"
+      },
+      {
+        "prompt": "HTTP 503",
+        "correct_answer": "Služba nedostupná"
+      },
+      {
+        "prompt": "HTTP 504",
+        "correct_answer": "Časový limit brány vypršal"
+      },
+      {
+        "prompt": "HTTP 505",
+        "correct_answer": "Verzia HTTP nie je podporovaná"
+      },
+      {
+        "prompt": "HTTP 506",
+        "correct_answer": "Variant tiež vyjednáva"
+      },
+      {
+        "prompt": "HTTP 507",
+        "correct_answer": "Nedostatok miesta"
+      },
+      {
+        "prompt": "HTTP 508",
+        "correct_answer": "Zistená slučka"
+      },
+      {
+        "prompt": "HTTP 511",
+        "correct_answer": "Vyžaduje sa sieťové overenie"
+      }
+    ]
+  },
+  {
+    "name": "Základné Linux príkazy",
+    "category": "Technológie",
+    "is_premade": 1,
+    "front_lang": "sk-SK",
+    "back_lang": "en-US",
+    "cards": [
+      {
+        "prompt": "Príkaz na výpis obsahu adresára",
+        "correct_answer": "ls"
+      },
+      {
+        "prompt": "Príkaz na zmenu aktuálneho pracovného adresára",
+        "correct_answer": "cd"
+      },
+      {
+        "prompt": "Príkaz na vypísanie cesty k aktuálnemu adresáru",
+        "correct_answer": "pwd"
+      },
+      {
+        "prompt": "Príkaz na vytvorenie nového adresára",
+        "correct_answer": "mkdir"
+      },
+      {
+        "prompt": "Príkaz na odstránenie prázdneho adresára",
+        "correct_answer": "rmdir"
+      },
+      {
+        "prompt": "Príkaz na odstránenie súborov alebo adresárov",
+        "correct_answer": "rm"
+      },
+      {
+        "prompt": "Príkaz na kopírovanie súborov alebo adresárov",
+        "correct_answer": "cp"
+      },
+      {
+        "prompt": "Príkaz na presun alebo premenovanie súborov a adresárov",
+        "correct_answer": "mv"
+      },
+      {
+        "prompt": "Príkaz na vytvorenie prázdneho súboru alebo aktualizáciu časových pečiatok",
+        "correct_answer": "touch"
+      },
+      {
+        "prompt": "Príkaz na zobrazenie obsahu súboru v termináli",
+        "correct_answer": "cat"
+      },
+      {
+        "prompt": "Príkaz na zobrazenie obsahu súboru po stránkach",
+        "correct_answer": "less"
+      },
+      {
+        "prompt": "Príkaz na zobrazenie prvých niekoľkých riadkov súboru",
+        "correct_answer": "head"
+      },
+      {
+        "prompt": "Príkaz na zobrazenie posledných niekoľkých riadkov súboru",
+        "correct_answer": "tail"
+      },
+      {
+        "prompt": "Príkaz na vyhľadávanie textu podľa vzoru v súboroch",
+        "correct_answer": "grep"
+      },
+      {
+        "prompt": "Príkaz na vyhľadávanie súborov a adresárov v strome adresárov",
+        "correct_answer": "find"
+      },
+      {
+        "prompt": "Príkaz na zmenu prístupových práv súboru",
+        "correct_answer": "chmod"
+      },
+      {
+        "prompt": "Príkaz na zmenu vlastníka a skupiny súboru",
+        "correct_answer": "chown"
+      },
+      {
+        "prompt": "Príkaz na spustenie príkazu s právami správcu (root)",
+        "correct_answer": "sudo"
+      },
+      {
+        "prompt": "Príkaz na zobrazenie bežiacich procesov v reálnom čase",
+        "correct_answer": "top"
+      },
+      {
+        "prompt": "Príkaz na ukončenie procesu podľa PID",
+        "correct_answer": "kill"
+      },
+      {
+        "prompt": "Príkaz na ukončenie procesov podľa názvu",
+        "correct_answer": "killall"
+      },
+      {
+        "prompt": "Príkaz na zobrazenie snímky aktuálnych procesov",
+        "correct_answer": "ps"
+      },
+      {
+        "prompt": "Príkaz na kontrolu využitia miesta na disku",
+        "correct_answer": "df"
+      },
+      {
+        "prompt": "Príkaz na odhad využitia miesta súbormi a adresármi",
+        "correct_answer": "du"
+      },
+      {
+        "prompt": "Príkaz na zobrazenie voľnej a použitej pamäte (RAM)",
+        "correct_answer": "free"
+      },
+      {
+        "prompt": "Príkaz na výpis textu alebo hodnôt premenných do terminálu",
+        "correct_answer": "echo"
+      },
+      {
+        "prompt": "Príkaz na vyčistenie obrazovky terminálu",
+        "correct_answer": "clear"
+      },
+      {
+        "prompt": "Príkaz na zobrazenie histórie príkazov používateľa",
+        "correct_answer": "history"
+      },
+      {
+        "prompt": "Príkaz na spravovanie sieťových rozhraní a IP adries",
+        "correct_answer": "ip"
+      },
+      {
+        "prompt": "Príkaz na odosielanie ICMP požiadaviek na test sieťového spojenia",
+        "correct_answer": "ping"
+      },
+      {
+        "prompt": "Príkaz na sťahovanie súborov z webu cez HTTP/HTTPS/FTP",
+        "correct_answer": "wget"
+      },
+      {
+        "prompt": "Príkaz na prenos dát zo servera alebo na server pomocou URL",
+        "correct_answer": "curl"
+      },
+      {
+        "prompt": "Príkaz na ukladanie a rozbaľovanie súborov z archívu (tar)",
+        "correct_answer": "tar"
+      },
+      {
+        "prompt": "Príkaz na kompresiu súborov do formátu zip",
+        "correct_answer": "zip"
+      },
+      {
+        "prompt": "Príkaz na rozbalenie zip archívov",
+        "correct_answer": "unzip"
+      },
+      {
+        "prompt": "Príkaz na zabezpečené pripojenie k vzdialenému serveru",
+        "correct_answer": "ssh"
+      },
+      {
+        "prompt": "Príkaz na zabezpečené kopírovanie súborov cez SSH",
+        "correct_answer": "scp"
+      },
+      {
+        "prompt": "Príkaz na efektívnu synchronizáciu súborov medzi dvoma miestami",
+        "correct_answer": "rsync"
+      },
+      {
+        "prompt": "Príkaz na zobrazenie informácií o jadre a architektúre systému",
+        "correct_answer": "uname"
+      },
+      {
+        "prompt": "Príkaz na zobrazenie mena aktuálne prihláseného používateľa",
+        "correct_answer": "whoami"
+      },
+      {
+        "prompt": "Príkaz na zobrazenie doby behu systému a zaťaženia",
+        "correct_answer": "uptime"
+      },
+      {
+        "prompt": "Príkaz na ovládanie systému a správcu služieb systemd",
+        "correct_answer": "systemctl"
+      },
+      {
+        "prompt": "Príkaz na zobrazenie systémových denníkov (logov)",
+        "correct_answer": "journalctl"
+      },
+      {
+        "prompt": "Príkaz na vytváranie odkazov medzi súbormi",
+        "correct_answer": "ln"
+      },
+      {
+        "prompt": "Príkaz na spočítanie riadkov, slov a bajtov v súbore",
+        "correct_answer": "wc"
+      },
+      {
+        "prompt": "Príkaz na zotriedenie riadkov textových súborov",
+        "correct_answer": "sort"
+      },
+      {
+        "prompt": "Príkaz na vynechanie alebo zobrazenie opakujúcich sa riadkov",
+        "correct_answer": "uniq"
+      },
+      {
+        "prompt": "Command Prúdový editor na filtrovanie a úpravu textu",
+        "correct_answer": "sed"
+      },
+      {
+        "prompt": "Príkaz pre Príkaz na vyhľadávanie vzorov a spracovanie textu",
+        "correct_answer": "awk"
+      },
+      {
+        "prompt": "Príkaz na zobrazenie manuálovej stránky pre príkaz",
+        "correct_answer": "man"
+      },
+      {
+        "prompt": "Príkaz na vyhľadanie cesty k spustiteľnému súboru príkazu",
+        "correct_answer": "which"
+      },
+      {
+        "prompt": "Príkaz na zmenu hesla používateľa",
+        "correct_answer": "passwd"
+      },
+      {
+        "prompt": "Príkaz na reštartovanie systému",
+        "correct_answer": "reboot"
+      },
+      {
+        "prompt": "Príkaz na vypnutie počítača",
+        "correct_answer": "poweroff"
+      },
+      {
+        "prompt": "Príkaz na pripojenie (mount) súborového systému",
+        "correct_answer": "mount"
+      },
+      {
+        "prompt": "Príkaz na odpojenie súborového systému",
+        "correct_answer": "umount"
+      },
+      {
+        "prompt": "Príkaz na výpis alebo úpravu premenných prostredia",
+        "correct_answer": "env"
+      },
+      {
+        "prompt": "Príkaz na nastavenie premenných prostredia pre podprocesy",
+        "correct_answer": "export"
+      },
+      {
+        "prompt": "Príkaz na plánovanie pravidelných úloh na pozadí",
+        "correct_answer": "crontab"
+      },
+      {
+        "prompt": "Príkaz na ukončenie aktuálnej relácie shellu",
+        "correct_answer": "exit"
+      },
+      {
+        "prompt": "Príkaz na vyhľadávanie príkazov v PATH podľa názvu",
+        "correct_answer": "whereis"
+      },
+      {
+        "prompt": "Príkaz na zobrazenie alebo vytvorenie aliasov",
+        "correct_answer": "alias"
+      },
+      {
+        "prompt": "Príkaz na odstránenie aliasu",
+        "correct_answer": "unalias"
+      },
+      {
+        "prompt": "Príkaz na presmerovanie výstupu do súboru aj na terminál (tee)",
+        "correct_answer": "tee"
+      },
+      {
+        "prompt": "Príkaz na spustenie príkazu odolného voči odpojeniu relácie",
+        "correct_answer": "nohup"
+      },
+      {
+        "prompt": "Príkaz na zmenu koreňového adresára pre aktuálny proces",
+        "correct_answer": "chroot"
+      },
+      {
+        "prompt": "Príkaz na zobrazenie ID používateľa a skupín",
+        "correct_answer": "id"
+      },
+      {
+        "prompt": "Príkaz na zobrazenie názvu aktuálneho terminálu",
+        "correct_answer": "tty"
+      },
+      {
+        "prompt": "Príkaz na pozastavenie vykonávania na určený čas",
+        "correct_answer": "sleep"
+      },
+      {
+        "prompt": "Príkaz na spojenie riadkov súborov vedľa seba",
+        "correct_answer": "paste"
+      },
+      {
+        "prompt": "Príkaz na nahradenie alebo zmazanie znakov vo vstupe",
+        "correct_answer": "tr"
+      },
+      {
+        "prompt": "Príkaz na rozdelenie súboru na časti",
+        "correct_answer": "split"
+      },
+      {
+        "prompt": "Príkaz na prevod tabulátorov na medzery",
+        "correct_answer": "expand"
+      },
+      {
+        "prompt": "Príkaz na zobrazenie otvorených súborov a procesov",
+        "correct_answer": "lsof"
+      },
+      {
+        "prompt": "Príkaz na sledovanie systémových volaní a signálov",
+        "correct_answer": "strace"
+      }
+    ]
+  }
+]

@@ -453,6 +453,8 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                           itemCount: cards.length,
                           itemBuilder: (context, index) {
                             final card = cards[index];
+                            final textToSpeak = (showAnswer ? card['correct_answer'] : card['prompt'])?.toString() ?? '';
+                            final bool isSvg = textToSpeak.trim().toLowerCase().endsWith('.svg');
 
                             final cardDecoration = isCyber
                                 ? BoxDecoration(
@@ -504,18 +506,19 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                                                 letterSpacing: 2,
                                               ),
                                             ),
-                                            const SizedBox(width: 6),
-                                            IconButton(
-                                              padding: EdgeInsets.zero,
-                                              constraints: const BoxConstraints(),
-                                              icon: const Icon(Icons.volume_up_rounded, size: 20),
-                                              color: isCyber ? sectionColor : (isSoft ? const Color(0xFF718096) : cardTextColor.withValues(alpha: 0.8)),
-                                              onPressed: () {
-                                                final textToSpeak = showAnswer ? card['correct_answer'] : card['prompt'];
-                                                final lang = showAnswer ? widget.deck.backLang : widget.deck.frontLang;
-                                                TtsService.speak(textToSpeak.toString(), targetLanguage: lang);
-                                              },
-                                            ),
+                                            if (!isSvg) ...[
+                                              const SizedBox(width: 6),
+                                              IconButton(
+                                                padding: EdgeInsets.zero,
+                                                constraints: const BoxConstraints(),
+                                                icon: const Icon(Icons.volume_up_rounded, size: 20),
+                                                color: isCyber ? sectionColor : (isSoft ? const Color(0xFF718096) : cardTextColor.withValues(alpha: 0.8)),
+                                                onPressed: () {
+                                                  final lang = showAnswer ? widget.deck.backLang : widget.deck.frontLang;
+                                                  TtsService.speak(textToSpeak, targetLanguage: lang);
+                                                },
+                                              ),
+                                            ],
                                           ],
                                         ),
                                         const SizedBox(height: 20),

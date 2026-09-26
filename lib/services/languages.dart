@@ -571,7 +571,7 @@ const textsEn = AppTexts(
   premiumLimitCustomDecks: 'You have reached the limit of 3 free custom decks.\n\nActivate Premium for unlimited card creation and access to all decks.',
   premiumSuccessToast: 'Welcome to the Premium club! 🎉',
 
-  homeScreenTitle: 'FlashPass Decks',
+  homeScreenTitle: 'FlashPass',
   tooltipPremium: 'Premium',
   tooltipSettings: 'Settings',
   goalCardTitle: 'DAILY GOAL',
@@ -867,7 +867,7 @@ const textsSk = AppTexts(
   premiumLimitCustomDecks: 'Dosiahol si limit 3 vlastných balíčkov zadarmo.\n\nPre neobmedzené vytváranie kartičiek a prístup ku všetkým balíčkom si aktivuj Premium.',
   premiumSuccessToast: 'Vitaj v Premium klube! 🎉',
 
-  homeScreenTitle: 'FlashPass Balíčky',
+  homeScreenTitle: 'FlashPass',
   tooltipPremium: 'Premium',
   tooltipSettings: 'Nastavenia',
   goalCardTitle: 'DAILY GOAL',

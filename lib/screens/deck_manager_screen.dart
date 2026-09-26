@@ -885,7 +885,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                                   return;
                                 }
                                 final prefs = await SharedPreferences.getInstance();
-                                await prefs.setInt('active_test_deck_id', deck.id!);
+                                await prefs.setInt('active_test_deck_id', deck.id);
                                 setState(() => activeBlockerDeckId = deck.id);
                               },
                             ),
@@ -920,7 +920,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
                               color: isNeo ? Colors.black : currentTheme.decksColor,
                               onTap: () async {
                                 final currentLocale = context.read<LocaleProvider>().locale;
-                                final cards = await DatabaseHelper.instance.getCardsForDeck(deck.id!, locale: currentLocale);
+                                final cards = await DatabaseHelper.instance.getCardsForDeck(deck.id);
                                 final isEn = currentLocale == 'en';
 
                                 final mapData = {

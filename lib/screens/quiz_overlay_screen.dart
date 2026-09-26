@@ -15,7 +15,7 @@ import '../themes/themed_background.dart';
 import '../services/stats_provider.dart';
 import '../services/daily_challenge_service.dart';
 import '../services/tts_service.dart';
-import 'deck_manager_screen.dart';
+import '../services/locale_provider.dart';
 
 class QuizOverlayScreen extends StatefulWidget {
   final int? practiceDeckId; 
@@ -278,10 +278,12 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       }
     });
 
+    final currentLocale = context.read<LocaleProvider>().locale;
+
     if (_isLearningMode) {
-      _startLearningMode();
+      _startLearningMode(currentLocale);
     } else {
-      _loadNextQuizQuestion();
+      _loadNextQuizQuestion(currentLocale);
     }
   }
 
@@ -358,11 +360,13 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
 
   Future<void> _startRemedialLearning() async {
     setState(() => _isLoading = true);
+    final currentLocale = context.read<LocaleProvider>().locale;
     
     final cards = await DatabaseHelper.instance.getLearningCards(
       20, 
       deckId: _activeDeckId,
       excludeCardIds: [],
+      
     );
 
     setState(() {
@@ -379,8 +383,11 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     });
 
     final currentTheme = Provider.of<ThemeProvider>(context, listen: false).currentThemeData;
+    final isEn = currentLocale == 'en';
     _showThemedSnackBar(
-      "Test zlyhal! Zopakuj si kartičky a absolvuj opravný test (min. 80 %).",
+      isEn 
+          ? "Test failed! Review the cards and complete the retake test (min. 80%)."
+          : "Test zlyhal! Zopakuj si kartičky a absolvuj opravný test (min. 80 %).",
       currentTheme.errorColor,
     );
   }
@@ -451,14 +458,16 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     });
   }
 
-  Future<void> _startLearningMode() async {
+  Future<void> _startLearningMode([String? locale]) async {
     setState(() => _isLoading = true);
+    final currentLocale = locale ?? context.read<LocaleProvider>().locale;
     
     final List<int> excludedLearningIds = [];
     final cards = await DatabaseHelper.instance.getLearningCards(
       _learnCardCount.toInt(), 
       deckId: _activeDeckId,
       excludeCardIds: excludedLearningIds,
+      
     );
     
     setState(() {
@@ -519,7 +528,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     });
   }
 
-  Future<void> _loadNextQuizQuestion() async {
+  Future<void> _loadNextQuizQuestion([String? locale]) async {
     _timer?.cancel();
     setState(() {
       _isLoading = true;
@@ -529,9 +538,13 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       _hardcoreController.clear();
     });
 
+    final currentLocale = locale ?? context.read<LocaleProvider>().locale;
+    final isEn = currentLocale == 'en';
+
     var questionData = await DatabaseHelper.instance.getRandomQuizQuestion(
       deckId: _activeDeckId, 
       excludeCardIds: _excludedCardIds,
+      
     );
     
     if (questionData == null && _excludedCardIds.isNotEmpty) {
@@ -539,6 +552,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       questionData = await DatabaseHelper.instance.getRandomQuizQuestion(
         deckId: _activeDeckId, 
         excludeCardIds: _excludedCardIds,
+        
       );
     }
 
@@ -554,14 +568,16 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     String correct = questionData['correct_answer'].toString();
     List<String> options = List<String>.from(questionData['options']);
 
+    final String noneOption = isEn ? "None of the above" : "Žiadna z odpovedí";
+
     if (!_isHardcore) {
       if (_isConfusion) {
         bool isNoneCorrect = Random().nextDouble() < 0.4;
         if (isNoneCorrect) {
-          options.remove(correct); options.add("Žiadna z odpovedí"); correct = "Žiadna z odpovedí";
+          options.remove(correct); options.add(noneOption); correct = noneOption;
         } else {
           String wrongOpt = options.firstWhere((opt) => opt != correct);
-          options.remove(wrongOpt); options.add("Žiadna z odpovedí");
+          options.remove(wrongOpt); options.add(noneOption);
         }
       }
       if (_is3Options && !_isConfusion) {
@@ -589,9 +605,13 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       _hardcoreController.clear();
     });
 
+    final currentLocale = context.read<LocaleProvider>().locale;
+    final isEn = currentLocale == 'en';
+
     var questionData = await DatabaseHelper.instance.getRandomQuizQuestion(
       deckId: _activeDeckId,
       excludeCardIds: _excludedCardIds,
+      
     );
 
     if (questionData == null) {
@@ -606,14 +626,16 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     String correct = questionData['correct_answer'].toString();
     List<String> options = List<String>.from(questionData['options']);
 
+    final String noneOption = isEn ? "None of the above" : "Žiadna z odpovedí";
+
     if (!_isHardcore) {
       if (_isConfusion) {
         bool isNoneCorrect = Random().nextDouble() < 0.4;
         if (isNoneCorrect) {
-          options.remove(correct); options.add("Žiadna z odpovedí"); correct = "Žiadna z odpovedí";
+          options.remove(correct); options.add(noneOption); correct = noneOption;
         } else {
           String wrongOpt = options.firstWhere((opt) => opt != correct);
-          options.remove(wrongOpt); options.add("Žiadna z odpovedí");
+          options.remove(wrongOpt); options.add(noneOption);
         }
       }
       if (_is3Options && !_isConfusion) {
@@ -663,6 +685,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     if (_isAnswerChecked) return; 
     _timer?.cancel();
     bool isCorrect = false;
+    final isEn = context.read<LocaleProvider>().locale == 'en';
 
     setState(() => _isAnswerChecked = true);
 
@@ -678,7 +701,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
 
     if (_isBlindTest) {
       String userAns = _isHardcore ? (_selectedAnswer ?? '') : selectedOption;
-      if (userAns.isEmpty) userAns = "Bez odpovede (čas vypršal)";
+      if (userAns.isEmpty) userAns = isEn ? "No answer (time expired)" : "Bez odpovede (čas vypršal)";
 
       _blindTestRecap.add({
         'prompt': _currentQuestion?['prompt'] ?? '',
@@ -720,7 +743,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
 
         final currentTheme = Provider.of<ThemeProvider>(context, listen: false).currentThemeData;
         _showThemedSnackBar(
-          'Druhá šanca! Skús znova.',
+          isEn ? 'Second chance! Try again.' : 'Druhá šanca! Skús znova.',
           currentTheme.warningColor,
         );
 
@@ -747,6 +770,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     int totalQuestions = _questionCount.toInt();
     int remainingQuestions = totalQuestions - _currentQuestionIndex;
     int maxPossibleCorrect = _correctAnswersCount + remainingQuestions;
+    final isEn = context.read<LocaleProvider>().locale == 'en';
 
     if (_currentQuestionIndex >= totalQuestions) {
       bool passed = _correctAnswersCount >= _requiredCorrectQuestions;
@@ -764,7 +788,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
 
         final currentTheme = Provider.of<ThemeProvider>(context, listen: false).currentThemeData;
         _showThemedSnackBar(
-          "1. kolo zvládnuté! Teraz dokonči 2. kolo.",
+          isEn ? "Round 1 passed! Now complete Round 2." : "1. kolo zvládnuté! Teraz dokonči 2. kolo.",
           currentTheme.warningColor,
         );
 
@@ -775,12 +799,12 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
         _startRemedialLearning();
       } 
       else {
-        if (!passed) {
-          _triggerFailureVibration();
-        } else {
-          _confettiController.play();
-        }
         setState(() => _isTestFinished = true);
+        if (passed) {
+          _confettiController.play();
+        } else {
+          _triggerFailureVibration();
+        }
       }
     } 
     else if (maxPossibleCorrect < _requiredCorrectQuestions) {
@@ -1024,6 +1048,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
+    final isEn = context.watch<LocaleProvider>().locale == 'en';
     final bool isVibrant = currentTheme.id == 5;
     final bool isGlass = currentTheme.id == 4 || currentTheme.id.toString() == '4';
     final bool isNeo = currentTheme.id == 2;
@@ -1121,7 +1146,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                                 ),
                               ),
                             ) 
-                          : _buildContent(currentTheme),
+                          : _buildContent(currentTheme, isEn),
                     ),
                   ),
 
@@ -1135,7 +1160,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                         size: 20,
                       ),
                       label: Text(
-                        "Zrušiť test", 
+                        isEn ? "Cancel test" : "Zrušiť test", 
                         style: TextStyle(
                           color: isCyberpunk ? const Color(0xFF00F0FF) : (isNeo ? Colors.black : (isSoft ? const Color(0xFF4A5568) : ((isVibrant || isGlass) ? Colors.white.withValues(alpha: 0.85) : theme.colorScheme.onSurface.withValues(alpha: 0.75)))), 
                           fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.bold, 
@@ -1184,8 +1209,8 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     return mainBody;
   }
 
-  Widget _buildContent(AppThemeData currentTheme) {
-    if (_isTestFinished) return _buildFinishedScreen(currentTheme);
+  Widget _buildContent(AppThemeData currentTheme, bool isEn) {
+    if (_isTestFinished) return _buildFinishedScreen(currentTheme, isEn);
     
     if (_isLearningMode || _isRemedialLearning) {
       if (_learningCardsQueue.isEmpty) {
@@ -1197,7 +1222,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
         final bool isCyberpunk = cleanName.contains('cyberpunk');
 
         return Text(
-          "Žiadne kartičky v databáze!", 
+          isEn ? "No cards in database!" : "Žiadne kartičky v databáze!", 
           style: TextStyle(
             fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.normal,
             fontFamily: isCyberpunk ? 'monospace' : null,
@@ -1205,7 +1230,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
           ),
         );
       }
-      return _buildLearningUI(currentTheme);
+      return _buildLearningUI(currentTheme, isEn);
     } else {
       if (_currentQuestion == null) {
         final bool isVibrant = currentTheme.id == 5;
@@ -1216,7 +1241,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
         final bool isCyberpunk = cleanName.contains('cyberpunk');
 
         return Text(
-          "Žiadne kartičky v databáze!",
+          isEn ? "No cards in database!" : "Žiadne kartičky v databáze!",
           style: TextStyle(
             fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.normal,
             fontFamily: isCyberpunk ? 'monospace' : null,
@@ -1224,7 +1249,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
           ),
         );
       }
-      return _buildQuizUI(currentTheme);
+      return _buildQuizUI(currentTheme, isEn);
     }
   }
 
@@ -1277,7 +1302,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     );
   }
 
-  Widget _buildBlindTestRecap(AppThemeData currentTheme) {
+  Widget _buildBlindTestRecap(AppThemeData currentTheme, bool isEn) {
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
     final String cleanName = currentTheme.name.toLowerCase();
@@ -1301,7 +1326,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
         ),
         const SizedBox(height: 12),
         Text(
-          "Rekapitulácia slepého testu:",
+          isEn ? "Blind Test Recap:" : "Rekapitulácia slepého testu:",
           style: TextStyle(
             fontSize: 16,
             fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.bold,
@@ -1378,7 +1403,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                       ),
                       const SizedBox(height: 8),
                       _buildRecapAnswerRow(
-                        label: "Tvoja odpoveď: ",
+                        label: isEn ? "Your answer: " : "Tvoja odpoveď: ",
                         value: selectedStr,
                         valueColor: isCyberpunk
                             ? (isCorrect ? const Color(0xFF00F0FF) : const Color(0xFFFF007F))
@@ -1389,7 +1414,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                       if (!isCorrect) ...[
                         const SizedBox(height: 4),
                         _buildRecapAnswerRow(
-                          label: "Správna odpoveď: ",
+                          label: isEn ? "Correct answer: " : "Správna odpoveď: ",
                           value: correctStr,
                           valueColor: isCyberpunk
                               ? const Color(0xFF00F0FF)
@@ -1409,7 +1434,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     );
   }
 
-  Widget _buildFinishedScreen(AppThemeData currentTheme) {
+  Widget _buildFinishedScreen(AppThemeData currentTheme, bool isEn) {
     final theme = currentTheme.theme;
     final bool isVibrant = currentTheme.id == 5;
     final bool isGlass = currentTheme.id == 4 || currentTheme.id.toString() == '4';
@@ -1442,7 +1467,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                   : const Icon(Icons.school_rounded, size: 60, color: Colors.green)),
           const SizedBox(height: 16),
           Text(
-            "Učenie dokončené!", 
+            isEn ? "Learning Completed!" : "Učenie dokončené!", 
             style: TextStyle(
               fontSize: 24, 
               fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.bold, 
@@ -1452,7 +1477,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            "Prešiel si všetky kartičky z balíčka.", 
+            isEn ? "You have reviewed all cards in this deck." : "Prešiel si všetky kartičky z balíčka.", 
             textAlign: TextAlign.center, 
             style: TextStyle(
               fontSize: 16, 
@@ -1463,7 +1488,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
           ),
           const SizedBox(height: 24),
           _buildCustomButton(
-            text: "Zatvoriť",
+            text: isEn ? "Close" : "Zatvoriť",
             onPressed: _finishAndUnlock,
             currentTheme: currentTheme,
           ),
@@ -1479,10 +1504,12 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     int s = earnedSeconds % 60;
     bool isPractice = widget.practiceDeckId != null;
 
-    String titleText = "Test Dokončený!";
+    String titleText = isEn ? "Test Completed!" : "Test Dokončený!";
     if (_isRemedialQuiz) {
-      titleText = "Opravný test dokončený!";
-    } else if (_isDoubleTest) titleText = "Double Test Dokončený!";
+      titleText = isEn ? "Retake Test Completed!" : "Opravný test dokončený!";
+    } else if (_isDoubleTest) {
+      titleText = isEn ? "Double Test Completed!" : "Double Test Dokončený!";
+    }
 
     final Color accentResultColor = isSuccess ? currentTheme.successColor : currentTheme.errorColor;
 
@@ -1531,7 +1558,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
         ),
         const SizedBox(height: 16),
         Text(
-          "Úspešnosť: $_correctAnswersCount / ${_questionCount.toInt()}", 
+          "${isEn ? 'Score' : 'Úspešnosť'}: $_correctAnswersCount / ${_questionCount.toInt()}", 
           style: TextStyle(
             fontSize: 16, 
             fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.bold : FontWeight.normal,
@@ -1540,7 +1567,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
           ),
         ),
         Text(
-          "Požadovaný prah: $_requiredCorrectQuestions / ${_questionCount.toInt()}", 
+          "${isEn ? 'Required score' : 'Požadovaný prah'}: $_requiredCorrectQuestions / ${_questionCount.toInt()}", 
           style: TextStyle(
             fontSize: 16, 
             fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.bold : FontWeight.normal,
@@ -1584,7 +1611,9 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                           )
                         : currentTheme.getCardDecoration(accentResultColor))),
             child: Text(
-              isSuccess ? "Získaný čas: ${m}m ${s}s" : "Nesplnil si podmienku pre zisk času.", 
+              isSuccess 
+                  ? (isEn ? "Time earned: ${m}m ${s}s" : "Získaný čas: ${m}m ${s}s")
+                  : (isEn ? "Requirement not met to earn time." : "Nesplnil si podmienku pre zisk času."), 
               style: TextStyle(
                 fontSize: 18, 
                 fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.bold, 
@@ -1597,11 +1626,13 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
         ],
 
         if (_isBlindTest && _blindTestRecap.isNotEmpty)
-          _buildBlindTestRecap(currentTheme),
+          _buildBlindTestRecap(currentTheme, isEn),
 
         const SizedBox(height: 24),
         _buildCustomButton(
-          text: isSuccess && !isPractice ? "Odomknúť aplikácie" : "Zatvoriť test",
+          text: isSuccess && !isPractice 
+              ? (isEn ? "Unlock Apps" : "Odomknúť aplikácie") 
+              : (isEn ? "Close Test" : "Zatvoriť test"),
           onPressed: _finishAndUnlock,
           currentTheme: currentTheme,
         ),
@@ -1609,7 +1640,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     );
   }
 
-  Widget _buildLearningUI(AppThemeData currentTheme) {
+  Widget _buildLearningUI(AppThemeData currentTheme, bool isEn) {
     final theme = currentTheme.theme;
     final bool isVibrant = currentTheme.id == 5;
     final bool isGlass = currentTheme.id == 4 || currentTheme.id.toString() == '4';
@@ -1621,6 +1652,9 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     final Color textColor = isCyberpunk ? Colors.white : (isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : ((isVibrant || isGlass) ? Colors.white : theme.colorScheme.onSurface)));
     final card = _learningCardsQueue.first;
     int currentIndex = _totalLearnedCards - _learningCardsQueue.length + 1;
+
+    final String btnKnowText = isEn ? "Know" : "Viem";
+    final String btnAgainText = isEn ? "Again" : "Znova";
 
     final Color warningBtnTextColor = isClean
         ? const Color(0xFFDC2626)
@@ -1673,7 +1707,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                           )
                         : currentTheme.getCardDecoration(currentTheme.errorColor))),
             child: Text(
-              "POVINNÉ OPAKOVANIE ZA TREST", 
+              isEn ? "MANDATORY PUNISHMENT REVIEW" : "POVINNÉ OPAKOVANIE ZA TREST", 
               style: TextStyle(
                 color: isCyberpunk ? const Color(0xFFFF007F) : (isNeo ? Colors.black : (isSoft ? const Color(0xFFE11D48) : ((isVibrant || isGlass) ? Colors.white : currentTheme.getContrastTextColor(currentTheme.errorColor)))), 
                 fontWeight: FontWeight.w900, 
@@ -1717,7 +1751,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                   style: TextStyle(color: isCyberpunk ? Colors.white : (isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : textColor.withValues(alpha: 0.7))), fontWeight: FontWeight.w900, fontFamily: isCyberpunk ? 'monospace' : null, fontSize: 16),
                 ),
                 if (_learningRound > 1) 
-                  Text("Kolo $_learningRound", style: TextStyle(color: isCyberpunk ? const Color(0xFF00F0FF) : (isNeo ? Colors.black : (isSoft ? const Color(0xFF2563EB) : currentTheme.warningColor)), fontSize: 12, fontWeight: FontWeight.w900, fontFamily: isCyberpunk ? 'monospace' : null)),
+                  Text("${isEn ? 'Round' : 'Kolo'} $_learningRound", style: TextStyle(color: isCyberpunk ? const Color(0xFF00F0FF) : (isNeo ? Colors.black : (isSoft ? const Color(0xFF2563EB) : currentTheme.warningColor)), fontSize: 12, fontWeight: FontWeight.w900, fontFamily: isCyberpunk ? 'monospace' : null)),
               ],
             ),
             Container(
@@ -1797,7 +1831,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                 Icon(Icons.check_rounded, color: successBtnTextColor, size: 50),
                 const SizedBox(height: 8),
                 Text(
-                  "VIEM", 
+                  btnKnowText.toUpperCase(), 
                   style: TextStyle(
                     color: successBtnTextColor, 
                     fontSize: 24, 
@@ -1846,7 +1880,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                 Icon(Icons.close_rounded, color: warningBtnTextColor, size: 50),
                 const SizedBox(height: 8),
                 Text(
-                  "ZNOVA", 
+                  btnAgainText.toUpperCase(), 
                   style: TextStyle(
                     color: warningBtnTextColor, 
                     fontSize: 24, 
@@ -1865,7 +1899,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
               transitionBuilder: (Widget child, Animation<double> animation) => ScaleTransition(scale: animation, child: child),
-              child: _isCardFlipped ? _buildCardBack(card, currentTheme) : _buildCardFront(card, currentTheme),
+              child: _isCardFlipped ? _buildCardBack(card, currentTheme) : _buildCardFront(card, currentTheme, isEn),
             ),
           ),
         ),
@@ -1927,7 +1961,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                           Icon(Icons.close_rounded, color: warningBtnTextColor, size: 20),
                           const SizedBox(width: 8),
                           Text(
-                            "Znova", 
+                            btnAgainText, 
                             style: TextStyle(
                               fontWeight: isNeo || isSoft || isCyberpunk || isClean ? FontWeight.bold : FontWeight.w600, 
                               fontFamily: isCyberpunk ? 'monospace' : null,
@@ -1998,7 +2032,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                           Icon(Icons.check_rounded, color: isCyberpunk ? Colors.black : successBtnTextColor, size: 20),
                           const SizedBox(width: 8),
                           Text(
-                            "Viem", 
+                            btnKnowText, 
                             style: TextStyle(
                               fontWeight: isNeo || isSoft || isCyberpunk || isClean ? FontWeight.bold : FontWeight.w600, 
                               fontFamily: isCyberpunk ? 'monospace' : null,
@@ -2019,7 +2053,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     );
   }
 
-  Widget _buildCardFront(Map<String, dynamic> card, AppThemeData currentTheme) {
+  Widget _buildCardFront(Map<String, dynamic> card, AppThemeData currentTheme, bool isEn) {
     final theme = currentTheme.theme;
     final bool isVibrant = currentTheme.id == 5;
     final bool isGlass = currentTheme.id == 4 || currentTheme.id.toString() == '4';
@@ -2103,7 +2137,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
             ),
           const SizedBox(height: 20),
           Text(
-            "Ťukni pre otočenie", 
+            isEn ? "Tap to flip" : "Ťukni pre otočenie", 
             style: TextStyle(
               color: isCyberpunk ? const Color(0xFF00F0FF).withValues(alpha: 0.8) : (isNeo ? Colors.black87 : (isSoft ? const Color(0xFF64748B) : textColor.withValues(alpha: 0.6))), 
               fontSize: 13, 
@@ -2339,7 +2373,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
     );
   }
 
-  Widget _buildQuizUI(AppThemeData currentTheme) {
+  Widget _buildQuizUI(AppThemeData currentTheme, bool isEn) {
     final theme = currentTheme.theme;
     final bool isVibrant = currentTheme.id == 5;
     final bool isGlass = currentTheme.id == 4 || currentTheme.id.toString() == '4';
@@ -2356,16 +2390,29 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
       String typed = _selectedAnswer ?? "";
       String expected = _actualCorrectAnswer.trim().toLowerCase();
       if (typed == expected && typed.isNotEmpty) {
-        hardcoreFeedbackWidget = Text("Výborne!", style: TextStyle(color: isCyberpunk ? const Color(0xFF00F0FF) : (isNeo ? Colors.black : (isSoft ? const Color(0xFF0D9488) : (isClean ? const Color(0xFF059669) : Colors.green))), fontWeight: FontWeight.w900, fontFamily: isCyberpunk ? 'monospace' : null));
+        hardcoreFeedbackWidget = Text(
+          isEn ? "Excellent!" : "Výborne!", 
+          style: TextStyle(color: isCyberpunk ? const Color(0xFF00F0FF) : (isNeo ? Colors.black : (isSoft ? const Color(0xFF0D9488) : (isClean ? const Color(0xFF059669) : Colors.green))), fontWeight: FontWeight.w900, fontFamily: isCyberpunk ? 'monospace' : null),
+        );
       } else {
-        if (!_hideCorrectAnswer) hardcoreFeedbackWidget = Text("Odpoveď bola: $_actualCorrectAnswer", style: TextStyle(color: isCyberpunk ? const Color(0xFFFF007F) : (isSoft ? const Color(0xFFE11D48) : (isClean ? const Color(0xFFDC2626) : currentTheme.errorColor)), fontWeight: FontWeight.w900, fontFamily: isCyberpunk ? 'monospace' : null));
+        if (!_hideCorrectAnswer) {
+          hardcoreFeedbackWidget = Text(
+            isEn ? "Correct answer: $_actualCorrectAnswer" : "Odpoveď bola: $_actualCorrectAnswer", 
+            style: TextStyle(color: isCyberpunk ? const Color(0xFFFF007F) : (isSoft ? const Color(0xFFE11D48) : (isClean ? const Color(0xFFDC2626) : currentTheme.errorColor)), fontWeight: FontWeight.w900, fontFamily: isCyberpunk ? 'monospace' : null),
+          );
+        }
       }
     }
 
-    String topTitleText = "Otázka ${_currentQuestionIndex + 1} z ${_questionCount.toInt()}";
+    final String qWord = isEn ? "Question" : "Otázka";
+    final String ofWord = isEn ? "of" : "z";
+
+    String topTitleText = "$qWord ${_currentQuestionIndex + 1} $ofWord ${_questionCount.toInt()}";
     if (_isRemedialQuiz) {
-      topTitleText = "Opravný test • Otázka ${_currentQuestionIndex + 1} z ${_questionCount.toInt()}";
-    } else if (_isDoubleTest) topTitleText = "Kolo $_currentTestRound/2 • Otázka ${_currentQuestionIndex + 1} z ${_questionCount.toInt()}";
+      topTitleText = "${isEn ? 'Retake Test' : 'Opravný test'} • $qWord ${_currentQuestionIndex + 1} $ofWord ${_questionCount.toInt()}";
+    } else if (_isDoubleTest) {
+      topTitleText = "${isEn ? 'Round' : 'Kolo'} $_currentTestRound/2 • $qWord ${_currentQuestionIndex + 1} $ofWord ${_questionCount.toInt()}";
+    }
 
     final BoxDecoration inputDecoration = isCyberpunk
         ? BoxDecoration(
@@ -2529,7 +2576,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      "Vymeň kartu (1x)", 
+                      isEn ? "Swap card (1x)" : "Vymeň kartu (1x)", 
                       style: TextStyle(
                         fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.bold,
                         fontFamily: isCyberpunk ? 'monospace' : null,
@@ -2557,7 +2604,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
               enabled: !_isAnswerChecked, 
               style: TextStyle(fontSize: 18, fontWeight: isNeo || isSoft || isCyberpunk ? FontWeight.w900 : FontWeight.bold, fontFamily: isCyberpunk ? 'monospace' : null, color: textColor),
               decoration: InputDecoration(
-                hintText: "Napíš odpoveď sem...",
+                hintText: isEn ? "Type answer here..." : "Napíš odpoveď sem...",
                 hintStyle: TextStyle(color: isCyberpunk ? Colors.white38 : (isSoft ? const Color(0xFF64748B) : textColor.withValues(alpha: 0.4)), fontFamily: isCyberpunk ? 'monospace' : null),
                 border: InputBorder.none,
               ),
@@ -2567,7 +2614,7 @@ class _QuizOverlayScreenState extends State<QuizOverlayScreen> {
           if (hardcoreFeedbackWidget != null) ...[const SizedBox(height: 8), hardcoreFeedbackWidget],
           const SizedBox(height: 16),
           _buildCustomButton(
-            text: "Potvrdiť",
+            text: isEn ? "Submit" : "Potvrdiť",
             onPressed: _isAnswerChecked ? null : () => _checkQuizAnswer(""),
             currentTheme: currentTheme,
           ),

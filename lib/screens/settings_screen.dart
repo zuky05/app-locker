@@ -8,6 +8,7 @@ import '../themes/theme_provider.dart';
 import '../services/revenuecat_service.dart';
 import '../themes/themed_background.dart';
 import '../services/locale_provider.dart';
+import '../services/database_helper.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -48,10 +49,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await prefs.setBool('vibration_enabled', value);
   }
 
-  // 🟢 Zmena jazyka priamo cez Provider (jediný zdroj pravdy)
+  // 🟢 Zmena jazyka priamo cez Provider + Obnovenie predpripravených balíčkov v DB
   Future<void> _saveLanguageSetting(String langCode) async {
     if (mounted) {
       context.read<LocaleProvider>().setLocale(langCode);
+      await DatabaseHelper.instance.refreshPremadeDecks(null, langCode);
     }
   }
 
@@ -246,7 +248,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
 
-    // 🟢 Načítanie aktuálneho jazyka priamo z LocaleProvider
     final localeProvider = Provider.of<LocaleProvider>(context);
     final String currentLanguageCode = localeProvider.locale;
 

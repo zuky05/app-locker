@@ -15,6 +15,7 @@ import 'test_setup_screen.dart';
 import 'stats_detail_screen.dart';
 import '../services/revenuecat_service.dart';
 import '../services/daily_challenge_service.dart';
+import '../services/locale_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,6 +25,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  int totalDeckCount = 0;
   int customDeckCount = 0;
   bool isPremium = false;
   bool isLoading = true;
@@ -76,12 +78,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _checkDeckCount() async {
-    final count = await DatabaseHelper.instance.getCustomDeckCount();
+    final customCount = await DatabaseHelper.instance.getCustomDeckCount();
+    final allDecks = await DatabaseHelper.instance.getDecks();
     final premiumStatus = await RevenueCatService.isPremium();
     
     if (!mounted) return;
     setState(() {
-      customDeckCount = count;
+      customDeckCount = customCount;
+      totalDeckCount = allDecks.length;
       isPremium = premiumStatus;
       isLoading = false;
     });
@@ -108,6 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showPremiumDialog() {
+    final t = context.read<LocaleProvider>().t;
     final currentTheme = Provider.of<ThemeProvider>(context, listen: false).currentThemeData;
     final theme = currentTheme.theme;
     final bool isNeo = currentTheme.id == 2;
@@ -134,14 +139,14 @@ class _HomeScreenState extends State<HomeScreen> {
             Icon(Icons.star_rounded, size: 50, color: isNeo ? Colors.black : currentTheme.warningColor),
             const SizedBox(height: 10),
             Text(
-              "Odomkni FlashPass Premium!",
+              t.dialogPremiumTitle,
               textAlign: TextAlign.center,
               style: TextStyle(fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold, color: dialogTextColor),
             ),
           ],
         ),
         content: Text(
-          "Dosiahol si limit 3 vlastných balíčkov zadarmo.\n\nPre neobmedzené vytváranie balíčkov si aktivuj Premium.",
+          t.premiumLimitCustomDecks,
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 15, fontWeight: isNeo ? FontWeight.w600 : FontWeight.normal, color: dialogTextColor.withValues(alpha: 0.8)),
         ),
@@ -158,7 +163,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 side: isNeo ? const BorderSide(color: Colors.black, width: 3.5) : currentTheme.buttonBorder,
               ),
             ),
-            child: Text("Zrušiť", style: TextStyle(color: isNeo ? Colors.black : Colors.white, fontWeight: FontWeight.bold)),
+            child: Text(t.buttonCancel, style: TextStyle(color: isNeo ? Colors.black : Colors.white, fontWeight: FontWeight.bold)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -170,7 +175,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: const Text("Vitaj v Premium klube! 🎉"), 
+                      content: Text(t.premiumSuccessToast), 
                       backgroundColor: currentTheme.successColor,
                     ),
                   );
@@ -186,7 +191,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 side: isNeo ? const BorderSide(color: Colors.black, width: 3.5) : currentTheme.buttonBorder,
               ),
             ),
-            child: Text("Odomknúť Premium", style: TextStyle(fontWeight: FontWeight.w900, color: isNeo ? Colors.black : Colors.white)),
+            child: Text(t.buttonUnlockPremium, style: TextStyle(fontWeight: FontWeight.w900, color: isNeo ? Colors.black : Colors.white)),
           ),
         ],
       ),
@@ -253,6 +258,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildShipatonFooterBadge(BuildContext context) {
+    final t = context.watch<LocaleProvider>().t;
     final currentTheme = Provider.of<ThemeProvider>(context).currentThemeData;
     final bool isCyberpunk = currentTheme.id == 0 || currentTheme.name.toLowerCase().contains('cyberpunk');
     final bool isNeo = currentTheme.id == 2;
@@ -287,37 +293,41 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? Border.all(color: Colors.white.withValues(alpha: 0.25), width: 1.0)
                 : Border.all(color: textColor.withValues(alpha: 0.20), width: 1.0)));
 
-    return Center(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-        decoration: BoxDecoration(
-          color: badgeBg,
-          borderRadius: BorderRadius.circular(20),
-          border: border,
-          boxShadow: isNeo 
-              ? const [BoxShadow(color: Colors.black, offset: Offset(2, 2))] 
-              : null,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.rocket_launch_rounded, 
-              size: 13, 
-              color: isCyberpunk ? const Color(0xFFFF007F) : textColor,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              "Created for Shipaton 2026 by RevenueCat",
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: isNeo || isCyberpunk ? FontWeight.w900 : FontWeight.w600,
-                fontFamily: isCyberpunk ? 'monospace' : null,
-                color: textColor,
-                letterSpacing: isCyberpunk ? 0.6 : 0.2,
+    return Padding(
+      // Dynamický spodný padding chráni badge pred prekrytím Android lištou
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 20),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          decoration: BoxDecoration(
+            color: badgeBg,
+            borderRadius: BorderRadius.circular(20),
+            border: border,
+            boxShadow: isNeo 
+                ? const [BoxShadow(color: Colors.black, offset: Offset(2, 2))] 
+                : null,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.rocket_launch_rounded, 
+                size: 13, 
+                color: isCyberpunk ? const Color(0xFFFF007F) : textColor,
               ),
-            ),
-          ],
+              const SizedBox(width: 6),
+              Text(
+                t.shipatonFooter,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isNeo || isCyberpunk ? FontWeight.w900 : FontWeight.w600,
+                  fontFamily: isCyberpunk ? 'monospace' : null,
+                  color: textColor,
+                  letterSpacing: isCyberpunk ? 0.6 : 0.2,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -325,6 +335,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.watch<LocaleProvider>().t;
     final themeProvider = Provider.of<ThemeProvider>(context);
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
@@ -333,7 +344,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final bool isSoft = currentTheme.id == 1;
     final bool isCyber = currentTheme.id == 0;
 
-    // Pridávame kontrolu na blokovanie importov
     final bool isLimitReached = (customDeckCount >= 3 && !isPremium);
 
     return Scaffold(
@@ -346,7 +356,7 @@ class _HomeScreenState extends State<HomeScreen> {
         title: Row(
           children: [
             Text(
-              'FlashPass Decks',
+              t.homeScreenTitle,
               style: theme.appBarTheme.titleTextStyle ?? TextStyle(
                 color: isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : theme.colorScheme.onSurface),
                 fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
@@ -375,7 +385,7 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(
             icon: Icon(Icons.star_rounded, color: isNeo ? Colors.black : Colors.amber, size: 30),
-            tooltip: 'Premium',
+            tooltip: t.tooltipPremium,
             onPressed: () async {
               if (isPremium) {
                 RevenueCatService.showCustomerCenter();
@@ -391,7 +401,7 @@ class _HomeScreenState extends State<HomeScreen> {
               color: isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : (theme.appBarTheme.iconTheme?.color ?? theme.colorScheme.onSurface)), 
               size: 24,
             ),
-            tooltip: 'Settings',
+            tooltip: t.tooltipSettings,
             onPressed: () {
               Navigator.push(
                 context,
@@ -508,7 +518,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  isCyber ? '// Ťukni na kartu pre detailné štatistiky' : 'Ťukni na kartu pre detailné štatistiky',
+                                  t.carouselTapHint,
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontFamily: isCyber ? 'monospace' : null,
@@ -573,9 +583,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               const SizedBox(width: 14),
                               Text(
-                                isPremium 
-                                    ? (isCyber ? '// MANAGE PREMIUM' : 'MANAGE PREMIUM') 
-                                    : (isCyber ? '// UNLOCK PREMIUM' : 'PREMIUM ACCESS'),
+                                isPremium ? t.managePremiumBtn : t.unlockPremiumBtn,
                                 style: TextStyle(
                                   color: isNeo 
                                       ? Colors.black 
@@ -600,7 +608,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             context,
                             MaterialPageRoute(builder: (context) => const DeckManagerScreen()),
                           );
-                          await _refreshAllData(); // Oživí HomeScreen po návrate
+                          await _refreshAllData();
                         },
                         borderRadius: currentTheme.cardBorderRadius,
                         child: Container(
@@ -622,7 +630,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 Padding(
                                   padding: const EdgeInsets.only(bottom: 6),
                                   child: Text(
-                                    '// STORAGE_BANK :: DECKS',
+                                    t.storageBankDecks,
                                     style: TextStyle(
                                       color: currentTheme.testSetupColor.withValues(alpha: 0.85),
                                       fontSize: 10,
@@ -653,19 +661,17 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               const SizedBox(height: 10),
                               Text(
-                                'Decks',
+                                t.decksCardTitle,
                                 style: TextStyle(
                                   color: isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : (currentTheme.id == 5 ? Colors.white : theme.colorScheme.onSurface)),
                                   fontSize: 22,
                                   fontFamily: isCyber ? 'monospace' : null,
-                                  fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
+                                  fontWeight: FontWeight.w900,
                                 ),
                               ),
                               const SizedBox(height: 3),
                               Text(
-                                isCyber 
-                                    ? '[$customDeckCount BALÍČKOV] :: Správa & tvorba' 
-                                    : '$customDeckCount balíčkov · Správa & tvorba',
+                                t.decksCardSubtitle(totalDeckCount),
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: isNeo ? Colors.black87 : (isSoft ? const Color(0xFF64748B) : (currentTheme.id == 5 ? Colors.white70 : theme.colorScheme.onSurface.withValues(alpha: 0.7))),
@@ -687,8 +693,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           Expanded(
                             child: _buildActionTile(
                               icon: Icons.settings_suggest_rounded,
-                              title: 'Test Setup',
-                              subtitle: isCyber ? '[SYS_CONFIG]' : 'Prispôsob si učenie',
+                              title: t.testSetupTitle,
+                              subtitle: t.testSetupSubtitle,
                               accentColor: currentTheme.decksColor,
                               socketBgColor: isSoft ? const Color(0xFFEDE9FE) : null,
                               socketIconColor: isSoft ? const Color(0xFF7C3AED) : null,
@@ -704,8 +710,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           Expanded(
                             child: _buildActionTile(
                               icon: Icons.smartphone_rounded,
-                              title: 'Blocked Apps',
-                              subtitle: isCyber ? '[APP_LOCK]' : 'Výber blokovaných appiek',
+                              title: t.blockedAppsTitle,
+                              subtitle: t.blockedAppsSubtitle,
                               accentColor: currentTheme.blockedAppsColor,
                               socketBgColor: isSoft ? const Color(0xFFFFE4E6) : null,
                               socketIconColor: isSoft ? const Color(0xFFE11D48) : null,
@@ -724,7 +730,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                       const SizedBox(height: 22),
 
-                      // QUICK IMPORT PRIAMO V LISTVIEW
+                      // QUICK IMPORT
                       Center(
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
@@ -748,7 +754,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ] : null),
                                 ),
                           child: Text(
-                            isCyber ? '// DATA_INGESTION_PROTOCOL' : 'QUICK IMPORT',
+                            t.quickImportTitle,
                             style: TextStyle(
                               color: isNeo 
                                   ? Colors.black 
@@ -766,12 +772,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           Expanded(
                             child: _buildImportTile(
-                              title: 'CSV Import',
+                              title: t.csvImportTitle,
                               icon: Icons.description_rounded,
                               accentColor: currentTheme.quickImportColor,
                               socketBgColor: isSoft ? const Color(0xFFD6E4FF) : null,
                               socketIconColor: isSoft ? const Color(0xFF2563EB) : null,
-                              isLocked: isLimitReached, // <-- Blokovanie
+                              isLocked: isLimitReached,
                               currentTheme: currentTheme,
                               isCyber: isCyber,
                               onTap: () async {
@@ -792,12 +798,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SizedBox(width: 14),
                           Expanded(
                             child: _buildImportTile(
-                              title: 'Anki',
+                              title: t.ankiImportTitle,
                               icon: Icons.view_carousel_rounded,
                               accentColor: currentTheme.quickImportColor,
                               socketBgColor: isSoft ? const Color(0xFFE0F2FE) : null,
                               socketIconColor: isSoft ? const Color(0xFF0284C7) : null,
-                              isLocked: isLimitReached, // <-- Blokovanie
+                              isLocked: isLimitReached,
                               currentTheme: currentTheme,
                               isCyber: isCyber,
                               onTap: () {
@@ -826,8 +832,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // (Tu pokračujú tvoje metódy _buildDailyGoalCard, _buildDailyChallengeCard, _buildTimeEarnedCard, _buildAccuracyMasteryCard, _buildActionTile, _buildImportTile úplne bez zmeny)
-
   Widget _buildDailyGoalCard({
     required BuildContext context,
     required AppThemeData currentTheme,
@@ -838,17 +842,17 @@ class _HomeScreenState extends State<HomeScreen> {
     required double progressValue,
     required bool isCyber,
   }) {
+    final t = context.watch<LocaleProvider>().t;
     final bool isNeobrutalism = currentTheme.id == 2;
     final bool isVibrant = currentTheme.id == 5;
     final bool isSoft = currentTheme.id == 1;
     
     final bool isCompleted = cardsDone >= dailyTarget;
     final int displayStreak = isCompleted ? streak + 1 : streak;
-    final String dayWord = displayStreak == 1 ? 'Deň' : (displayStreak >= 2 && displayStreak <= 4 ? 'Dni' : 'Dní');
 
     final String statusText = isCompleted 
-        ? 'Splnené  ' 
-        : '$cardsDone / $dailyTarget Kariet';
+        ? '${t.goalCompleted} 🔥' 
+        : t.goalCardsProgress(cardsDone, dailyTarget);
 
     final Color progressFillColor = isNeobrutalism 
         ? Colors.black 
@@ -884,7 +888,7 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             _buildCarouselCardHeader(
-              title: 'DAILY GOAL',
+              title: t.goalCardTitle,
               titleColor: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFF2563EB) : (isVibrant ? Colors.white.withValues(alpha: 0.9) : currentTheme.dailyGoalColor)),
               isSoft: isSoft,
               isNeo: isNeobrutalism,
@@ -898,7 +902,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const Text('🔥', style: TextStyle(fontSize: 40)),
                 const SizedBox(width: 14),
                 Text(
-                  '$displayStreak $dayWord Streak\n$statusText',
+                  '${t.streakDaysFormat(displayStreak)}\n$statusText',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFF1E293B) : (isVibrant ? Colors.white : theme.colorScheme.onSurface)),
@@ -941,6 +945,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required ThemeData theme,
     required bool isCyber,
   }) {
+    final t = context.watch<LocaleProvider>().t;
     final bool isVibrantGradient = currentTheme.id == 5;
     final bool isNeobrutalism = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
@@ -979,145 +984,154 @@ class _HomeScreenState extends State<HomeScreen> {
     final double challengeProgressPct = (_challengeProgress / _todayChallenge!.target).clamp(0.0, 1.0);
     final int bonusMin = _todayChallenge!.bonusSeconds ~/ 60;
 
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: cardDecoration,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Text(_todayChallenge!.iconEmoji, style: const TextStyle(fontSize: 20)),
-                  const SizedBox(width: 8),
-                  Text(
-                    isCyber ? '// MISSION_CONTROL' : 'DENNÁ VÝZVA',
-                    style: TextStyle(
-                      color: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFF7C3AED) : (isCyber ? currentTheme.decksColor : textColor.withValues(alpha: 0.8))),
-                      fontSize: 12,
-                      fontFamily: isCyber ? 'monospace' : null,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.1,
-                    ),
-                  ),
-                ],
-              ),
-              if (_challengeStreak > 0)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: isNeobrutalism ? Colors.white : (isSoft ? const Color(0xFFE2E8F0) : Colors.black),
-                    borderRadius: BorderRadius.circular(isCyber ? 3 : 10),
-                    border: Border.all(color: isNeobrutalism ? Colors.black : Colors.orange, width: isCyber ? 1.0 : 2.0),
-                  ),
-                  child: Row(
-                    children: [
-                      const Text('🔥', style: TextStyle(fontSize: 12)),
-                      const SizedBox(width: 4),
-                      Text(
-                        '$_challengeStreak d',
-                        style: TextStyle(
-                          color: isNeobrutalism ? Colors.black : Colors.orange,
-                          fontWeight: FontWeight.w900,
-                          fontFamily: isCyber ? 'monospace' : null,
-                          fontSize: 12,
-                        ),
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const StatsDetailScreen()),
+        );
+      },
+      borderRadius: currentTheme.cardBorderRadius,
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: cardDecoration,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Text(_todayChallenge!.iconEmoji, style: const TextStyle(fontSize: 20)),
+                    const SizedBox(width: 8),
+                    Text(
+                      t.dailyChallengeTitle,
+                      style: TextStyle(
+                        color: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFF7C3AED) : (isCyber ? currentTheme.decksColor : textColor.withValues(alpha: 0.8))),
+                        fontSize: 12,
+                        fontFamily: isCyber ? 'monospace' : null,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.1,
                       ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _todayChallenge!.title,
-            style: TextStyle(
-              color: textColor,
-              fontSize: 17,
-              fontFamily: isCyber ? 'monospace' : null,
-              fontWeight: isNeobrutalism || isSoft ? FontWeight.w900 : FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            _todayChallenge!.description,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: isNeobrutalism ? Colors.black87 : (isSoft ? const Color(0xFF64748B) : textColor.withValues(alpha: 0.8)),
-              fontSize: 12,
-              fontWeight: isNeobrutalism ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color: isNeobrutalism ? Colors.white : (isSoft ? const Color(0xFFE2E8F0) : Colors.black.withValues(alpha: 0.35)),
-                    borderRadius: BorderRadius.circular(isNeobrutalism ? 6 : (isCyber ? 2 : 8)),
-                    border: isNeobrutalism ? Border.all(color: Colors.black, width: 2.0) : (isCyber ? Border.all(color: currentTheme.decksColor.withValues(alpha: 0.5), width: 1) : null),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(isNeobrutalism ? 3 : (isCyber ? 1 : 8)),
-                    child: LinearProgressIndicator(
-                      value: challengeProgressPct,
-                      backgroundColor: Colors.transparent,
-                      color: isNeobrutalism 
-                          ? Colors.black 
-                          : (isSoft ? const Color(0xFF7C3AED) : (_isChallengeCompleted ? currentTheme.successColor : (isVibrantGradient ? Colors.white : theme.colorScheme.primary))),
                     ),
-                  ),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                '$_challengeProgress / ${_todayChallenge!.target}',
-                style: TextStyle(
-                  color: textColor,
-                  fontWeight: FontWeight.w900,
-                  fontFamily: isCyber ? 'monospace' : null,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: isSoft
-                  ? BoxDecoration(
-                      color: const Color(0xFFEBF0F5),
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: const [
-                        BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(2, 2), blurRadius: 4),
-                        BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
+                if (_challengeStreak > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: isNeobrutalism ? Colors.white : (isSoft ? const Color(0xFFE2E8F0) : Colors.black),
+                      borderRadius: BorderRadius.circular(isCyber ? 3 : 10),
+                      border: Border.all(color: isNeobrutalism ? Colors.black : Colors.orange, width: isCyber ? 1.0 : 2.0),
+                    ),
+                    child: Row(
+                      children: [
+                        const Text('🔥', style: TextStyle(fontSize: 12)),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$_challengeStreak d',
+                          style: TextStyle(
+                            color: isNeobrutalism ? Colors.black : Colors.orange,
+                            fontWeight: FontWeight.w900,
+                            fontFamily: isCyber ? 'monospace' : null,
+                            fontSize: 12,
+                          ),
+                        ),
                       ],
-                    )
-                  : BoxDecoration(
-                      color: isNeobrutalism ? Colors.white : Colors.amber.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(isCyber ? 3 : 8),
-                      border: isNeobrutalism ? Border.all(color: Colors.black, width: 2.0) : (isCyber ? Border.all(color: Colors.amber, width: 1.0) : null),
                     ),
-              child: Text(
-                'Odmena: +$bonusMin min',
-                style: TextStyle(
-                  color: isSoft ? const Color(0xFF7C3AED) : textColor,
-                  fontSize: 11,
-                  fontFamily: isCyber ? 'monospace' : null,
-                  fontWeight: FontWeight.w900,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _todayChallenge!.getLocalizedTitle(t),
+              style: TextStyle(
+                color: textColor,
+                fontSize: 17,
+                fontFamily: isCyber ? 'monospace' : null,
+                fontWeight: isNeobrutalism || isSoft ? FontWeight.w900 : FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              _todayChallenge!.getLocalizedDescription(t),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: isNeobrutalism ? Colors.black87 : (isSoft ? const Color(0xFF64748B) : textColor.withValues(alpha: 0.8)),
+                fontSize: 12,
+                fontWeight: isNeobrutalism ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: isNeobrutalism ? Colors.white : (isSoft ? const Color(0xFFE2E8F0) : Colors.black.withValues(alpha: 0.35)),
+                      borderRadius: BorderRadius.circular(isNeobrutalism ? 6 : (isCyber ? 2 : 8)),
+                      border: isNeobrutalism ? Border.all(color: Colors.black, width: 2.0) : (isCyber ? Border.all(color: currentTheme.decksColor.withValues(alpha: 0.5), width: 1) : null),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(isNeobrutalism ? 3 : (isCyber ? 1 : 8)),
+                      child: LinearProgressIndicator(
+                        value: challengeProgressPct,
+                        backgroundColor: Colors.transparent,
+                        color: isNeobrutalism 
+                            ? Colors.black 
+                            : (isSoft ? const Color(0xFF7C3AED) : (_isChallengeCompleted ? currentTheme.successColor : (isVibrantGradient ? Colors.white : theme.colorScheme.primary))),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  '$_challengeProgress / ${_todayChallenge!.target}',
+                  style: TextStyle(
+                    color: textColor,
+                    fontWeight: FontWeight.w900,
+                    fontFamily: isCyber ? 'monospace' : null,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: isSoft
+                    ? BoxDecoration(
+                        color: const Color(0xFFEBF0F5),
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: const [
+                          BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(2, 2), blurRadius: 4),
+                          BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
+                        ],
+                      )
+                    : BoxDecoration(
+                        color: isNeobrutalism ? Colors.white : Colors.amber.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(isCyber ? 3 : 8),
+                        border: isNeobrutalism ? Border.all(color: Colors.black, width: 2.0) : (isCyber ? Border.all(color: Colors.amber, width: 1.0) : null),
+                      ),
+                child: Text(
+                  t.challengeRewardFormat(bonusMin),
+                  style: TextStyle(
+                    color: isSoft ? const Color(0xFF7C3AED) : textColor,
+                    fontSize: 11,
+                    fontFamily: isCyber ? 'monospace' : null,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1129,6 +1143,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required int earnedSeconds,
     required bool isCyber,
   }) {
+    final t = context.watch<LocaleProvider>().t;
     int minutes = earnedSeconds ~/ 60;
     int seconds = earnedSeconds % 60;
     final bool isNeobrutalism = currentTheme.id == 2;
@@ -1161,7 +1176,7 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             _buildCarouselCardHeader(
-              title: 'ZÍSKANÝ ČAS DNES',
+              title: t.timeEarnedTitle,
               titleColor: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFF2563EB) : (isVibrant ? Colors.white.withValues(alpha: 0.9) : currentTheme.quickImportColor)),
               isSoft: isSoft,
               isNeo: isNeobrutalism,
@@ -1172,7 +1187,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text('⚡', style: TextStyle(fontSize: 38)),
+                const Text('⏳', style: TextStyle(fontSize: 38)),
                 const SizedBox(width: 12),
                 Text(
                   '${minutes}m ${seconds}s',
@@ -1187,7 +1202,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              isCyber ? '[UNLOCK_TIME_BANK] :: Vybojovaný čas' : 'Vybojovaný čas na odomknutie aplikácií',
+              t.timeEarnedSubtitle,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: isNeobrutalism ? Colors.black87 : (isSoft ? const Color(0xFF64748B) : (isVibrant ? Colors.white.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.7))),
@@ -1209,6 +1224,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required StatsProvider statsProvider,
     required bool isCyber,
   }) {
+    final t = context.watch<LocaleProvider>().t;
     final rawAccuracy = statsProvider.todayStats['accuracy'];
     double val = (rawAccuracy as num?)?.toDouble() ?? 0.0;
 
@@ -1249,7 +1265,7 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             _buildCarouselCardHeader(
-              title: 'ÚSPEŠNOSŤ & ZVLÁDNUTIE',
+              title: t.accuracyMasteryTitle,
               titleColor: isNeobrutalism ? Colors.black : (isSoft ? const Color(0xFFE11D48) : (isVibrant ? Colors.white.withValues(alpha: 0.9) : accuracyCardColor)),
               isSoft: isSoft,
               isNeo: isNeobrutalism,
@@ -1274,7 +1290,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     Text(
-                      'Úspešnosť',
+                      t.accuracyLabel,
                       style: TextStyle(
                         color: isNeobrutalism ? Colors.black87 : (isSoft ? const Color(0xFF64748B) : (isVibrant ? Colors.white.withValues(alpha: 0.7) : theme.colorScheme.onSurface.withValues(alpha: 0.6))),
                         fontSize: 11,
@@ -1303,7 +1319,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     Text(
-                      'Mastered kariet',
+                      t.masteredLabel,
                       style: TextStyle(
                         color: isNeobrutalism ? Colors.black87 : (isSoft ? const Color(0xFF64748B) : (isVibrant ? Colors.white.withValues(alpha: 0.7) : theme.colorScheme.onSurface.withValues(alpha: 0.6))),
                         fontSize: 11,

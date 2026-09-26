@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:file_selector/file_selector.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'database_helper.dart';
+import 'languages.dart';
 
 class CsvService {
   
@@ -67,9 +69,13 @@ class CsvService {
   // IMPORT CSV DO DATABÁZY
   // ==========================================
   static Future<String?> importDeckFromCsv() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lang = prefs.getString('app_language') ?? 'en';
+    final bool isEn = lang == 'en';
+
     try {
-      const XTypeGroup typeGroup = XTypeGroup(
-        label: 'Všetky súbory',
+      final XTypeGroup typeGroup = XTypeGroup(
+        label: isEn ? 'All Files' : 'Všetky súbory',
         mimeTypes: ['*/*'], // Hrubá sila pre Android File Picker
       );
       
@@ -77,18 +83,21 @@ class CsvService {
 
       if (xFile != null) {
         if (!xFile.name.toLowerCase().endsWith('.csv')) {
-          return "Prosím, vyberte súbor s príponou .csv";
+          return isEn ? "Please select a file with .csv extension" : "Prosím, vyberte súbor s príponou .csv";
         }
 
         final csvString = await xFile.readAsString();
         
-        // Použitie nášho vlastného parsera (NULA chýb vo VS Code)
+        // Použitie nášho vlastného parsera
         List<List<String>> csvData = _parseCsvCustom(csvString);
 
-        if (csvData.isEmpty) return "Súbor je prázdny.";
+        if (csvData.isEmpty) {
+          return isEn ? "The file is empty." : "Súbor je prázdny.";
+        }
 
         String deckName = xFile.name.replaceAll('.csv', '');
-        int newDeckId = await DatabaseHelper.instance.addNewDeck(deckName, 'Importované z CSV');
+        String categoryName = isEn ? 'Imported from CSV' : 'Importované z CSV';
+        int newDeckId = await DatabaseHelper.instance.addNewDeck(deckName, categoryName);
 
         int importedCount = 0;
         for (int i = 0; i < csvData.length; i++) {
@@ -110,11 +119,13 @@ class CsvService {
             }
           }
         }
-        return "Úspešne importovaných $importedCount kartičiek do balíčka '$deckName'.";
+        return isEn 
+            ? "Successfully imported $importedCount cards into deck '$deckName'."
+            : "Úspešne importovaných $importedCount kartičiek do balíčka '$deckName'.";
       }
       return null;
     } catch (e) {
-      return "Nastala chyba pri importe: $e";
+      return isEn ? "An error occurred during import: $e" : "Nastala chyba pri importe: $e";
     }
   }
 
@@ -122,17 +133,21 @@ class CsvService {
   // EXPORT BALÍČKA DO CSV
   // ==========================================
   static Future<void> exportDeckToCsv(int deckId, String deckName) async {
+    final prefs = await SharedPreferences.getInstance();
+    final lang = prefs.getString('app_language') ?? 'en';
+    final bool isEn = lang == 'en';
+
     try {
       final cards = await DatabaseHelper.instance.getCardsForDeck(deckId);
       
       StringBuffer csvBuffer = StringBuffer();
-      csvBuffer.writeln('Otazka,Odpoved'); 
+      csvBuffer.writeln(isEn ? 'Question,Answer' : 'Otazka,Odpoved'); 
       
       for (var card in cards) {
         String q = card['prompt']?.toString().replaceAll('"', '""') ?? '';
         String a = card['correct_answer']?.toString().replaceAll('"', '""') ?? '';
         
-        // Pri exporte pridávame úvodzovky kôli bezpečnosti
+        // Pri exporte pridávame úvodzovky kvôli bezpečnosti
         csvBuffer.writeln('"$q","$a"');
       }
 
@@ -142,7 +157,8 @@ class CsvService {
       final file = File(path);
       await file.writeAsString(csvBuffer.toString());
 
-      await Share.shareXFiles([XFile(path)], text: 'Export balíčka: $deckName');
+      String shareText = isEn ? 'Export deck: $deckName' : 'Export balíčka: $deckName';
+      await Share.shareXFiles([XFile(path)], text: shareText);
       
     } catch (e) {
       debugPrint("Chyba pri exporte: $e");

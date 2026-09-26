@@ -6,6 +6,7 @@ import '../themes/theme_provider.dart';
 import '../themes/app_themes.dart';
 import 'deck_manager_screen.dart';
 import '../themes/themed_background.dart';
+import '../services/languages.dart';
 
 class TestSetupScreen extends StatefulWidget {
   const TestSetupScreen({super.key});
@@ -18,14 +19,13 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
   SharedPreferences? _prefs;
   bool _isLoading = true;
   int? _activeDeckId;
-  String _activeDeckName = "Načítavam...";
+  String _activeDeckName = "...";
   int _availableCardCount = 10;
+  String _currentLanguageCode = 'sk';
 
   // --- STAV PRE KVÍZ ---
   double _questionCount = 10;
   double _timeLimitIndex = 0;
-  final List<String> _timeLabels = ["Bez limitu", "30 s", "25 s", "20 s", "15 s", "10 s"];
-  final List<double> _timeMultipliers = [1.0, 1.1, 1.2, 1.3, 1.4, 1.5];
   
   double _lockoutIndex = 2;
   final List<double> _lockoutPercentages = [0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 1.00];
@@ -51,61 +51,92 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
   }
 
   Future<void> _loadSettings() async {
-    _prefs = await SharedPreferences.getInstance();
-    
-    final activeDeckId = _prefs!.getInt('active_test_deck_id');
-    _activeDeckId = activeDeckId;
-
-    if (activeDeckId != null) {
+    try {
+      _prefs = await SharedPreferences.getInstance();
+      _currentLanguageCode = _prefs!.getString('app_language') ?? 'sk';
+      
       final decks = await DatabaseHelper.instance.getDecks();
-      final currentDeck = decks.firstWhere(
-        (d) => d.id == activeDeckId, 
-        orElse: () => null as dynamic,
-      );
+      final activeDeckId = _prefs!.getInt('active_test_deck_id');
+      _activeDeckId = activeDeckId;
 
-      final cardCount = await DatabaseHelper.instance.getCardCountForDeck(activeDeckId);
+      if (activeDeckId != null) {
+        final currentDeck = decks.cast<dynamic?>().firstWhere(
+          (d) => d?.id == activeDeckId, 
+          orElse: () => null,
+        );
 
-      if (cardCount >= 5 && currentDeck != null) {
-        _availableCardCount = cardCount;
-        _activeDeckName = currentDeck.name;
-      } else {
-        _activeDeckId = null;
+        if (currentDeck != null) {
+          final cardCount = await DatabaseHelper.instance.getCardCountForDeck(activeDeckId);
+
+          if (cardCount >= 5) {
+            _availableCardCount = cardCount;
+            _activeDeckName = currentDeck.name;
+          } else {
+            _activeDeckId = null;
+          }
+        } else {
+          _activeDeckId = null;
+        }
+      }
+
+      // AUTOMATICKÝ FALLBACK: Ak nie je vybratý žiadny balíček, vyberieme prvý dostupný s min. 5 kartami
+      if (_activeDeckId == null && decks.isNotEmpty) {
+        for (var deck in decks) {
+          final cardCount = await DatabaseHelper.instance.getCardCountForDeck(deck.id);
+          if (cardCount >= 5) {
+            _activeDeckId = deck.id;
+            _activeDeckName = deck.name;
+            _availableCardCount = cardCount;
+            await _prefs!.setInt('active_test_deck_id', deck.id);
+            break;
+          }
+        }
+      }
+
+      if (_activeDeckId == null) {
         await _prefs!.remove('active_test_deck_id');
       }
+
+      double savedQuestions = _prefs!.getDouble('test_questionCount') ?? 10;
+      double savedLearnCards = _prefs!.getDouble('test_learnCardCount') ?? 10;
+
+      double maxQuestions = _availableCardCount < 10 ? _availableCardCount.toDouble() : 10;
+      if (maxQuestions < 3) maxQuestions = 3;
+      if (savedQuestions > maxQuestions) savedQuestions = maxQuestions;
+
+      double maxLearnCards = _availableCardCount < 20 ? _availableCardCount.toDouble() : 20;
+      if (maxLearnCards < 5) maxLearnCards = 5;
+      if (savedLearnCards > maxLearnCards) savedLearnCards = maxLearnCards;
+      if (savedLearnCards < 5) savedLearnCards = 5;
+
+      if (mounted) {
+        setState(() {
+          _questionCount = savedQuestions;
+          _learnCardCount = savedLearnCards;
+          
+          _timeLimitIndex = _prefs!.getDouble('test_timeLimitIndex') ?? 0;
+          _lockoutIndex = _prefs!.getDouble('test_lockoutIndex') ?? 2;
+          _is3Options = _prefs!.getBool('test_is3Options') ?? false;
+          _isSecondChance = _prefs!.getBool('test_isSecondChance') ?? false;
+          _isSwapQuestion = _prefs!.getBool('test_isSwapQuestion') ?? false;
+          _isConfusion = _prefs!.getBool('test_isConfusion') ?? false;
+          _isBlindTest = _prefs!.getBool('test_isBlindTest') ?? false;
+          _isHardcore = _prefs!.getBool('test_isHardcore') ?? false;
+          _isDoubleTest = _prefs!.getBool('test_isDoubleTest') ?? false;
+
+          _isLearningMode = _prefs!.getBool('test_isLearningMode') ?? false;
+          _learnInterval = _prefs!.getDouble('test_learnInterval') ?? 1;
+          _learnRepeat = _prefs!.getBool('test_learnRepeat') ?? true;
+
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("Chyba pri načítavaní nastavení testu: $e");
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
-
-    double savedQuestions = _prefs!.getDouble('test_questionCount') ?? 10;
-    double savedLearnCards = _prefs!.getDouble('test_learnCardCount') ?? 10;
-
-    double maxQuestions = _availableCardCount < 10 ? _availableCardCount.toDouble() : 10;
-    if (maxQuestions < 3) maxQuestions = 3;
-    if (savedQuestions > maxQuestions) savedQuestions = maxQuestions;
-
-    double maxLearnCards = _availableCardCount < 20 ? _availableCardCount.toDouble() : 20;
-    if (maxLearnCards < 5) maxLearnCards = 5;
-    if (savedLearnCards > maxLearnCards) savedLearnCards = maxLearnCards;
-    if (savedLearnCards < 5) savedLearnCards = 5;
-
-    setState(() {
-      _questionCount = savedQuestions;
-      _learnCardCount = savedLearnCards;
-      
-      _timeLimitIndex = _prefs!.getDouble('test_timeLimitIndex') ?? 0;
-      _lockoutIndex = _prefs!.getDouble('test_lockoutIndex') ?? 2;
-      _is3Options = _prefs!.getBool('test_is3Options') ?? false;
-      _isSecondChance = _prefs!.getBool('test_isSecondChance') ?? false;
-      _isSwapQuestion = _prefs!.getBool('test_isSwapQuestion') ?? false;
-      _isConfusion = _prefs!.getBool('test_isConfusion') ?? false;
-      _isBlindTest = _prefs!.getBool('test_isBlindTest') ?? false;
-      _isHardcore = _prefs!.getBool('test_isHardcore') ?? false;
-      _isDoubleTest = _prefs!.getBool('test_isDoubleTest') ?? false;
-
-      _isLearningMode = _prefs!.getBool('test_isLearningMode') ?? false;
-      _learnInterval = _prefs!.getDouble('test_learnInterval') ?? 1;
-      _learnRepeat = _prefs!.getBool('test_learnRepeat') ?? true;
-
-      _isLoading = false;
-    });
   }
 
   void _saveDouble(String key, double value) => _prefs?.setDouble(key, value);
@@ -123,6 +154,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     if (mult > 1.5) return 1.5;
     return mult;
   }
+
+  final List<double> _timeMultipliers = [1.0, 1.1, 1.2, 1.3, 1.4, 1.5];
 
   double get _currentMultiplier {
     double mult = 1.0;
@@ -195,11 +228,15 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
-    final Color accentColor = currentTheme.decksColor; // Ružová farba
+    final Color accentColor = currentTheme.decksColor;
 
     final bool isNeo = currentTheme.id == 2;
     final bool isSoft = currentTheme.id == 1;
     final bool isCyber = currentTheme.id == 0;
+
+    final AppTexts texts = _currentLanguageCode == 'en' ? textsEn : textsSk;
+
+    final List<String> timeLabels = [texts.timeLabelNoLimit, "30 s", "25 s", "20 s", "15 s", "10 s"];
 
     if (_isLoading) {
       return ThemedBackground(
@@ -213,6 +250,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     double maxQuestions = _availableCardCount < 10 ? _availableCardCount.toDouble() : 10;
     double minQuestions = 3;
     if (maxQuestions < minQuestions) maxQuestions = minQuestions;
+    if (_questionCount > maxQuestions) _questionCount = maxQuestions;
+    if (_questionCount < minQuestions) _questionCount = minQuestions;
     
     int questionDivisions = (maxQuestions - minQuestions).toInt();
     if (questionDivisions <= 0) questionDivisions = 1;
@@ -220,16 +259,16 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     double maxLearnCards = _availableCardCount < 20 ? _availableCardCount.toDouble() : 20;
     double minLearnCards = 5;
     if (maxLearnCards < minLearnCards) maxLearnCards = minLearnCards;
+    if (_learnCardCount > maxLearnCards) _learnCardCount = maxLearnCards;
+    if (_learnCardCount < minLearnCards) _learnCardCount = minLearnCards;
 
     int learnDivisions = (maxLearnCards - minLearnCards).toInt();
     if (learnDivisions <= 0) learnDivisions = 1;
 
     double currentLearnValue = _learnCardCount;
-    if (currentLearnValue > maxLearnCards) currentLearnValue = maxLearnCards;
-    if (currentLearnValue < minLearnCards) currentLearnValue = minLearnCards;
 
     int targetPctInt = (_lockoutPercentages[_lockoutIndex.toInt()] * 100).round();
-    String lockoutLabel = "$targetPctInt% (min. $_requiredCorrectQuestions / ${_questionCount.toInt()})";
+    String lockoutLabel = texts.lockoutLabelFormat(targetPctInt, _requiredCorrectQuestions, _questionCount.toInt());
 
     final Color headerContrastColor = isNeo 
         ? Colors.black 
@@ -245,7 +284,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
           surfaceTintColor: Colors.transparent,
           iconTheme: IconThemeData(color: isNeo ? Colors.black : theme.colorScheme.onSurface),
           title: Text(
-            'Nastavenie Testu', 
+            texts.testSetupScreenTitle, 
             style: TextStyle(
               color: isNeo ? Colors.black : theme.colorScheme.onSurface, 
               fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
@@ -263,7 +302,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                 onTap: () async {
                   await Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => DeckManagerScreen()),
+                    MaterialPageRoute(builder: (context) => const DeckManagerScreen()),
                   );
                   _loadSettings();
                 },
@@ -294,8 +333,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                           children: [
                             Text(
                               _activeDeckId == null 
-                                  ? "NEMÁŠ VYBRANÝ ŽIADEN BALÍČEK!" 
-                                  : "AKTÍVNY BALÍČEK",
+                                  ? texts.noDeckSelectedTitle 
+                                  : texts.activeDeckLabel,
                               style: TextStyle(
                                 color: isNeo 
                                     ? Colors.black 
@@ -309,8 +348,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                             const SizedBox(height: 2),
                             Text(
                               _activeDeckId == null 
-                                  ? "Klikni sem pre výber (min. 5 kariet)" 
-                                  : "$_activeDeckName ($_availableCardCount kariet)",
+                                  ? texts.noDeckSelectedSubtitle 
+                                  : "$_activeDeckName (${texts.deckCardCount(_availableCardCount)})",
                               style: TextStyle(
                                 color: headerContrastColor,
                                 fontWeight: FontWeight.bold,
@@ -326,7 +365,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            "Zmeniť",
+                            texts.btnChangeDeck,
                             style: TextStyle(
                               color: isNeo 
                                   ? Colors.black 
@@ -354,8 +393,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
               child: _buildSwitchCard(
-                title: 'Learning Mode',
-                subtitle: _isLearningMode ? 'Zamerané na opakovanie a učenie sa.' : 'Zamerané na výkon a získavanie času.',
+                title: texts.learningModeTitle,
+                subtitle: _isLearningMode ? texts.learningModeSubOn : texts.learningModeSubOff,
                 multiplier: 1.0, 
                 value: _isLearningMode,
                 isGold: false,
@@ -379,7 +418,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                   child: Column(
                     children: [
                       Text(
-                        'ODMENA ZA 1 SPRÁVNU ODPOVEĎ', 
+                        texts.rewardPerQuestionLabel, 
                         style: TextStyle(
                           color: isNeo 
                               ? Colors.black 
@@ -436,7 +475,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Celkový násobič', 
+                                  texts.totalMultiplierLabel, 
                                   style: TextStyle(
                                     color: isNeo 
                                         ? Colors.black87 
@@ -461,7 +500,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
-                                  'Max potenciál testu', 
+                                  texts.maxPotentialLabel, 
                                   style: TextStyle(
                                     color: isNeo 
                                         ? Colors.black87 
@@ -495,10 +534,10 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   physics: const BouncingScrollPhysics(),
                   children: [
-                    _buildSectionHeader('ZÁKLADNÉ NASTAVENIA KVÍZU', isNeo, isSoft, isCyber, theme, accentColor),
+                    _buildSectionHeader(texts.sectionBasicSettings, isNeo, isSoft, isCyber, theme, accentColor),
                     _buildSliderCard(
-                      title: 'Počet otázok', 
-                      valueLabel: '${_questionCount.toInt()} otázok', 
+                      title: texts.fieldQuestionCount, 
+                      valueLabel: texts.questionCountValue(_questionCount.toInt()), 
                       value: _questionCount, 
                       min: minQuestions, 
                       max: maxQuestions, 
@@ -513,8 +552,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     ),
                     const SizedBox(height: 10),
                     _buildSliderCard(
-                      title: 'Časový limit na otázku', 
-                      valueLabel: _timeLabels[_timeLimitIndex.toInt()], 
+                      title: texts.fieldTimeLimit, 
+                      valueLabel: timeLabels[_timeLimitIndex.toInt()], 
                       multiplier: _timeMultipliers[_timeLimitIndex.toInt()], 
                       value: _timeLimitIndex, 
                       min: 0, 
@@ -530,7 +569,7 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     ),
                     const SizedBox(height: 10),
                     _buildSliderCard(
-                      title: 'Lockout Prah (Min. úspešnosť)', 
+                      title: texts.fieldLockoutThreshold, 
                       valueLabel: lockoutLabel, 
                       multiplier: double.parse(_effectiveLockoutMultiplier.toStringAsFixed(2)), 
                       value: _lockoutIndex, 
@@ -545,10 +584,10 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                         _saveDouble('test_lockoutIndex', val); 
                       },
                     ),
-                    _buildSectionHeader('MODIFIKÁTORY', isNeo, isSoft, isCyber, theme, accentColor),
+                    _buildSectionHeader(texts.sectionModifiers, isNeo, isSoft, isCyber, theme, accentColor),
                     _buildSwitchCard(
-                      title: '3 Možnosti', 
-                      subtitle: 'O jednu nesprávnu odpoveď menej.', 
+                      title: texts.mod3OptionsTitle, 
+                      subtitle: texts.mod3OptionsSub, 
                       multiplier: 0.7, 
                       value: _is3Options, 
                       isDisabled: _isHardcore, 
@@ -562,8 +601,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     ),
                     const SizedBox(height: 10),
                     _buildSwitchCard(
-                      title: 'Vymeň kartu', 
-                      subtitle: '1-krát za test môžeš vymeniť ťažkú otázku za novú.', 
+                      title: texts.modSwapCardTitle, 
+                      subtitle: texts.modSwapCardSub, 
                       multiplier: 0.85, 
                       value: _isSwapQuestion, 
                       currentTheme: currentTheme,
@@ -576,8 +615,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     ),
                     const SizedBox(height: 10),
                     _buildSwitchCard(
-                      title: 'Druhá šanca', 
-                      subtitle: 'Jedna nesprávna odpoveď za celý test sa ti odpustí.', 
+                      title: texts.modSecondChanceTitle, 
+                      subtitle: texts.modSecondChanceSub, 
                       multiplier: 0.8, 
                       value: _isSecondChance, 
                       currentTheme: currentTheme,
@@ -590,8 +629,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     ),
                     const SizedBox(height: 10),
                     _buildSwitchCard(
-                      title: 'Confusion', 
-                      subtitle: 'Pridaná možnosť "Žiadna z odpovedí".', 
+                      title: texts.modConfusionTitle, 
+                      subtitle: texts.modConfusionSub, 
                       multiplier: 1.1, 
                       value: _isConfusion, 
                       isDisabled: _isHardcore, 
@@ -605,8 +644,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     ),
                     const SizedBox(height: 10),
                     _buildSwitchCard(
-                      title: 'Slepý test', 
-                      subtitle: 'Správnosť odpovedí sa dozvieš až na záver testu.', 
+                      title: texts.modBlindTestTitle, 
+                      subtitle: texts.modBlindTestSub, 
                       multiplier: 1.25, 
                       value: _isBlindTest, 
                       currentTheme: currentTheme,
@@ -619,8 +658,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     ),
                     const SizedBox(height: 10),
                     _buildSwitchCard(
-                      title: 'Double Test', 
-                      subtitle: 'Musíš zvládnuť 2 testy po sebe. Odmenu dostaneš až po druhom.', 
+                      title: texts.modDoubleTestTitle, 
+                      subtitle: texts.modDoubleTestSub, 
                       multiplier: 1.75, 
                       value: _isDoubleTest, 
                       isGold: false,
@@ -636,8 +675,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     ),
                     const SizedBox(height: 10),
                     _buildSwitchCard(
-                      title: 'Hardcore (Write-in)', 
-                      subtitle: 'Bez možností. Odpoveď musíš ručne napísať.', 
+                      title: texts.modHardcoreTitle, 
+                      subtitle: texts.modHardcoreSub, 
                       multiplier: 1.5, 
                       value: _isHardcore, 
                       isGold: false, 
@@ -667,10 +706,10 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   physics: const BouncingScrollPhysics(),
                   children: [
-                    _buildSectionHeader('NASTAVENIA UČENIA', isNeo, isSoft, isCyber, theme, accentColor),
+                    _buildSectionHeader(texts.sectionLearnSettings, isNeo, isSoft, isCyber, theme, accentColor),
                     _buildSliderCard(
-                      title: 'Počet kartičiek v dávke',
-                      valueLabel: '${currentLearnValue.toInt()} kartičiek',
+                      title: texts.learnBatchSizeTitle,
+                      valueLabel: texts.learnBatchSizeValue(currentLearnValue.toInt()),
                       value: currentLearnValue,
                       min: minLearnCards, 
                       max: maxLearnCards, 
@@ -685,18 +724,13 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     ),
                     const SizedBox(height: 10),
                     _buildSliderCard(
-                      title: 'Frekvencia uzamknutia (Pop-up)',
+                      title: texts.learnIntervalTitle,
                       valueLabel: () {
-                      int totalSeconds = (_learnInterval * 60).round();
-                      int minutes = totalSeconds ~/ 60;
-                      int seconds = totalSeconds % 60;
-                      
-                      if (seconds == 0) {
-                        return 'Každé $minutes min.';
-                      } else {
-                        return 'Každé $minutes min. $seconds s.';
-                      }
-                    }(),
+                        int totalSeconds = (_learnInterval * 60).round();
+                        int minutes = totalSeconds ~/ 60;
+                        int seconds = totalSeconds % 60;
+                        return texts.learnIntervalValue(minutes, seconds);
+                      }(),
                       value: _learnInterval,
                       min: 1, max: 5, divisions: 8,
                       currentTheme: currentTheme,
@@ -709,8 +743,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
                     ),
                     const SizedBox(height: 10),
                     _buildSwitchCard(
-                      title: 'Opakovanie nevedomostí',
-                      subtitle: 'Karty, ktoré si nevedel, sa ukážu znovu na konci.',
+                      title: texts.learnRepeatTitle,
+                      subtitle: texts.learnRepeatSub,
                       multiplier: 1.0,
                       showMultiplier: false,
                       value: _learnRepeat,
@@ -824,6 +858,13 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     final Color activeTrack = isCyber ? const Color(0xFF00FF66) : (isSoft ? accentColor : textColor);
     final Color inactiveTrack = isCyber ? accentColor.withValues(alpha: 0.25) : (isSoft ? const Color(0xFFB0C0D6) : textColor.withValues(alpha: 0.3));
 
+    double safeMin = min;
+    double safeMax = max;
+    if (safeMin > safeMax) safeMax = safeMin;
+    double safeValue = value;
+    if (safeValue < safeMin) safeValue = safeMin;
+    if (safeValue > safeMax) safeValue = safeMax;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
       decoration: currentTheme.getCardDecoration(accentColor),
@@ -866,11 +907,11 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
               thumbShape: isSoft ? const RoundSliderThumbShape(enabledThumbRadius: 10.0, elevation: 4) : (isCyber ? const RoundSliderThumbShape(enabledThumbRadius: 8.0) : null),
             ),
             child: Slider(
-              value: value, 
-              min: min, 
-              max: max, 
-              divisions: divisions, 
-              onChanged: min == max ? null : onChanged,
+              value: safeValue, 
+              min: safeMin, 
+              max: safeMax, 
+              divisions: divisions > 0 ? divisions : 1, 
+              onChanged: safeMin == safeMax ? null : onChanged,
             ),
           ),
         ],

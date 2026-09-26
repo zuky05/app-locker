@@ -2,19 +2,18 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'themes/theme_provider.dart';
-import 'services/stats_provider.dart'; // PRIDANÝ IMPORT
+import 'services/stats_provider.dart';
+import 'services/locale_provider.dart';
+import 'services/languages.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:app_links/app_links.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
-
 import 'screens/block_choice_screen.dart';
 import 'screens/permission_screen.dart';
 import 'services/permission_guard.dart';
 import 'services/database_helper.dart';
-
-// 1. IMPORT REVENUECAT SERVISU
 import 'services/revenuecat_service.dart'; 
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -23,7 +22,7 @@ late PermissionGuard permissionGuard;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Purchases.setLogLevel(LogLevel.error);
-  // 2. INICIALIZÁCIA REVENUECAT PRI ŠTARTE APPKY
+  
   await RevenueCatService.initialize();
 
   await SystemChrome.setPreferredOrientations([
@@ -31,10 +30,23 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
+  // Nastavenie správania systémových líšt (Edge-to-Edge)
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent, // Pôvodný horný stavový bar zachovaný
+      systemNavigationBarColor: Colors.transparent,
+    ),
+  );
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
   const platform = MethodChannel('flashpass.channel');
 
+  final prefs = await SharedPreferences.getInstance();
+
+  // 🟢 Východzí jazyk pri prvom spustení je 'en'
+  final String savedLanguage = prefs.getString('app_language') ?? 'en';
+
   try {
-    final prefs = await SharedPreferences.getInstance();
     final blocked = prefs.getStringList('blocked_apps') ?? ['com.android.chrome'];
     await platform.invokeMethod('setBlockedApps', {'apps': blocked});
   } catch (e) {
@@ -58,7 +70,6 @@ void main() async {
     debugPrint("Chyba komunikácie: $e");
   }
 
-  // Inicializácia a spustenie PermissionGuard
   permissionGuard = PermissionGuard(navigatorKey: navigatorKey);
   permissionGuard.startListening();
 
@@ -67,6 +78,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (context) => ThemeProvider()),
         ChangeNotifierProvider(create: (context) => StatsProvider()),
+        ChangeNotifierProvider(create: (context) => LocaleProvider(savedLanguage)),
       ],
       child: MyApp(
         initialOverlay: isOverlay,
@@ -111,14 +123,11 @@ class _MyAppState extends State<MyApp> {
     isTimeout = widget.initialTimeout;
     isFromNotification = widget.initialFromNotification;
 
-    // 1. Ak sa appka spustila priamo cez deep link v stave Cold Start
     if (widget.initialData != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _importDeckFromData(widget.initialData!);
       });
-    } 
-    // 2. Alebo ak sa spustila ako overlay
-    else if (isOverlay) {
+    } else if (isOverlay) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         navigatorKey.currentState?.pushAndRemoveUntil(
           MaterialPageRoute(
@@ -132,7 +141,6 @@ class _MyAppState extends State<MyApp> {
       });
     }
 
-    // Odchytávanie správ pri prebudení aplikácie z pozadia (Warm start)
     platform.setMethodCallHandler((call) async {
       if (call.method == 'updateOverlayInfo') {
         final args = Map<String, dynamic>.from(call.arguments as Map);
@@ -140,15 +148,13 @@ class _MyAppState extends State<MyApp> {
         final bool timeout = args['isTimeout'] ?? false;
         final bool incomingFromNotif = args['isFromNotification'] ?? false;
 
-        // KĽÚČOVÁ ZMENA: Ak sme už otvorili test z notifikácie a sme zablokovaní,
-        // nesmie to žiadny iný signál z Kotlinu prepísať späť na false!
         final bool resolvedFromNotification = (isOverlay && isFromNotification) ? true : incomingFromNotif;
 
         if (shouldBlock != isOverlay || timeout != isTimeout || resolvedFromNotification != isFromNotification) {
           setState(() {
             isOverlay = shouldBlock;
             isTimeout = timeout;
-            isFromNotification = resolvedFromNotification; // Použijeme poistenú premennú
+            isFromNotification = resolvedFromNotification;
           });
 
           if (shouldBlock) {
@@ -156,7 +162,7 @@ class _MyAppState extends State<MyApp> {
               MaterialPageRoute(
                 builder: (context) => BlockChoiceScreen(
                   isTimeout: timeout,
-                  isFromNotification: resolvedFromNotification, // Pošleme poistenú premennú
+                  isFromNotification: resolvedFromNotification,
                 ),
               ),
               (route) => false,
@@ -211,42 +217,44 @@ class _MyAppState extends State<MyApp> {
     final context = navigatorKey.currentContext;
     if (context == null) return;
 
+    final prefs = await SharedPreferences.getInstance();
+    final lang = prefs.getString('app_language') ?? 'en';
+    final AppTexts texts = lang == 'en' ? textsEn : textsSk;
+
     try {
       String jsonString = utf8.decode(base64Url.decode(base64Data));
       Map<String, dynamic> deckData = jsonDecode(jsonString);
 
-      String title = deckData['title'] ?? 'Zdieľaný balíček';
+      String title = deckData['title'] ?? (lang == 'en' ? 'Shared Deck' : 'Zdieľaný balíček');
       String category = deckData['category'] ?? 'Shared';
       List cards = deckData['cards'] ?? [];
 
       final int customCount = await DatabaseHelper.instance.getCustomDeckCount();
       final int remainingDecks = 3 - customCount;
 
-      // 3. SKONTROLUJEME, ČI MÁ POUŽÍVATEĽ PREMIUM
       final bool isPremium = await RevenueCatService.isPremium();
 
-      // Ak má 3 a viac balíčkov A ZÁROVEŇ NEMÁ Premium, zastavíme ho
       if (customCount >= 3 && !isPremium) {
         if (!context.mounted) return;
         showDialog(
           context: context,
           builder: (dialogContext) => AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: const Column(
+            title: Column(
               children: [
-                Icon(Icons.star_rounded, size: 50, color: Colors.amber),
-                SizedBox(height: 10),
+                const Icon(Icons.star_rounded, size: 50, color: Colors.amber),
+                const SizedBox(height: 10),
                 Text(
-                  "Odomkni flashpass Premium!",
+                  texts.premiumLimitTitle,
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
-            content: const Text(
-              "Dosiahol si limit 3 vlastných balíčkov zadarmo.\n\nPre import ďalších balíčkov a neobmedzené vytváranie si aktivuj Premium.",
+            content: Text(
+              texts.premiumLimitCustomDecks,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 15),
+              style: const TextStyle(fontSize: 15),
             ),
             actionsAlignment: MainAxisAlignment.center,
             actions: [
@@ -258,17 +266,12 @@ class _MyAppState extends State<MyApp> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 ),
-                child: const Text("Zrušiť"),
+                child: Text(texts.buttonCancel),
               ),
               ElevatedButton(
-                // OTVÁRAME NÁKUPNÚ OBRAZOVKU!
                 onPressed: () async {
-                  Navigator.pop(dialogContext); // Zatvoríme tento dialog
-                  
-                  // Zavoláme Paywall z RevenueCatu
+                  Navigator.pop(dialogContext);
                   final success = await RevenueCatService.presentPaywall();
-                  
-                  // Ak nákup prebehol úspešne, reštartujeme funkciu a balíček sa mu už naimportuje!
                   if (success) {
                     debugPrint("Nákup úspešný! Importujem balíček...");
                     _importDeckFromData(base64Data);
@@ -280,7 +283,7 @@ class _MyAppState extends State<MyApp> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 ),
-                child: const Text("Odomknúť Premium", style: TextStyle(fontWeight: FontWeight.bold)),
+                child: Text(texts.buttonUnlockPremium, style: const TextStyle(fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -288,22 +291,25 @@ class _MyAppState extends State<MyApp> {
         return;
       }
 
-      // Ak prešiel (buď má menej ako 3 balíčky, alebo má Premium), prebehne klasický import
       if (!context.mounted) return;
       showDialog(
         context: context,
         builder: (dialogContext) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text("Importovať '$title'?"),
+          title: Text(lang == 'en' ? "Import '$title'?" : "Importovať '$title'?"),
           content: Text(
             isPremium 
-                ? "Tento zdieľaný balíček obsahuje ${cards.length} kartičiek.\n\n(Premium používateľ: Voľné sloty sú neobmedzené!)"
-                : "Tento zdieľaný balíček obsahuje ${cards.length} kartičiek.\n\nVoľné sloty na custom balíčky: $remainingDecks/3",
+                ? (lang == 'en' 
+                    ? "This shared deck contains ${cards.length} cards.\n\n(Premium user: Slots are unlimited!)" 
+                    : "Tento zdieľaný balíček obsahuje ${cards.length} kartičiek.\n\n(Premium používateľ: Voľné sloty sú neobmedzené!)")
+                : (lang == 'en' 
+                    ? "This shared deck contains ${cards.length} cards.\n\nCustom deck slots left: $remainingDecks/3" 
+                    : "Tento zdieľaný balíček obsahuje ${cards.length} kartičiek.\n\nVoľné sloty na custom balíčky: $remainingDecks/3"),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text("Zrušiť", style: TextStyle(color: Colors.grey)),
+              child: Text(texts.buttonCancel, style: const TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -327,7 +333,7 @@ class _MyAppState extends State<MyApp> {
 
                 navigatorKey.currentState?.pushNamedAndRemoveUntil('/', (route) => false);
               },
-              child: const Text("Importovať"),
+              child: Text(lang == 'en' ? "Import" : "Importovať"),
             ),
           ],
         ),
@@ -339,17 +345,16 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    // Consumer zabezpečuje počúvanie zmien tém z ThemeProvideru
+    final localeProvider = Provider.of<LocaleProvider>(context);
+
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return MaterialApp(
           navigatorKey: navigatorKey,
           debugShowCheckedModeBanner: false,
           title: 'flashpass',
-          
-          // Tu sa aplikuje zvolená téma z tvojho katalógu app_themes.dart
+          locale: Locale(localeProvider.locale),
           theme: themeProvider.theme,
-          
           home: isOverlay
               ? BlockChoiceScreen(isTimeout: isTimeout, isFromNotification: isFromNotification)
               : const PermissionScreen(),

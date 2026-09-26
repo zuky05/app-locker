@@ -6,6 +6,7 @@ import 'home_screen.dart';
 import '../themes/theme_provider.dart';
 import '../themes/app_themes.dart';
 import '../themes/themed_background.dart';
+import '../services/locale_provider.dart';
 
 class PermissionScreen extends StatefulWidget {
   const PermissionScreen({super.key});
@@ -99,6 +100,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
 
   @override
   Widget build(BuildContext context) {
+    final t = context.watch<LocaleProvider>().t;
     final themeProvider = Provider.of<ThemeProvider>(context);
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
@@ -320,7 +322,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
                   child: Column(
                     children: [
                       Text(
-                        "Vyžaduje sa aktivácia",
+                        t.permTitle,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 22,
@@ -331,7 +333,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        "Pre správne a neprerušované fungovanie blokovania je potrebné povoliť nasledujúce štyri funkcie.",
+                        t.permSubtitle,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 14,
@@ -348,25 +350,25 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
 
                 // Zoznam povolení
                 _buildPermissionTile(
-                  title: "Prekrytie aplikácií (Overlay)",
+                  title: t.permOverlay,
                   isGranted: isOverlayGranted,
                   currentTheme: currentTheme,
                 ),
                 const SizedBox(height: 12),
                 _buildPermissionTile(
-                  title: "Zjednodušenie prístupu (Accessibility)",
+                  title: t.permAccessibility,
                   isGranted: isAccessibilityGranted,
                   currentTheme: currentTheme,
                 ),
                 const SizedBox(height: 12),
                 _buildPermissionTile(
-                  title: "Upozornenia a odpočet času (Notifications)",
+                  title: t.permNotification,
                   isGranted: isNotificationGranted,
                   currentTheme: currentTheme,
                 ),
                 const SizedBox(height: 12),
                 _buildPermissionTile(
-                  title: "Vypnutie šetrenia batérie (Unrestricted)",
+                  title: t.permBattery,
                   isGranted: isBatteryOptimizationGranted,
                   currentTheme: currentTheme,
                 ),
@@ -392,6 +394,7 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
     required VoidCallback onTap,
     required AppThemeData currentTheme,
   }) {
+    final t = context.watch<LocaleProvider>().t;
     final bool isVibrant = currentTheme.id == 5;
     final bool isGlass = currentTheme.id == 4;
     final bool isNeo = currentTheme.id == 2;
@@ -402,14 +405,14 @@ class _PermissionScreenState extends State<PermissionScreen> with WidgetsBinding
     final bool isCleanMinimal = currentTheme.id == 3 || cleanName.contains('clean');
 
     String buttonText = allGranted
-        ? "Pokračovať"
+        ? t.permBtnContinue
         : (!isOverlayGranted
-            ? "Povoliť prekrytie"
+            ? t.permBtnOverlay
             : (!isAccessibilityGranted
-                ? "Povoliť Zjednodušenie"
+                ? t.permBtnAccessibility
                 : (!isNotificationGranted
-                    ? "Povoliť Upozornenia"
-                    : "Vypnúť šetrenie")));
+                    ? t.permBtnNotification
+                    : t.permBtnBattery)));
 
     IconData buttonIcon = allGranted ? Icons.arrow_forward : Icons.settings;
 

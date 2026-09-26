@@ -3,6 +3,7 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:provider/provider.dart';
 import '../services/revenuecat_service.dart';
 import '../themes/theme_provider.dart';
+import '../services/locale_provider.dart';
 
 class PremiumScreen extends StatefulWidget {
   const PremiumScreen({super.key});
@@ -39,6 +40,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
   }
 
   void _openPaywall() async {
+    final t = context.read<LocaleProvider>().t;
     final currentTheme = Provider.of<ThemeProvider>(context, listen: false).currentThemeData;
     final success = await RevenueCatService.presentPaywall();
     if (success) {
@@ -46,7 +48,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              "Vitaj v Premium klube! 🎉",
+              t.premiumSuccessToast,
               style: TextStyle(color: currentTheme.getContrastTextColor(currentTheme.successColor)),
             ), 
             backgroundColor: currentTheme.successColor,
@@ -59,6 +61,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.watch<LocaleProvider>().t;
     final themeProvider = Provider.of<ThemeProvider>(context);
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
@@ -76,7 +79,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("FlashPass Premium"),
+        title: Text(t.premiumScreenTitle),
         backgroundColor: theme.appBarTheme.backgroundColor ?? Colors.transparent,
         foregroundColor: theme.colorScheme.onSurface,
         elevation: theme.appBarTheme.elevation ?? 0,
@@ -96,7 +99,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
               ),
               const SizedBox(height: 24),
               Text(
-                _isPremium ? "Máš aktívne Premium! 👑" : "Používaš Free verziu",
+                _isPremium ? t.premiumActiveTitle : t.premiumFreeTitle,
                 style: TextStyle(
                   fontSize: 22, 
                   fontWeight: FontWeight.bold,
@@ -105,9 +108,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                _isPremium 
-                    ? "Užívaj si neobmedzené balíčky, ďalšie štýly a všetky funkcie naplno." 
-                    : "Odomkni si neobmedzené vlastné balíčky, premium štýly a iné pokročilé funkcie.",
+                _isPremium ? t.premiumActiveDesc : t.premiumFreeDesc,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16, 
@@ -128,9 +129,9 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     ),
                   ),
                   onPressed: _openPaywall,
-                  child: const Text(
-                    "Odomknúť Premium", 
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  child: Text(
+                    t.buttonUnlockPremium, 
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -142,7 +143,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            "Nákupy boli úspešne obnovené!", 
+                            t.premiumRestoreSuccess, 
                             style: TextStyle(color: currentTheme.getContrastTextColor(currentTheme.successColor)),
                           ), 
                           backgroundColor: currentTheme.successColor,
@@ -153,7 +154,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            "Nenašlo sa žiadne predchádzajúce predplatné.", 
+                            t.premiumRestoreEmpty, 
                             style: TextStyle(color: currentTheme.getContrastTextColor(currentTheme.errorColor)),
                           ), 
                           backgroundColor: currentTheme.errorColor,
@@ -162,7 +163,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     }
                   },
                   child: Text(
-                    "Obnoviť nákupy (Restore Purchases)", 
+                    t.premiumRestoreBtn, 
                     style: TextStyle(
                       color: currentTheme.decksColor, 
                       decoration: TextDecoration.underline,
@@ -182,9 +183,9 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     ),
                   ),
                   icon: const Icon(Icons.manage_accounts),
-                  label: const Text(
-                    "Spravovať predplatné", 
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  label: Text(
+                    t.premiumManageBtn, 
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   onPressed: () => RevenueCatService.showCustomerCenter(),
                 ),

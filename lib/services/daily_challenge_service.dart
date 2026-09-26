@@ -1,6 +1,6 @@
 import 'dart:math';
-import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'languages.dart';
 
 enum ChallengeType {
   completeQuizzes,       // Dokonči X testov
@@ -42,6 +42,48 @@ class DailyChallenge {
     required this.bonusSeconds,
     required this.iconEmoji,
   });
+
+  String getLocalizedTitle(AppTexts t) {
+    switch (id) {
+      case 'quizzes_2': return t.dcQuizzesTitle;
+      case 'earn_10_min': return t.dcEarnMinTitle;
+      case 'learn_15_cards': return t.dcLearnCardsTitle;
+      case 'perfect_1': return t.dcPerfectTitle;
+      case 'mod_3options': return t.dcMod3OptionsTitle;
+      case 'mod_swap': return t.dcModSwapTitle;
+      case 'mod_second_chance': return t.dcModSecondChanceTitle;
+      case 'mod_confusion': return t.dcModConfusionTitle;
+      case 'mod_blind': return t.dcModBlindTitle;
+      case 'mod_double': return t.dcModDoubleTitle;
+      case 'mod_hardcore': return t.dcModHardcoreTitle;
+      case 'mod_at_least_3': return t.dcModAtLeast3Title;
+      case 'combo_confusion_blind': return t.dcComboConfusionBlindTitle;
+      case 'combo_double_blind': return t.dcComboDoubleBlindTitle;
+      case 'combo_second_swap': return t.dcComboSecondSwapTitle;
+      default: return title;
+    }
+  }
+
+  String getLocalizedDescription(AppTexts t) {
+    switch (id) {
+      case 'quizzes_2': return t.dcQuizzesDesc;
+      case 'earn_10_min': return t.dcEarnMinDesc;
+      case 'learn_15_cards': return t.dcLearnCardsDesc;
+      case 'perfect_1': return t.dcPerfectDesc;
+      case 'mod_3options': return t.dcMod3OptionsDesc;
+      case 'mod_swap': return t.dcModSwapDesc;
+      case 'mod_second_chance': return t.dcModSecondChanceDesc;
+      case 'mod_confusion': return t.dcModConfusionDesc;
+      case 'mod_blind': return t.dcModBlindDesc;
+      case 'mod_double': return t.dcModDoubleDesc;
+      case 'mod_hardcore': return t.dcModHardcoreDesc;
+      case 'mod_at_least_3': return t.dcModAtLeast3Desc;
+      case 'combo_confusion_blind': return t.dcComboConfusionBlindDesc;
+      case 'combo_double_blind': return t.dcComboDoubleBlindDesc;
+      case 'combo_second_swap': return t.dcComboSecondSwapDesc;
+      default: return description;
+    }
+  }
 }
 
 class DailyChallengeService {
@@ -65,7 +107,7 @@ class DailyChallengeService {
     ),
     DailyChallenge(
       id: 'earn_10_min',
-      title: 'Lovca času',
+      title: 'Lovec času',
       description: 'Získaj celkovo 10 minút odomknutého času',
       type: ChallengeType.earnMinutes,
       target: 600,
@@ -341,7 +383,6 @@ class DailyChallengeService {
       await prefs.setInt(_prefKeyMaxStreak, maxStreak);
       await prefs.setInt(_prefKeyTotalCompleted, totalCompleted);
 
-      // Vráti výšku odmeny. Ukladanie do DB robí QuizOverlayScreen v jednom balíku.
       return challenge.bonusSeconds;
     }
 

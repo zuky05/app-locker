@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class Deck {
   final int id;
   final String name;
@@ -20,7 +22,7 @@ class Deck {
       id: map['id'],
       name: map['name'],
       category: map['category'],
-      isPremade: map['is_premade'] == 1,
+      isPremade: map['is_premade'] == 1 || map['is_premade'] == true,
       frontLang: map['front_lang'] ?? 'en-US',
       backLang: map['back_lang'] ?? 'en-US',
     );
@@ -36,4 +38,10 @@ class Deck {
       'back_lang': backLang,
     };
   }
+
+  /// Vráti názov priamo z databázy (keďže JSONy sú už preložené)
+  String getLocalizedName(BuildContext context) => name;
+
+  /// Vráti kategóriu priamo z databázy (keďže JSONy sú už preložené)
+  String getLocalizedCategory(BuildContext context) => category;
 }

@@ -8,6 +8,7 @@ import '../models/deck_model.dart';
 import '../themes/app_themes.dart';
 import '../themes/theme_provider.dart';
 import '../themes/themed_background.dart';
+import '../services/locale_provider.dart';
 
 class DeckDetailScreen extends StatefulWidget {
   final Deck deck;
@@ -154,6 +155,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
   }
 
   void _showAddCardBottomSheet() {
+    final t = context.read<LocaleProvider>().t;
     final promptController = TextEditingController();
     final answerController = TextEditingController();
     final currentTheme = Provider.of<ThemeProvider>(context, listen: false).currentThemeData;
@@ -240,7 +242,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                 ),
               ),
               Text(
-                "Nová kartička",
+                t.deckDetailNewCardTitle,
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -264,7 +266,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                     fontWeight: FontWeight.w500,
                   ),
                   decoration: InputDecoration(
-                    labelText: "Otázka / Pojem (Predná strana)",
+                    labelText: t.deckDetailPromptHint,
                     alignLabelWithHint: true,
                     labelStyle: TextStyle(
                       color: isCyber ? sectionColor.withValues(alpha: 0.7) : dialogTextColor.withValues(alpha: 0.6),
@@ -290,7 +292,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                     fontWeight: FontWeight.w500,
                   ),
                   decoration: InputDecoration(
-                    labelText: "Správna odpoveď (Zadná strana)",
+                    labelText: t.deckDetailAnswerHint,
                     alignLabelWithHint: true,
                     labelStyle: TextStyle(
                       color: isCyber ? sectionColor.withValues(alpha: 0.7) : dialogTextColor.withValues(alpha: 0.6),
@@ -364,7 +366,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          "Pridať kartičku",
+                          t.deckDetailBtnAddCard,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -386,6 +388,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.watch<LocaleProvider>().t;
     final themeProvider = Provider.of<ThemeProvider>(context);
     final currentTheme = themeProvider.currentThemeData;
     final theme = currentTheme.theme;
@@ -400,7 +403,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
         backgroundColor: Colors.transparent,
         appBar: AppBar(
           title: Text(
-            widget.deck.name,
+            widget.deck.getLocalizedName(context),
             style: TextStyle(
               fontFamily: isCyber ? 'monospace' : null,
               fontWeight: isCyber ? FontWeight.bold : null,
@@ -415,7 +418,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
             : cards.isEmpty
                 ? Center(
                     child: Text(
-                      "Tento balíček je zatiaľ prázdny.",
+                      t.deckDetailEmpty,
                       style: TextStyle(
                         fontFamily: isCyber ? 'monospace' : null,
                         color: isSoft ? const Color(0xFF718096) : (isVibrant ? Colors.white.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.7)),
@@ -450,6 +453,8 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                           itemCount: cards.length,
                           itemBuilder: (context, index) {
                             final card = cards[index];
+                            final textToSpeak = (showAnswer ? card['correct_answer'] : card['prompt'])?.toString() ?? '';
+                            final bool isSvg = textToSpeak.trim().toLowerCase().endsWith('.svg');
 
                             final cardDecoration = isCyber
                                 ? BoxDecoration(
@@ -492,7 +497,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                                           mainAxisAlignment: MainAxisAlignment.center,
                                           children: [
                                             Text(
-                                              showAnswer ? "ODPOVEĎ" : "OTÁZKA",
+                                              showAnswer ? t.deckDetailAnswerLabel : t.deckDetailQuestionLabel,
                                               style: TextStyle(
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.bold,
@@ -501,18 +506,19 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                                                 letterSpacing: 2,
                                               ),
                                             ),
-                                            const SizedBox(width: 6),
-                                            IconButton(
-                                              padding: EdgeInsets.zero,
-                                              constraints: const BoxConstraints(),
-                                              icon: const Icon(Icons.volume_up_rounded, size: 20),
-                                              color: isCyber ? sectionColor : (isSoft ? const Color(0xFF718096) : cardTextColor.withValues(alpha: 0.8)),
-                                              onPressed: () {
-                                                final textToSpeak = showAnswer ? card['correct_answer'] : card['prompt'];
-                                                final lang = showAnswer ? widget.deck.backLang : widget.deck.frontLang;
-                                                TtsService.speak(textToSpeak.toString(), targetLanguage: lang);
-                                              },
-                                            ),
+                                            if (!isSvg) ...[
+                                              const SizedBox(width: 6),
+                                              IconButton(
+                                                padding: EdgeInsets.zero,
+                                                constraints: const BoxConstraints(),
+                                                icon: const Icon(Icons.volume_up_rounded, size: 20),
+                                                color: isCyber ? sectionColor : (isSoft ? const Color(0xFF718096) : cardTextColor.withValues(alpha: 0.8)),
+                                                onPressed: () {
+                                                  final lang = showAnswer ? widget.deck.backLang : widget.deck.frontLang;
+                                                  TtsService.speak(textToSpeak, targetLanguage: lang);
+                                                },
+                                              ),
+                                            ],
                                           ],
                                         ),
                                         const SizedBox(height: 20),
@@ -664,7 +670,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              "Pridať",
+                              t.deckDetailBtnAdd,
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,

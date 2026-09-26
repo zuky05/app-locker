@@ -23,7 +23,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 4, // 🟢 Zvýšená verzia pre podporu jazykov v balíčkoch (front_lang, back_lang)
+      version: 12, // Zvýšené na 12 pre okamžité vyčistenie starých duplikátov
       onCreate: _createDB,
       onUpgrade: _onUpgradeDB,
     );
@@ -65,7 +65,7 @@ class DatabaseHelper {
       )
     ''');
 
-    await _seedPremadeDecks(db);
+    await refreshPremadeDecks(db);
   }
 
   Future _onUpgradeDB(Database db, int oldVersion, int newVersion) async {
@@ -84,34 +84,51 @@ class DatabaseHelper {
         await db.execute("ALTER TABLE decks ADD COLUMN back_lang TEXT NOT NULL DEFAULT 'en-US'");
       } catch (_) {}
     }
+    if (oldVersion < 12) {
+      await refreshPremadeDecks(db);
+    }
   }
 
-  Future<void> _seedPremadeDecks(Database db) async {
-    try {
-      final jsonString = await rootBundle.loadString('assets/decks/premade_decks.json');
-      final List<dynamic> deckList = jsonDecode(jsonString);
-      for (var d in deckList) {
-        final deckId = await db.insert('decks', {
-          'name': d['name'],
-          'category': d['category'],
-          'is_premade': 1,
-          'front_lang': d['front_lang'] ?? 'en-US',
-          'back_lang': d['back_lang'] ?? 'en-US',
-        });
+  /// Vymaže staré premade balíčky a nahrá nové presne podľa zvoleného jazyka
+  Future<void> refreshPremadeDecks([Database? optionalDb, String? targetLangCode]) async {
+    final db = optionalDb ?? await instance.database;
+    
+    await db.transaction((txn) async {
+      await txn.rawDelete('DELETE FROM cards WHERE deck_id IN (SELECT id FROM decks WHERE is_premade = 1)');
+      await txn.rawDelete('DELETE FROM decks WHERE is_premade = 1');
+      
+      try {
+        final String langCode = targetLangCode ?? 'sk';
+        final String assetFileName = (langCode == 'sk') 
+            ? 'assets/decks/premade_decks_sk.json' 
+            : 'assets/decks/premade_decks.json';
 
-        for (var c in d['cards']) {
-          await db.insert('cards', {
-            'deck_id': deckId,
-            'prompt': c['prompt'],
-            'correct_answer': c['correct_answer'],
-            'counter': 0,
-            'wrong_count': 0,
+        final jsonString = await rootBundle.loadString(assetFileName);
+        final List<dynamic> deckList = jsonDecode(jsonString);
+
+        for (var d in deckList) {
+          final deckId = await txn.insert('decks', {
+            'name': d['name'],
+            'category': d['category'],
+            'is_premade': 1,
+            'front_lang': d['front_lang'] ?? 'en-US',
+            'back_lang': d['back_lang'] ?? 'en-US',
           });
+
+          for (var c in d['cards']) {
+            await txn.insert('cards', {
+              'deck_id': deckId,
+              'prompt': c['prompt'],
+              'correct_answer': c['correct_answer'],
+              'counter': 0,
+              'wrong_count': 0,
+            });
+          }
         }
+      } catch (e) {
+        debugPrint("Database seeding error: $e");
       }
-    } catch (e) {
-      debugPrint("Database seeding error: $e");
-    }
+    });
   }
 
   Future<List<Deck>> getDecks() async {
@@ -122,14 +139,13 @@ class DatabaseHelper {
 
   Future<int> addNewDeck(String name, String category, {String frontLang = 'en-US', String backLang = 'en-US'}) async {
     final db = await instance.database;
-    final deckId = await db.insert('decks', {
+    return await db.insert('decks', {
       'name': name,
       'category': category,
       'is_premade': 0,
       'front_lang': frontLang,
       'back_lang': backLang,
     });
-    return deckId;
   }
 
   Future<void> removeCard(int id) async {
@@ -139,7 +155,6 @@ class DatabaseHelper {
 
   Future<void> addNewCard(int deckId, String prompt, String correctAnswer) async {
     final db = await instance.database;
-    
     await db.insert('cards', {
       'deck_id': deckId,
       'prompt': prompt,
@@ -177,6 +192,8 @@ class DatabaseHelper {
     final card = randomCardResult.first;
     final cardId = card['id'] as int;
     final actualDeckId = card['deck_id'];
+
+    final deckMap = await getDeckById(actualDeckId);
     final correctAnswer = card['correct_answer'] as String;
     final prompt = card['prompt'] as String;
 
@@ -199,6 +216,8 @@ class DatabaseHelper {
       'prompt': prompt,
       'correct_answer': correctAnswer,
       'options': options,
+      'front_lang': deckMap?['front_lang'] ?? 'en-US',
+      'back_lang': deckMap?['back_lang'] ?? 'en-US',
     };
   }
 
@@ -219,7 +238,7 @@ class DatabaseHelper {
         [limit]
       );
     }
-    
+
     for (var card in result) {
       await db.rawUpdate('UPDATE cards SET counter = counter + 1 WHERE id = ?', [card['id']]);
     }
@@ -240,7 +259,6 @@ class DatabaseHelper {
       whereArgs: [deckId],
     );
   }
-
 
   Future<Map<String, dynamic>?> getDeckById(int id) async {
     final db = await instance.database;

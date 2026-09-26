@@ -89,7 +89,7 @@ Built natively in Flutter for the **RevenueCat Shipaton 2026**.
 ## ✨ Key Features
 
 * **App Blocker Engine:** Built using Android Accessibility Service and System Alert Overlay permissions for reliable interception.
-* **Pre-made Starter Decks:** Curated collections in Geography, Tech/IT (Linux commands, HTTP status codes, Haskell), and Languages.
+* **Pre-made Starter Decks:** Curated collections in Geography, Tech/IT (Linux commands, HTTP status codes), and Languages.
 * **Gamification & Daily Challenges:** Animated streaks, dynamic mastery metrics, and daily goal missions.
 * **Theme Match:** Clean Neumorphic interface custom-tailored to harmonize with modern RevenueCat Paywall components.
 

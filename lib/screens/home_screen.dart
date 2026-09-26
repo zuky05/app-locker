@@ -25,6 +25,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  int totalDeckCount = 0;
   int customDeckCount = 0;
   bool isPremium = false;
   bool isLoading = true;
@@ -77,12 +78,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _checkDeckCount() async {
-    final count = await DatabaseHelper.instance.getCustomDeckCount();
+    final customCount = await DatabaseHelper.instance.getCustomDeckCount();
+    final allDecks = await DatabaseHelper.instance.getDecks();
     final premiumStatus = await RevenueCatService.isPremium();
     
     if (!mounted) return;
     setState(() {
-      customDeckCount = count;
+      customDeckCount = customCount;
+      totalDeckCount = allDecks.length;
       isPremium = premiumStatus;
       isLoading = false;
     });
@@ -290,37 +293,41 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? Border.all(color: Colors.white.withValues(alpha: 0.25), width: 1.0)
                 : Border.all(color: textColor.withValues(alpha: 0.20), width: 1.0)));
 
-    return Center(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-        decoration: BoxDecoration(
-          color: badgeBg,
-          borderRadius: BorderRadius.circular(20),
-          border: border,
-          boxShadow: isNeo 
-              ? const [BoxShadow(color: Colors.black, offset: Offset(2, 2))] 
-              : null,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.rocket_launch_rounded, 
-              size: 13, 
-              color: isCyberpunk ? const Color(0xFFFF007F) : textColor,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              t.shipatonFooter,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: isNeo || isCyberpunk ? FontWeight.w900 : FontWeight.w600,
-                fontFamily: isCyberpunk ? 'monospace' : null,
-                color: textColor,
-                letterSpacing: isCyberpunk ? 0.6 : 0.2,
+    return Padding(
+      // Dynamický spodný padding chráni badge pred prekrytím Android lištou
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 20),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          decoration: BoxDecoration(
+            color: badgeBg,
+            borderRadius: BorderRadius.circular(20),
+            border: border,
+            boxShadow: isNeo 
+                ? const [BoxShadow(color: Colors.black, offset: Offset(2, 2))] 
+                : null,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.rocket_launch_rounded, 
+                size: 13, 
+                color: isCyberpunk ? const Color(0xFFFF007F) : textColor,
               ),
-            ),
-          ],
+              const SizedBox(width: 6),
+              Text(
+                t.shipatonFooter,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isNeo || isCyberpunk ? FontWeight.w900 : FontWeight.w600,
+                  fontFamily: isCyberpunk ? 'monospace' : null,
+                  color: textColor,
+                  letterSpacing: isCyberpunk ? 0.6 : 0.2,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -659,12 +666,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                   color: isNeo ? Colors.black : (isSoft ? const Color(0xFF1E293B) : (currentTheme.id == 5 ? Colors.white : theme.colorScheme.onSurface)),
                                   fontSize: 22,
                                   fontFamily: isCyber ? 'monospace' : null,
-                                  fontWeight: isNeo || isSoft ? FontWeight.w900 : FontWeight.bold,
+                                  fontWeight: FontWeight.w900,
                                 ),
                               ),
                               const SizedBox(height: 3),
                               Text(
-                                t.decksCardSubtitle(customDeckCount),
+                                t.decksCardSubtitle(totalDeckCount),
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: isNeo ? Colors.black87 : (isSoft ? const Color(0xFF64748B) : (currentTheme.id == 5 ? Colors.white70 : theme.colorScheme.onSurface.withValues(alpha: 0.7))),
@@ -843,9 +850,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final bool isCompleted = cardsDone >= dailyTarget;
     final int displayStreak = isCompleted ? streak + 1 : streak;
 
-  final String statusText = isCompleted 
-      ? '${t.goalCompleted} 🔥 ' 
-      : t.goalCardsProgress(cardsDone, dailyTarget);
+    final String statusText = isCompleted 
+        ? '${t.goalCompleted} 🔥' 
+        : t.goalCardsProgress(cardsDone, dailyTarget);
 
     final Color progressFillColor = isNeobrutalism 
         ? Colors.black 

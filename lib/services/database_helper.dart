@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sqflite/sqflite.dart';
@@ -24,7 +23,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 10, // Zvýšená verzia na vynútenie čistej migrácie
+      version: 12, // Zvýšené na 12 pre okamžité vyčistenie starých duplikátov
       onCreate: _createDB,
       onUpgrade: _onUpgradeDB,
     );
@@ -66,7 +65,7 @@ class DatabaseHelper {
       )
     ''');
 
-    await _seedPremadeDecks(db);
+    await refreshPremadeDecks(db);
   }
 
   Future _onUpgradeDB(Database db, int oldVersion, int newVersion) async {
@@ -85,55 +84,51 @@ class DatabaseHelper {
         await db.execute("ALTER TABLE decks ADD COLUMN back_lang TEXT NOT NULL DEFAULT 'en-US'");
       } catch (_) {}
     }
-    if (oldVersion < 10) {
+    if (oldVersion < 12) {
       await refreshPremadeDecks(db);
     }
   }
 
-  /// Kompletná obnova predpripravených balíčkov podľa aktuálneho jazyka
+  /// Vymaže staré premade balíčky a nahrá nové presne podľa zvoleného jazyka
   Future<void> refreshPremadeDecks([Database? optionalDb, String? targetLangCode]) async {
     final db = optionalDb ?? await instance.database;
     
-    // Vymažeme staré predpripravené dáta
-    await db.rawDelete('DELETE FROM cards WHERE deck_id IN (SELECT id FROM decks WHERE is_premade = 1)');
-    await db.rawDelete('DELETE FROM decks WHERE is_premade = 1');
-    
-    // Znovu ich naplníme zo správneho JSON súboru
-    await _seedPremadeDecks(db, targetLangCode);
-  }
+    await db.transaction((txn) async {
+      await txn.rawDelete('DELETE FROM cards WHERE deck_id IN (SELECT id FROM decks WHERE is_premade = 1)');
+      await txn.rawDelete('DELETE FROM decks WHERE is_premade = 1');
+      
+      try {
+        final String langCode = targetLangCode ?? 'sk';
+        final String assetFileName = (langCode == 'sk') 
+            ? 'assets/decks/premade_decks_sk.json' 
+            : 'assets/decks/premade_decks.json';
 
-  Future<void> _seedPremadeDecks(Database db, [String? targetLangCode]) async {
-    try {
-      final String langCode = targetLangCode ?? ui.PlatformDispatcher.instance.locale.languageCode;
-      final String assetFileName = (langCode == 'sk') 
-          ? 'assets/decks/premade_decks_sk.json' 
-          : 'assets/decks/premade_decks.json';
+        final jsonString = await rootBundle.loadString(assetFileName);
+        final List<dynamic> deckList = jsonDecode(jsonString);
 
-      final jsonString = await rootBundle.loadString(assetFileName);
-      final List<dynamic> deckList = jsonDecode(jsonString);
-
-      for (var d in deckList) {
-        final deckId = await db.insert('decks', {
-          'name': d['name'],
-          'category': d['category'],
-          'is_premade': 1,
-          'front_lang': d['front_lang'] ?? 'en-US',
-          'back_lang': d['back_lang'] ?? 'en-US',
-        });
-
-        for (var c in d['cards']) {
-          await db.insert('cards', {
-            'deck_id': deckId,
-            'prompt': c['prompt'],
-            'correct_answer': c['correct_answer'],
-            'counter': 0,
-            'wrong_count': 0,
+        for (var d in deckList) {
+          final deckId = await txn.insert('decks', {
+            'name': d['name'],
+            'category': d['category'],
+            'is_premade': 1,
+            'front_lang': d['front_lang'] ?? 'en-US',
+            'back_lang': d['back_lang'] ?? 'en-US',
           });
+
+          for (var c in d['cards']) {
+            await txn.insert('cards', {
+              'deck_id': deckId,
+              'prompt': c['prompt'],
+              'correct_answer': c['correct_answer'],
+              'counter': 0,
+              'wrong_count': 0,
+            });
+          }
         }
+      } catch (e) {
+        debugPrint("Database seeding error: $e");
       }
-    } catch (e) {
-      debugPrint("Database seeding error: $e");
-    }
+    });
   }
 
   Future<List<Deck>> getDecks() async {

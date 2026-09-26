@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:country_flags/country_flags.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../themes/app_themes.dart';
 import '../themes/theme_provider.dart';
 import '../services/revenuecat_service.dart';
@@ -71,6 +72,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
       });
       themeProvider.setTheme(appTheme.id);
     }
+  }
+
+  // 🌐 Metóda na otvorenie URL v prehliadači
+  Future<void> _launchExternalUrl(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    try {
+      if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+        debugPrint('Nepodarilo sa otvoriť URL: $urlString');
+      }
+    } catch (e) {
+      debugPrint('Chyba pri otváraní odkazu: $e');
+    }
+  }
+
+  String currentLanguageCode(BuildContext context) {
+    return Provider.of<LocaleProvider>(context, listen: false).locale;
   }
 
   BoxDecoration _getPreviewDecoration(AppThemeData appTheme, bool isSelected) {
@@ -636,6 +653,52 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       );
                     },
                   ),
+
+                  const SizedBox(height: 32),
+
+                  // --- SEKCIA: ODKAZY NA GOOGLE SITES (TERMS & PRIVACY) ---
+                  Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            // 🔗 SEM DOPLN SVOJU REÁLNU URL Z GOOGLE SITES PRE TERMS
+                            _launchExternalUrl('https://sites.google.com/view/flashpass');
+                          },
+                          child: Text(
+                            currentLanguageCode == 'sk' ? "Podmienky používania" : "Terms & Conditions",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isNeo ? Colors.black : (isVibrant ? Colors.white70 : theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          "•",
+                          style: TextStyle(
+                            color: isNeo ? Colors.black : (isVibrant ? Colors.white70 : theme.colorScheme.onSurface.withValues(alpha: 0.4)),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            // 🔗 SEM DOPLN SVOJU REÁLNU URL Z GOOGLE SITES PRE PRIVACY
+                            _launchExternalUrl('https://sites.google.com/view/flashpass/privacy-policy');
+                          },
+                          child: Text(
+                            currentLanguageCode == 'sk' ? "Ochrana súkromia" : "Privacy Policy",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isNeo ? Colors.black : (isVibrant ? Colors.white70 : theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                 ],
               ),
       ),

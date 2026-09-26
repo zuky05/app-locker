@@ -30,6 +30,15 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
+  // Nastavenie správania systémových líšt (Edge-to-Edge)
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent, // Pôvodný horný stavový bar zachovaný
+      systemNavigationBarColor: Colors.transparent,
+    ),
+  );
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
   const platform = MethodChannel('flashpass.channel');
 
   final prefs = await SharedPreferences.getInstance();

@@ -51,62 +51,92 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
   }
 
   Future<void> _loadSettings() async {
-    _prefs = await SharedPreferences.getInstance();
-    _currentLanguageCode = _prefs!.getString('app_language') ?? 'sk';
-    
-    final activeDeckId = _prefs!.getInt('active_test_deck_id');
-    _activeDeckId = activeDeckId;
-
-    if (activeDeckId != null) {
+    try {
+      _prefs = await SharedPreferences.getInstance();
+      _currentLanguageCode = _prefs!.getString('app_language') ?? 'sk';
+      
       final decks = await DatabaseHelper.instance.getDecks();
-      final currentDeck = decks.firstWhere(
-        (d) => d.id == activeDeckId, 
-        orElse: () => null as dynamic,
-      );
+      final activeDeckId = _prefs!.getInt('active_test_deck_id');
+      _activeDeckId = activeDeckId;
 
-      final cardCount = await DatabaseHelper.instance.getCardCountForDeck(activeDeckId);
+      if (activeDeckId != null) {
+        final currentDeck = decks.cast<dynamic?>().firstWhere(
+          (d) => d?.id == activeDeckId, 
+          orElse: () => null,
+        );
 
-      if (cardCount >= 5 && currentDeck != null) {
-        _availableCardCount = cardCount;
-        _activeDeckName = currentDeck.name;
-      } else {
-        _activeDeckId = null;
+        if (currentDeck != null) {
+          final cardCount = await DatabaseHelper.instance.getCardCountForDeck(activeDeckId);
+
+          if (cardCount >= 5) {
+            _availableCardCount = cardCount;
+            _activeDeckName = currentDeck.name;
+          } else {
+            _activeDeckId = null;
+          }
+        } else {
+          _activeDeckId = null;
+        }
+      }
+
+      // AUTOMATICKÝ FALLBACK: Ak nie je vybratý žiadny balíček, vyberieme prvý dostupný s min. 5 kartami
+      if (_activeDeckId == null && decks.isNotEmpty) {
+        for (var deck in decks) {
+          final cardCount = await DatabaseHelper.instance.getCardCountForDeck(deck.id);
+          if (cardCount >= 5) {
+            _activeDeckId = deck.id;
+            _activeDeckName = deck.name;
+            _availableCardCount = cardCount;
+            await _prefs!.setInt('active_test_deck_id', deck.id);
+            break;
+          }
+        }
+      }
+
+      if (_activeDeckId == null) {
         await _prefs!.remove('active_test_deck_id');
       }
+
+      double savedQuestions = _prefs!.getDouble('test_questionCount') ?? 10;
+      double savedLearnCards = _prefs!.getDouble('test_learnCardCount') ?? 10;
+
+      double maxQuestions = _availableCardCount < 10 ? _availableCardCount.toDouble() : 10;
+      if (maxQuestions < 3) maxQuestions = 3;
+      if (savedQuestions > maxQuestions) savedQuestions = maxQuestions;
+
+      double maxLearnCards = _availableCardCount < 20 ? _availableCardCount.toDouble() : 20;
+      if (maxLearnCards < 5) maxLearnCards = 5;
+      if (savedLearnCards > maxLearnCards) savedLearnCards = maxLearnCards;
+      if (savedLearnCards < 5) savedLearnCards = 5;
+
+      if (mounted) {
+        setState(() {
+          _questionCount = savedQuestions;
+          _learnCardCount = savedLearnCards;
+          
+          _timeLimitIndex = _prefs!.getDouble('test_timeLimitIndex') ?? 0;
+          _lockoutIndex = _prefs!.getDouble('test_lockoutIndex') ?? 2;
+          _is3Options = _prefs!.getBool('test_is3Options') ?? false;
+          _isSecondChance = _prefs!.getBool('test_isSecondChance') ?? false;
+          _isSwapQuestion = _prefs!.getBool('test_isSwapQuestion') ?? false;
+          _isConfusion = _prefs!.getBool('test_isConfusion') ?? false;
+          _isBlindTest = _prefs!.getBool('test_isBlindTest') ?? false;
+          _isHardcore = _prefs!.getBool('test_isHardcore') ?? false;
+          _isDoubleTest = _prefs!.getBool('test_isDoubleTest') ?? false;
+
+          _isLearningMode = _prefs!.getBool('test_isLearningMode') ?? false;
+          _learnInterval = _prefs!.getDouble('test_learnInterval') ?? 1;
+          _learnRepeat = _prefs!.getBool('test_learnRepeat') ?? true;
+
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("Chyba pri načítavaní nastavení testu: $e");
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
-
-    double savedQuestions = _prefs!.getDouble('test_questionCount') ?? 10;
-    double savedLearnCards = _prefs!.getDouble('test_learnCardCount') ?? 10;
-
-    double maxQuestions = _availableCardCount < 10 ? _availableCardCount.toDouble() : 10;
-    if (maxQuestions < 3) maxQuestions = 3;
-    if (savedQuestions > maxQuestions) savedQuestions = maxQuestions;
-
-    double maxLearnCards = _availableCardCount < 20 ? _availableCardCount.toDouble() : 20;
-    if (maxLearnCards < 5) maxLearnCards = 5;
-    if (savedLearnCards > maxLearnCards) savedLearnCards = maxLearnCards;
-    if (savedLearnCards < 5) savedLearnCards = 5;
-
-    setState(() {
-      _questionCount = savedQuestions;
-      _learnCardCount = savedLearnCards;
-      
-      _timeLimitIndex = _prefs!.getDouble('test_timeLimitIndex') ?? 0;
-      _lockoutIndex = _prefs!.getDouble('test_lockoutIndex') ?? 2;
-      _is3Options = _prefs!.getBool('test_is3Options') ?? false;
-      _isSecondChance = _prefs!.getBool('test_isSecondChance') ?? false;
-      _isSwapQuestion = _prefs!.getBool('test_isSwapQuestion') ?? false;
-      _isConfusion = _prefs!.getBool('test_isConfusion') ?? false;
-      _isBlindTest = _prefs!.getBool('test_isBlindTest') ?? false;
-      _isHardcore = _prefs!.getBool('test_isHardcore') ?? false;
-      _isDoubleTest = _prefs!.getBool('test_isDoubleTest') ?? false;
-
-      _isLearningMode = _prefs!.getBool('test_isLearningMode') ?? false;
-      _learnInterval = _prefs!.getDouble('test_learnInterval') ?? 1;
-      _learnRepeat = _prefs!.getBool('test_learnRepeat') ?? true;
-
-      _isLoading = false;
-    });
   }
 
   void _saveDouble(String key, double value) => _prefs?.setDouble(key, value);
@@ -220,6 +250,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     double maxQuestions = _availableCardCount < 10 ? _availableCardCount.toDouble() : 10;
     double minQuestions = 3;
     if (maxQuestions < minQuestions) maxQuestions = minQuestions;
+    if (_questionCount > maxQuestions) _questionCount = maxQuestions;
+    if (_questionCount < minQuestions) _questionCount = minQuestions;
     
     int questionDivisions = (maxQuestions - minQuestions).toInt();
     if (questionDivisions <= 0) questionDivisions = 1;
@@ -227,13 +259,13 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     double maxLearnCards = _availableCardCount < 20 ? _availableCardCount.toDouble() : 20;
     double minLearnCards = 5;
     if (maxLearnCards < minLearnCards) maxLearnCards = minLearnCards;
+    if (_learnCardCount > maxLearnCards) _learnCardCount = maxLearnCards;
+    if (_learnCardCount < minLearnCards) _learnCardCount = minLearnCards;
 
     int learnDivisions = (maxLearnCards - minLearnCards).toInt();
     if (learnDivisions <= 0) learnDivisions = 1;
 
     double currentLearnValue = _learnCardCount;
-    if (currentLearnValue > maxLearnCards) currentLearnValue = maxLearnCards;
-    if (currentLearnValue < minLearnCards) currentLearnValue = minLearnCards;
 
     int targetPctInt = (_lockoutPercentages[_lockoutIndex.toInt()] * 100).round();
     String lockoutLabel = texts.lockoutLabelFormat(targetPctInt, _requiredCorrectQuestions, _questionCount.toInt());
@@ -826,6 +858,13 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     final Color activeTrack = isCyber ? const Color(0xFF00FF66) : (isSoft ? accentColor : textColor);
     final Color inactiveTrack = isCyber ? accentColor.withValues(alpha: 0.25) : (isSoft ? const Color(0xFFB0C0D6) : textColor.withValues(alpha: 0.3));
 
+    double safeMin = min;
+    double safeMax = max;
+    if (safeMin > safeMax) safeMax = safeMin;
+    double safeValue = value;
+    if (safeValue < safeMin) safeValue = safeMin;
+    if (safeValue > safeMax) safeValue = safeMax;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
       decoration: currentTheme.getCardDecoration(accentColor),
@@ -868,11 +907,11 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
               thumbShape: isSoft ? const RoundSliderThumbShape(enabledThumbRadius: 10.0, elevation: 4) : (isCyber ? const RoundSliderThumbShape(enabledThumbRadius: 8.0) : null),
             ),
             child: Slider(
-              value: value, 
-              min: min, 
-              max: max, 
-              divisions: divisions, 
-              onChanged: min == max ? null : onChanged,
+              value: safeValue, 
+              min: safeMin, 
+              max: safeMax, 
+              divisions: divisions > 0 ? divisions : 1, 
+              onChanged: safeMin == safeMax ? null : onChanged,
             ),
           ),
         ],

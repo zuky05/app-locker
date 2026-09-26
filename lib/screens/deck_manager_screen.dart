@@ -26,13 +26,17 @@ class DeckManagerScreen extends StatefulWidget {
 class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTickerProviderStateMixin {
   List<Deck> myDecks = [];
   List<Deck> premadeDecks = [];
+  Map<int, int> deckCardCounts = {};
+  
   bool isLoading = true;
+  bool isPremadeLoading = false;
   bool isPremium = false;
   
   int? expandedDeckId;
   int? activeBlockerDeckId;
 
   late TabController _tabController;
+  String? _currentLocale;
 
   static const Color _softCardBg = Color(0xFFF8FAFC);
 
@@ -41,9 +45,18 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
-      setState(() {}); 
+      if (mounted) setState(() {}); 
     });
-    _loadDecks();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final newLocale = Provider.of<LocaleProvider>(context, listen: true).locale;
+    if (_currentLocale != newLocale) {
+      _currentLocale = newLocale;
+      _loadDecks();
+    }
   }
 
   @override
@@ -52,14 +65,40 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     super.dispose();
   }
 
+  int _getCategoryWeight(String categoryName) {
+    final clean = categoryName.toLowerCase();
+    if (clean.contains('geogr')) return 1;
+    if (clean.contains('lang') || clean.contains('jazyk')) return 2;
+    if (clean.contains('comp') || clean.contains('informa') || clean.contains('tech') || clean == 'it') return 3;
+    return 4;
+  }
+
   Future<void> _loadDecks() async {
+    if (!mounted) return;
+
+    final currentLocale = Provider.of<LocaleProvider>(context, listen: false).locale;
+
+    // 1. Rýchle načítanie z lokálnej DB
     final loadedDecks = await DatabaseHelper.instance.getDecks();
     final prefs = await SharedPreferences.getInstance();
+    final premiumStatus = await RevenueCatService.isPremium();
     int? activeId = prefs.getInt('active_test_deck_id');
+
+    final Map<int, int> counts = {};
+    for (var deck in loadedDecks) {
+      if (deck.id != null) {
+        counts[deck.id!] = await DatabaseHelper.instance.getCardCountForDeck(deck.id!);
+      }
+    }
+
+    final Map<String, Deck> uniquePremadeMap = {};
+    for (var d in loadedDecks.where((d) => d.isPremade)) {
+      uniquePremadeMap.putIfAbsent(d.name, () => d);
+    }
 
     if (activeId != null) {
       final bool exists = loadedDecks.any((d) => d.id == activeId);
-      final int activeCardCount = exists ? await DatabaseHelper.instance.getCardCountForDeck(activeId) : 0;
+      final int activeCardCount = counts[activeId] ?? 0;
 
       if (!exists || activeCardCount < 5) {
         await prefs.remove('active_test_deck_id');
@@ -69,12 +108,10 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
 
     if (activeId == null && loadedDecks.isNotEmpty) {
       Deck? defaultDeck;
-
       for (var d in loadedDecks) {
         final nameLower = d.name.toLowerCase();
         if (nameLower.contains('capital') || nameLower.contains('hlavné mestá') || nameLower.contains('world capitals')) {
-          final count = await DatabaseHelper.instance.getCardCountForDeck(d.id!);
-          if (count >= 5) {
+          if ((counts[d.id!] ?? 0) >= 5) {
             defaultDeck = d;
             break;
           }
@@ -83,12 +120,9 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
 
       if (defaultDeck == null) {
         for (var d in loadedDecks) {
-          if (d.isPremade) {
-            final count = await DatabaseHelper.instance.getCardCountForDeck(d.id!);
-            if (count >= 5) {
-              defaultDeck = d;
-              break;
-            }
+          if (d.isPremade && (counts[d.id!] ?? 0) >= 5) {
+            defaultDeck = d;
+            break;
           }
         }
       }
@@ -98,33 +132,62 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
         activeId = defaultDeck.id;
       }
     }
-    
-    final premiumStatus = await RevenueCatService.isPremium();
+
     if (!mounted) return;
 
+    // Ihneď odomkneme hlavné UI
     setState(() {
       myDecks = loadedDecks.where((d) => !d.isPremade).toList();
-      premadeDecks = loadedDecks.where((d) => d.isPremade).toList();
+      premadeDecks = uniquePremadeMap.values.toList();
+      deckCardCounts = counts;
       activeBlockerDeckId = activeId;
       isPremium = premiumStatus;
       isLoading = false;
+      isPremadeLoading = true;
+    });
+
+    // 2. Na pozadí obnovíme premade decky
+    await DatabaseHelper.instance.refreshPremadeDecks(null, currentLocale);
+
+    if (!mounted) return;
+
+    // 3. Plynulá aktualizácia zoznamu
+    final updatedDecks = await DatabaseHelper.instance.getDecks();
+    final Map<int, int> updatedCounts = {};
+    for (var deck in updatedDecks) {
+      if (deck.id != null) {
+        updatedCounts[deck.id!] = await DatabaseHelper.instance.getCardCountForDeck(deck.id!);
+      }
+    }
+
+    final Map<String, Deck> newUniquePremadeMap = {};
+    for (var d in updatedDecks.where((d) => d.isPremade)) {
+      newUniquePremadeMap.putIfAbsent(d.name, () => d);
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      myDecks = updatedDecks.where((d) => !d.isPremade).toList();
+      premadeDecks = newUniquePremadeMap.values.toList();
+      deckCardCounts = updatedCounts;
+      isPremadeLoading = false;
     });
   }
 
-  // 🟢 DYNAMICKÝ POPIS KATEGÓRIÍ PODĽA ZVOLENÉHO JAZYKA
-  String _getCategoryDescription(String category, bool isEn) {
-    final cleanCategory = category.toLowerCase().trim();
-    if (cleanCategory.contains('geography') || cleanCategory.contains('geografia')) {
+  String _getCategoryDescription(String displayCategory, bool isEn) {
+    final clean = displayCategory.toLowerCase();
+    if (clean.contains('geogr')) {
       return isEn
           ? 'Test your knowledge of capitals, flags, and world geography.'
           : 'Otestuj svoje znalosti hlavných miest, vlajok a geografie sveta.';
     }
-    if (cleanCategory.contains('language') || cleanCategory.contains('jazyk')) {
+    if (clean.contains('lang') || clean.contains('jazyk')) {
       return isEn
           ? 'Expand your vocabulary in the most spoken world languages.'
           : 'Rozšír si slovnú zásobu v najpoužívanejších svetových jazykoch.';
     }
-    if (cleanCategory.contains('tech') || cleanCategory.contains('it') || cleanCategory.contains('computer') || cleanCategory.contains('informa')) {
+    if (clean.contains('comp') || clean.contains('informa') || clean.contains('tech') || clean == 'it') {
       return isEn
           ? 'Master HTTP status codes, Linux commands, and developer concepts.'
           : 'Ovládni HTTP status kódy, Linux príkazy a základné vývojárske koncepty.';
@@ -143,11 +206,11 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     await _loadDecks();
   }
 
-  IconData _getCategoryIcon(String category) {
-    final cleanCategory = category.trim().toLowerCase();
-    if (cleanCategory.contains('geography') || cleanCategory.contains('geografia')) return Icons.public;
-    if (cleanCategory.contains('language') || cleanCategory.contains('jazyk')) return Icons.translate;
-    if (cleanCategory.contains('tech') || cleanCategory.contains('it') || cleanCategory.contains('computer') || cleanCategory.contains('informa')) return Icons.terminal;
+  IconData _getCategoryIcon(String displayCategory) {
+    final clean = displayCategory.toLowerCase();
+    if (clean.contains('geogr')) return Icons.public;
+    if (clean.contains('lang') || clean.contains('jazyk')) return Icons.translate;
+    if (clean.contains('comp') || clean.contains('informa') || clean.contains('tech') || clean == 'it') return Icons.terminal;
     return Icons.folder_special;
   }
 
@@ -707,6 +770,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
 
   Widget _buildDeckCard(Deck deck) {
     final t = context.watch<LocaleProvider>().t;
+    final isEn = context.watch<LocaleProvider>().locale == 'en';
     final isExpanded = expandedDeckId == deck.id;
     final bool isCustom = !deck.isPremade;
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -718,273 +782,270 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     final bool isSoft = currentTheme.id == 1;
     final bool isCyber = currentTheme.id == 0;
 
-    return FutureBuilder<int>(
-      future: DatabaseHelper.instance.getCardCountForDeck(deck.id!),
-      builder: (context, snapshot) {
-        final cardCount = snapshot.data ?? 0;
-        final bool hasEnoughCards = cardCount >= 5;
-        final bool isActive = (activeBlockerDeckId == deck.id) && hasEnoughCards;
+    final cardCount = deck.id != null ? (deckCardCounts[deck.id!] ?? 0) : 0;
+    final bool hasEnoughCards = cardCount >= 5;
+    final bool isActive = (activeBlockerDeckId == deck.id) && hasEnoughCards;
 
-        final cardDecoration = isCyber
-            ? BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.75),
-                borderRadius: currentTheme.cardBorderRadius,
-                border: Border.all(
-                  color: isActive 
-                      ? const Color(0xFF00FF66) 
-                      : const Color(0xFF00F5FF).withValues(alpha: 0.35),
-                  width: isActive ? 1.5 : 1.0,
-                ),
-              )
-            : currentTheme.getCardDecoration(sectionColor, isSelected: isActive);
+    final categoryName = deck.getLocalizedCategory(context);
 
-        final Color tileBgColor = currentTheme.getTileBg(isGranted: false, accentColor: sectionColor);
-        final Color avatarBg = isNeo 
-            ? Colors.white 
-            : (isCyber 
-                ? Colors.black.withValues(alpha: 0.5) 
-                : (isVibrant ? Colors.white.withValues(alpha: 0.2) : tileBgColor));
-        
-        final Color avatarIconColor = isNeo 
-            ? Colors.black 
-            : (isCyber 
-                ? const Color(0xFF00F5FF) 
-                : (isVibrant ? Colors.white : currentTheme.getContrastTextColor(tileBgColor)));
-
-        return Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          decoration: cardDecoration,
-          child: ClipRRect(
+    final cardDecoration = isCyber
+        ? BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.75),
             borderRadius: currentTheme.cardBorderRadius,
-            child: Column(
-              children: [
-                ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  leading: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: isSoft
-                        ? BoxDecoration(
-                            color: const Color(0xFFEBF0F5),
-                            shape: BoxShape.circle,
-                            boxShadow: const [
-                              BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(2, 2), blurRadius: 4),
-                              BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
-                            ],
-                          )
-                        : null,
-                    child: CircleAvatar(
-                      backgroundColor: isSoft ? Colors.transparent : avatarBg,
-                      child: Icon(_getCategoryIcon(deck.category), size: 20, color: isSoft ? sectionColor : avatarIconColor),
-                    ),
-                  ),
-                  title: Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          deck.getLocalizedName(context), 
-                          style: TextStyle(
-                            fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
-                            fontSize: 16,
-                            color: isNeo ? Colors.black : (isSoft ? const Color(0xFF2D3748) : (isCyber || isVibrant ? Colors.white : theme.colorScheme.onSurface)),
-                          ), 
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (isActive) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: isSoft
-                              ? BoxDecoration(
-                                  color: const Color(0xFFEBF0F5),
-                                  borderRadius: BorderRadius.circular(6),
-                                  boxShadow: const [
-                                    BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(2, 2), blurRadius: 4),
-                                    BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
-                                  ],
-                                )
-                              : (isCyber 
-                                  ? BoxDecoration(
-                                      color: const Color(0xFF00FF66).withValues(alpha: 0.15),
-                                      borderRadius: BorderRadius.circular(2),
-                                      border: Border.all(color: const Color(0xFF00FF66), width: 1.0),
-                                    )
-                                  : BoxDecoration(
-                                      color: currentTheme.successColor, 
-                                      borderRadius: BorderRadius.circular(4),
-                                      border: isNeo ? Border.all(color: Colors.black, width: 2.0) : Border.fromBorderSide(currentTheme.buttonBorder),
-                                    )),
-                          child: Text(
-                            t.activeBadge, 
-                            style: TextStyle(
-                              color: isSoft ? currentTheme.successColor : (isCyber ? const Color(0xFF00FF66) : (isNeo ? Colors.black : currentTheme.getContrastTextColor(currentTheme.successColor))), 
-                              fontSize: 10, 
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        )
-                      ]
-                    ],
-                  ),
-                  subtitle: Text(
-                    "${deck.getLocalizedCategory(context)} • ${context.read<LocaleProvider>().locale == 'en' ? 'Cards' : 'Karty'}: $cardCount",
-                    style: TextStyle(
-                      fontWeight: isNeo ? FontWeight.bold : FontWeight.normal,
-                      fontSize: 12,
-                      color: isNeo ? Colors.black87 : (isSoft ? const Color(0xFF718096) : (isCyber ? Colors.white60 : (isVibrant ? Colors.white.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.7)))),
-                    ),
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (!hasEnoughCards) ...[
-                        Icon(Icons.warning_amber_rounded, color: isNeo ? Colors.black : currentTheme.warningColor, size: 20),
-                        const SizedBox(width: 8),
-                      ],
-                      Icon(
-                        isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                        color: isNeo ? Colors.black : (isSoft ? const Color(0xFF718096) : (isCyber ? const Color(0xFF00F5FF) : (isVibrant ? Colors.white : currentTheme.getIconColor(sectionColor)))),
-                      ),
-                    ],
-                  ),
-                  onTap: () {
-                    setState(() {
-                      expandedDeckId = isExpanded ? null : deck.id;
-                    });
-                  },
-                ),
-                AnimatedCrossFade(
-                  firstChild: const SizedBox.shrink(),
-                  secondChild: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: isNeo ? Colors.black.withValues(alpha: 0.05) : (isVibrant ? Colors.white.withValues(alpha: 0.15) : (isCyber ? Colors.black.withValues(alpha: 0.4) : Colors.transparent)),
-                      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
-                      border: isNeo || isVibrant ? Border(top: BorderSide(color: isNeo ? Colors.black : (isVibrant ? Colors.white.withValues(alpha: 0.3) : currentTheme.buttonBorder.color), width: isNeo ? 3.5 : 2.0)) : (isCyber ? Border(top: BorderSide(color: const Color(0xFF00F5FF).withValues(alpha: 0.2), width: 1.0)) : null),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                    child: Column(
-                      children: [
-                        if (!isNeo && !isVibrant && !isSoft && !isCyber) ...[
-                          Divider(height: 1, color: theme.colorScheme.onSurface.withValues(alpha: 0.2)),
-                          const SizedBox(height: 8),
-                        ],
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _buildActionButton(
-                              icon: isActive ? Icons.check_circle : Icons.radio_button_unchecked,
-                              label: isActive ? t.btnActive : t.btnSelect,
-                              color: isNeo ? Colors.black : (isActive ? currentTheme.successColor : (isSoft ? const Color(0xFF2D3748) : theme.colorScheme.onSurface)),
-                              onTap: () async {
-                                if (!hasEnoughCards) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text(t.errorMinCardsBlock)),
-                                  );
-                                  return;
-                                }
-                                final prefs = await SharedPreferences.getInstance();
-                                await prefs.setInt('active_test_deck_id', deck.id);
-                                setState(() => activeBlockerDeckId = deck.id);
-                              },
-                            ),
-                            _buildActionButton(
-                              icon: Icons.style,
-                              label: t.btnView,
-                              color: isNeo ? Colors.black : currentTheme.blockedAppsColor,
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => DeckDetailScreen(deck: deck, isReadOnly: true)),
-                              ).then((_) => _loadDecks()),
-                            ),
-                            Opacity(
-                              opacity: hasEnoughCards ? 1.0 : 0.4,
-                              child: _buildActionButton(
-                                icon: Icons.quiz,
-                                label: t.btnTest,
-                                color: isNeo ? Colors.black : currentTheme.decksColor,
-                                onTap: hasEnoughCards ? () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => QuizOverlayScreen(practiceDeckId: deck.id)),
-                                ) : () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text(t.errorMinCardsTest)),
-                                  );
-                                },
-                              ),
-                            ),
-                            _buildActionButton(
-                              icon: Icons.share,
-                              label: t.btnShare,
-                              color: isNeo ? Colors.black : currentTheme.decksColor,
-                              onTap: () async {
-                                final currentLocale = context.read<LocaleProvider>().locale;
-                                final cards = await DatabaseHelper.instance.getCardsForDeck(deck.id);
-                                final isEn = currentLocale == 'en';
-
-                                final mapData = {
-                                  'title': deck.name,
-                                  'category': deck.category,
-                                  'cards': cards.map((c) => {
-                                    'q': c['question'] ?? c['front'] ?? c['prompt'] ?? '',
-                                    'a': c['answer'] ?? c['back'] ?? c['correct_answer'] ?? '',
-                                  }).toList(),
-                                };
-
-                                String jsonString = jsonEncode(mapData);
-                                String base64Data = base64Url.encode(utf8.encode(jsonString));
-
-                                final String shareLink = 'flashpass://share?data=$base64Data';
-                                final String message = isEn
-                                    ? 'Come learn the deck "${deck.getLocalizedName(context)}" on FlashPass! Click to import: $shareLink'
-                                    : 'Poď sa učiť balíček "${deck.getLocalizedName(context)}" vo FlashPasse! Klikni pre import: $shareLink';
-
-                                Share.share(message);
-                              },
-                            ),
-                          ],
-                        ),
-                        if (isCustom) ...[
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              _buildActionButton(
-                                icon: Icons.add_circle_outline_outlined,
-                                label: t.btnEditCards,
-                                color: isNeo ? Colors.black : currentTheme.dailyGoalColor,
-                                onTap: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => DeckDetailScreen(deck: deck)),
-                                ).then((_) => _loadDecks()),
-                              ),
-                              _buildActionButton(
-                                icon: Icons.edit,
-                                label: t.btnRename,
-                                color: isNeo ? Colors.black : currentTheme.warningColor,
-                                onTap: () => _showRenameDeckDialog(deck),
-                              ),
-                              _buildActionButton(
-                                icon: Icons.delete,
-                                label: t.btnDelete,
-                                color: isNeo ? Colors.black : currentTheme.errorColor,
-                                onTap: () => _showDeleteConfirmDialog(deck),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  crossFadeState: isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-                  duration: const Duration(milliseconds: 250),
-                ),
-              ],
+            border: Border.all(
+              color: isActive 
+                  ? const Color(0xFF00FF66) 
+                  : const Color(0xFF00F5FF).withValues(alpha: 0.35),
+              width: isActive ? 1.5 : 1.0,
             ),
-          ),
-        );
-      },
+          )
+        : currentTheme.getCardDecoration(sectionColor, isSelected: isActive);
+
+    final Color tileBgColor = currentTheme.getTileBg(isGranted: false, accentColor: sectionColor);
+    final Color avatarBg = isNeo 
+        ? Colors.white 
+        : (isCyber 
+            ? Colors.black.withValues(alpha: 0.5) 
+            : (isVibrant ? Colors.white.withValues(alpha: 0.2) : tileBgColor));
+    
+    final Color avatarIconColor = isNeo 
+        ? Colors.black 
+        : (isCyber 
+            ? const Color(0xFF00F5FF) 
+            : (isVibrant ? Colors.white : currentTheme.getContrastTextColor(tileBgColor)));
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: cardDecoration,
+      child: ClipRRect(
+        borderRadius: currentTheme.cardBorderRadius,
+        child: Column(
+          children: [
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: isSoft
+                    ? BoxDecoration(
+                        color: const Color(0xFFEBF0F5),
+                        shape: BoxShape.circle,
+                        boxShadow: const [
+                          BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(2, 2), blurRadius: 4),
+                          BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
+                        ],
+                      )
+                    : null,
+                child: CircleAvatar(
+                  backgroundColor: isSoft ? Colors.transparent : avatarBg,
+                  child: Icon(_getCategoryIcon(categoryName), size: 20, color: isSoft ? sectionColor : avatarIconColor),
+                ),
+              ),
+              title: Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      deck.getLocalizedName(context), 
+                      style: TextStyle(
+                        fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
+                        fontSize: 16,
+                        color: isNeo ? Colors.black : (isSoft ? const Color(0xFF2D3748) : (isCyber || isVibrant ? Colors.white : theme.colorScheme.onSurface)),
+                      ), 
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (isActive) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: isSoft
+                          ? BoxDecoration(
+                              color: const Color(0xFFEBF0F5),
+                              borderRadius: BorderRadius.circular(6),
+                              boxShadow: const [
+                                BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(2, 2), blurRadius: 4),
+                                BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
+                              ],
+                            )
+                          : (isCyber 
+                              ? BoxDecoration(
+                                  color: const Color(0xFF00FF66).withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(2),
+                                  border: Border.all(color: const Color(0xFF00FF66), width: 1.0),
+                                )
+                              : BoxDecoration(
+                                  color: currentTheme.successColor, 
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: isNeo ? Border.all(color: Colors.black, width: 2.0) : Border.fromBorderSide(currentTheme.buttonBorder),
+                                )),
+                      child: Text(
+                        t.activeBadge, 
+                        style: TextStyle(
+                          color: isSoft ? currentTheme.successColor : (isCyber ? const Color(0xFF00FF66) : (isNeo ? Colors.black : currentTheme.getContrastTextColor(currentTheme.successColor))), 
+                          fontSize: 10, 
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    )
+                  ]
+                ],
+              ),
+              subtitle: Text(
+                "$categoryName • ${isEn ? 'Cards' : 'Karty'}: $cardCount",
+                style: TextStyle(
+                  fontWeight: isNeo ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 12,
+                  color: isNeo ? Colors.black87 : (isSoft ? const Color(0xFF718096) : (isCyber ? Colors.white60 : (isVibrant ? Colors.white.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.7)))),
+                ),
+              ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (!hasEnoughCards) ...[
+                    Icon(Icons.warning_amber_rounded, color: isNeo ? Colors.black : currentTheme.warningColor, size: 20),
+                    const SizedBox(width: 8),
+                  ],
+                  Icon(
+                    isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                    color: isNeo ? Colors.black : (isSoft ? const Color(0xFF718096) : (isCyber ? const Color(0xFF00F5FF) : (isVibrant ? Colors.white : currentTheme.getIconColor(sectionColor)))),
+                  ),
+                ],
+              ),
+              onTap: () {
+                setState(() {
+                  expandedDeckId = isExpanded ? null : deck.id;
+                });
+              },
+            ),
+            AnimatedCrossFade(
+              firstChild: const SizedBox.shrink(),
+              secondChild: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: isNeo ? Colors.black.withValues(alpha: 0.05) : (isVibrant ? Colors.white.withValues(alpha: 0.15) : (isCyber ? Colors.black.withValues(alpha: 0.4) : Colors.transparent)),
+                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
+                  border: isNeo || isVibrant ? Border(top: BorderSide(color: isNeo ? Colors.black : (isVibrant ? Colors.white.withValues(alpha: 0.3) : currentTheme.buttonBorder.color), width: isNeo ? 3.5 : 2.0)) : (isCyber ? Border(top: BorderSide(color: const Color(0xFF00F5FF).withValues(alpha: 0.2), width: 1.0)) : null),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                child: Column(
+                  children: [
+                    if (!isNeo && !isVibrant && !isSoft && !isCyber) ...[
+                      Divider(height: 1, color: theme.colorScheme.onSurface.withValues(alpha: 0.2)),
+                      const SizedBox(height: 8),
+                    ],
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildActionButton(
+                          icon: isActive ? Icons.check_circle : Icons.radio_button_unchecked,
+                          label: isActive ? t.btnActive : t.btnSelect,
+                          color: isNeo ? Colors.black : (isActive ? currentTheme.successColor : (isSoft ? const Color(0xFF2D3748) : theme.colorScheme.onSurface)),
+                          onTap: () async {
+                            if (!hasEnoughCards) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(t.errorMinCardsBlock)),
+                              );
+                              return;
+                            }
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.setInt('active_test_deck_id', deck.id!);
+                            setState(() => activeBlockerDeckId = deck.id);
+                          },
+                        ),
+                        _buildActionButton(
+                          icon: Icons.style,
+                          label: t.btnView,
+                          color: isNeo ? Colors.black : currentTheme.blockedAppsColor,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => DeckDetailScreen(deck: deck, isReadOnly: true)),
+                          ).then((_) => _loadDecks()),
+                        ),
+                        Opacity(
+                          opacity: hasEnoughCards ? 1.0 : 0.4,
+                          child: _buildActionButton(
+                            icon: Icons.quiz,
+                            label: t.btnTest,
+                            color: isNeo ? Colors.black : currentTheme.decksColor,
+                            onTap: hasEnoughCards ? () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => QuizOverlayScreen(practiceDeckId: deck.id)),
+                            ) : () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(t.errorMinCardsTest)),
+                              );
+                            },
+                          ),
+                        ),
+                        _buildActionButton(
+                          icon: Icons.share,
+                          label: t.btnShare,
+                          color: isNeo ? Colors.black : currentTheme.decksColor,
+                          onTap: () async {
+                            final currentLocale = context.read<LocaleProvider>().locale;
+                            final cards = await DatabaseHelper.instance.getCardsForDeck(deck.id!);
+                            final isEn = currentLocale == 'en';
+
+                            final mapData = {
+                              'title': deck.name,
+                              'category': deck.category,
+                              'cards': cards.map((c) => {
+                                'q': c['question'] ?? c['front'] ?? c['prompt'] ?? '',
+                                'a': c['answer'] ?? c['back'] ?? c['correct_answer'] ?? '',
+                              }).toList(),
+                            };
+
+                            String jsonString = jsonEncode(mapData);
+                            String base64Data = base64Url.encode(utf8.encode(jsonString));
+
+                            final String shareLink = 'flashpass://share?data=$base64Data';
+                            final String message = isEn
+                                ? 'Come learn the deck "${deck.getLocalizedName(context)}" on FlashPass! Click to import: $shareLink'
+                                : 'Poď sa učiť balíček "${deck.getLocalizedName(context)}" vo FlashPasse! Klikni pre import: $shareLink';
+
+                            Share.share(message);
+                          },
+                        ),
+                      ],
+                    ),
+                    if (isCustom) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildActionButton(
+                            icon: Icons.add_circle_outline_outlined,
+                            label: t.btnEditCards,
+                            color: isNeo ? Colors.black : currentTheme.dailyGoalColor,
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => DeckDetailScreen(deck: deck)),
+                            ).then((_) => _loadDecks()),
+                          ),
+                          _buildActionButton(
+                            icon: Icons.edit,
+                            label: t.btnRename,
+                            color: isNeo ? Colors.black : currentTheme.warningColor,
+                            onTap: () => _showRenameDeckDialog(deck),
+                          ),
+                          _buildActionButton(
+                            icon: Icons.delete,
+                            label: t.btnDelete,
+                            color: isNeo ? Colors.black : currentTheme.errorColor,
+                            onTap: () => _showDeleteConfirmDialog(deck),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              crossFadeState: isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+              duration: const Duration(milliseconds: 250),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -1025,6 +1086,32 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
     final bool isSoft = currentTheme.id == 1;
     final bool isCyber = currentTheme.id == 0;
 
+    if (isPremadeLoading && deckList.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(
+              color: isCyber ? const Color(0xFF00F5FF) : sectionColor,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              isEn ? 'Loading decks...' : 'Načítavajú sa balíčky...',
+              style: TextStyle(
+                fontWeight: isNeo ? FontWeight.w900 : FontWeight.bold,
+                fontSize: 14,
+                color: isNeo
+                    ? Colors.black
+                    : (isSoft
+                        ? const Color(0xFF718096)
+                        : (isCyber ? Colors.white70 : theme.colorScheme.onSurface.withValues(alpha: 0.8))),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     if (deckList.isEmpty) {
       return Center(
         child: Text(
@@ -1039,101 +1126,110 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
 
     final Map<String, List<Deck>> groupedDecks = {};
     for (var deck in deckList) {
-      groupedDecks.putIfAbsent(deck.getLocalizedCategory(context), () => []).add(deck);
+      final categoryName = deck.getLocalizedCategory(context);
+      groupedDecks.putIfAbsent(categoryName, () => []).add(deck);
     }
 
-    // 🟢 Zoradenie kategórií: Informatika / Technology bude VŽDY úplne na spodku
     final categories = groupedDecks.keys.toList();
     categories.sort((a, b) {
-      final aClean = a.toLowerCase();
-      final bClean = b.toLowerCase();
-      final aIsTech = aClean.contains('informa') || aClean.contains('tech') || aClean.contains('computer');
-      final bIsTech = bClean.contains('informa') || bClean.contains('tech') || bClean.contains('computer');
-
-      if (aIsTech && !bIsTech) return 1;
-      if (!aIsTech && bIsTech) return -1;
+      final weightA = _getCategoryWeight(a);
+      final weightB = _getCategoryWeight(b);
+      if (weightA != weightB) {
+        return weightA.compareTo(weightB);
+      }
       return a.compareTo(b);
     });
 
     return ListView(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-      children: categories.map((categoryName) {
-        final categoryDecks = groupedDecks[categoryName]!;
-
-        final cardDeco = isCyber
-            ? BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.75),
-                borderRadius: currentTheme.cardBorderRadius,
-                border: Border.all(
-                  color: const Color(0xFF00F5FF).withValues(alpha: 0.4),
-                  width: 1.0,
-                ),
-              )
-            : currentTheme.getCardDecoration(sectionColor);
-
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          decoration: cardDeco,
-          child: ClipRRect(
-            borderRadius: currentTheme.cardBorderRadius,
-            child: ExpansionTile(
-              shape: const Border(),
-              collapsedShape: const Border(),
-              leading: Container(
-                width: 36,
-                height: 36,
-                decoration: isSoft
-                    ? BoxDecoration(
-                        color: const Color(0xFFEBF0F5),
-                        shape: BoxShape.circle,
-                        boxShadow: const [
-                          BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(2, 2), blurRadius: 4),
-                          BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
-                        ],
-                      )
-                    : null,
-                child: Center(
-                  child: Icon(
-                    _getCategoryIcon(categoryName), 
-                    color: isNeo ? Colors.black : (isSoft ? sectionColor : (isCyber ? const Color(0xFF00F5FF) : (isVibrant ? Colors.white : currentTheme.getIconColor(sectionColor)))), 
-                    size: 22,
-                  ),
-                ),
-              ),
-              iconColor: isNeo ? Colors.black : (isSoft ? const Color(0xFF718096) : (isCyber ? const Color(0xFF00F5FF) : (isVibrant ? Colors.white : sectionColor))),
-              collapsedIconColor: isNeo ? Colors.black : (isSoft ? const Color(0xFF718096) : (isCyber ? const Color(0xFF00F5FF) : (isVibrant ? Colors.white : sectionColor))),
-              tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              title: Text(
-                categoryName,
-                style: TextStyle(
-                  fontSize: 18, 
-                  fontWeight: FontWeight.bold, 
-                  color: isNeo ? Colors.black : (isSoft ? const Color(0xFF2D3748) : (isCyber ? Colors.white : (isVibrant ? Colors.white : sectionColor))),
-                ),
-              ),
-              subtitle: Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Text(
-                  _getCategoryDescription(categoryName, isEn),
-                  style: TextStyle(
-                    fontSize: 12, 
-                    fontWeight: isNeo ? FontWeight.bold : FontWeight.normal,
-                    color: isNeo ? Colors.black87 : (isSoft ? const Color(0xFF718096) : (isCyber ? Colors.white70 : (isVibrant ? Colors.white.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.7)))),
-                  ),
-                ),
-              ),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                  child: Column(
-                    children: categoryDecks.map((deck) => _buildDeckCard(deck)).toList(),
-                  ),
-                ),
-              ],
+      children: [
+        if (isPremadeLoading)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: LinearProgressIndicator(
+              color: isCyber ? const Color(0xFF00F5FF) : sectionColor,
+              backgroundColor: sectionColor.withValues(alpha: 0.2),
             ),
           ),
-        );
-      }).toList(),
+        ...categories.map((categoryName) {
+          final categoryDecks = groupedDecks[categoryName]!;
+
+          final cardDeco = isCyber
+              ? BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.75),
+                  borderRadius: currentTheme.cardBorderRadius,
+                  border: Border.all(
+                    color: const Color(0xFF00F5FF).withValues(alpha: 0.4),
+                    width: 1.0,
+                  ),
+                )
+              : currentTheme.getCardDecoration(sectionColor);
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: cardDeco,
+            child: ClipRRect(
+              borderRadius: currentTheme.cardBorderRadius,
+              child: ExpansionTile(
+                initiallyExpanded: true,
+                shape: const Border(),
+                collapsedShape: const Border(),
+                leading: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: isSoft
+                      ? BoxDecoration(
+                          color: const Color(0xFFEBF0F5),
+                          shape: BoxShape.circle,
+                          boxShadow: const [
+                            BoxShadow(color: Color(0xFFCBD5E1), offset: Offset(2, 2), blurRadius: 4),
+                            BoxShadow(color: Colors.white, offset: Offset(-2, -2), blurRadius: 4),
+                          ],
+                        )
+                      : null,
+                  child: Center(
+                    child: Icon(
+                      _getCategoryIcon(categoryName), 
+                      color: isNeo ? Colors.black : (isSoft ? sectionColor : (isCyber ? const Color(0xFF00F5FF) : (isVibrant ? Colors.white : currentTheme.getIconColor(sectionColor)))), 
+                      size: 22,
+                    ),
+                  ),
+                ),
+                iconColor: isNeo ? Colors.black : (isSoft ? const Color(0xFF718096) : (isCyber ? const Color(0xFF00F5FF) : (isVibrant ? Colors.white : sectionColor))),
+                collapsedIconColor: isNeo ? Colors.black : (isSoft ? const Color(0xFF718096) : (isCyber ? const Color(0xFF00F5FF) : (isVibrant ? Colors.white : sectionColor))),
+                tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                title: Text(
+                  categoryName,
+                  style: TextStyle(
+                    fontSize: 18, 
+                    fontWeight: FontWeight.bold, 
+                    color: isNeo ? Colors.black : (isSoft ? const Color(0xFF2D3748) : (isCyber ? Colors.white : (isVibrant ? Colors.white : sectionColor))),
+                  ),
+                ),
+                subtitle: Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    _getCategoryDescription(categoryName, isEn),
+                    style: TextStyle(
+                      fontSize: 12, 
+                      fontWeight: isNeo ? FontWeight.bold : FontWeight.normal,
+                      color: isNeo ? Colors.black87 : (isSoft ? const Color(0xFF718096) : (isCyber ? Colors.white70 : (isVibrant ? Colors.white.withValues(alpha: 0.8) : theme.colorScheme.onSurface.withValues(alpha: 0.7)))),
+                    ),
+                  ),
+                ),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                    child: Column(
+                      children: categoryDecks.map((deck) => _buildDeckCard(deck)).toList(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+      ],
     );
   }
 
@@ -1266,7 +1362,11 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
           ),
         ),
         body: isLoading
-            ? Center(child: CircularProgressIndicator(color: sectionColor))
+            ? Center(
+                child: CircularProgressIndicator(
+                  color: isCyber ? const Color(0xFF00F5FF) : sectionColor,
+                ),
+              )
             : TabBarView(
                 controller: _tabController,
                 children: [

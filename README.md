@@ -32,7 +32,7 @@
 
 ## 🌟 Highlights
 
-* 🧠 **Knowledge as Currency:** To access your blocked apps , answer quick flashcard prompts to earn screen time.
+* 🧠 **Knowledge as Currency:** To access your blocked apps, answer quick flashcard prompts to earn screen time.
 * ⚡ **Zero-Friction Importers:** Native bidirectional CSV parsing (supports multi-line Quizlet exports) and direct `.apkg` Anki archive import.
 * 🛡️ **Unbreakable Focus Guard:** Native Android Accessibility & Foreground Overlay gating prevents impulse doomscrolling.
 * 💎 **RevenueCat Monetization:** In-app subscriptions backed by RevenueCat Paywalls and native Customer Center.
@@ -44,7 +44,7 @@
 **FlashPass** tackles digital screen addiction and doomscrolling from a psychological angle: instead of relying purely on willpower or rigid blocking, it implements an **active learning tax**.
 
 When attempting to launch a restricted app, FlashPass intercepts with an instant flashcard challenge. Solve the challenge = Get screen time for your restricted app. When the timer runs out, 
-user is prompted to take another challenge.
+the user is prompted to take another challenge.
 
 Built natively in Flutter for the **RevenueCat Shipaton 2026**.
 
@@ -72,7 +72,7 @@ Built natively in Flutter for the **RevenueCat Shipaton 2026**.
 2. **Choose your deck:** Use pre-made sets (Geography, Tech, Languages), create your own decks or import your custom Anki CSV decks.
 3. **Customize your studying:** Choose between learning (*flashcard*) mode and test mode in **Test Setup**. Set question count, change number of required correct answers or spice it up with modifiers!
 All of these choices affect your final time multiplier, so remember, no risk, no reward!
-4. **Earn your screen time:** Complete your test or learning and enjoy your hardly earned time. 
+4. **Earn your screen time:** Complete your test or learning and enjoy your hard-earned time. 
 
 ---
 
@@ -92,8 +92,7 @@ All of these choices affect your final time multiplier, so remember, no risk, no
 
 * **App Blocker Engine:** Built using Android Accessibility Service and System Alert Overlay permissions for reliable interception.
 * **Pre-made Starter Decks:** Curated collections in Geography, Tech/IT (Linux commands, HTTP status codes), and Languages.
-* **Gamification & Daily Challenges:** Animated streaks, dynamic mastery metrics, and daily goal missions.
-* **Theme Match:** Clean Neumorphic interface custom-tailored to harmonize with modern RevenueCat Paywall components.
+* **Gamification & Daily Challenges:** Daily streak, dynamic mastery metrics, and daily goal missions.
 
 ---
 

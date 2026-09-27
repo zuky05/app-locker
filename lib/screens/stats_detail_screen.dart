@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:country_flags/country_flags.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../services/stats_provider.dart';
 import '../themes/theme_provider.dart';
 import '../themes/app_themes.dart';
 import '../themes/themed_background.dart';
 import '../services/languages.dart';
+import '../services/locale_provider.dart';
 
 class StatsDetailScreen extends StatefulWidget {
   const StatsDetailScreen({super.key});
@@ -20,22 +20,6 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
   int _selectedFilterIndex = 0; // 0: Dnes, 1: Týždeň, 2: Všetok čas
   double _dragOffset = 0.0;
   bool _isSwipingRight = false;
-  String _currentLanguageCode = 'sk';
-
-  @override
-  void initState() {
-    super.initState();
-    _loadLanguagePreference();
-  }
-
-  Future<void> _loadLanguagePreference() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (mounted) {
-      setState(() {
-        _currentLanguageCode = prefs.getString('app_language') ?? 'sk';
-      });
-    }
-  }
 
   String _formatDuration(int totalSeconds) {
     if (totalSeconds <= 0) return '0 s';
@@ -78,7 +62,10 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
     final bool isVibrant = currentTheme.id == 5;
     final bool isSoft = currentTheme.id == 1;
     final bool isCyber = currentTheme.id == 0;
-    final AppTexts texts = _currentLanguageCode == 'en' ? textsEn : textsSk;
+
+    final localeProvider = Provider.of<LocaleProvider>(context);
+    final String currentLanguageCode = localeProvider.locale;
+    final AppTexts texts = currentLanguageCode == 'en' ? textsEn : textsSk;
 
     return ThemedBackground(
       child: Scaffold(
@@ -134,7 +121,7 @@ class _StatsDetailScreenState extends State<StatsDetailScreen> {
 
             final String rawFavDeck = stats['favoriteDeck'] ?? '';
             final String favoriteDeck = (rawFavDeck.isEmpty || rawFavDeck == 'Žiadny' || rawFavDeck == 'None') 
-                ? (_currentLanguageCode == 'en' ? 'None' : 'Žiadny') 
+                ? (currentLanguageCode == 'en' ? 'None' : 'Žiadny') 
                 : rawFavDeck;
 
             final String nemesisPrompt = stats['nemesisPrompt'] ?? stats['nemesisCard'] ?? '';

@@ -78,7 +78,12 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
 
     final currentLocale = Provider.of<LocaleProvider>(context, listen: false).locale;
 
-    // 1. Rýchle načítanie z lokálnej DB
+    // 1. Najprv synchronizujeme predpripravené balíčky podľa aktualneho jazyka (EN/SK)
+    await DatabaseHelper.instance.refreshPremadeDecks(null, currentLocale);
+
+    if (!mounted) return;
+
+    // 2. Načítame už správne lokalizované balíčky z DB
     final loadedDecks = await DatabaseHelper.instance.getDecks();
     final prefs = await SharedPreferences.getInstance();
     final premiumStatus = await RevenueCatService.isPremium();
@@ -135,7 +140,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
 
     if (!mounted) return;
 
-    // Ihneď odomkneme hlavné UI
+    // 3. Vykreslíme dáta priamo v správnom jazyku bez prebliknutia
     setState(() {
       myDecks = loadedDecks.where((d) => !d.isPremade).toList();
       premadeDecks = uniquePremadeMap.values.toList();
@@ -143,34 +148,6 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
       activeBlockerDeckId = activeId;
       isPremium = premiumStatus;
       isLoading = false;
-      isPremadeLoading = true;
-    });
-
-    // 2. Na pozadí obnovíme premade decky
-    await DatabaseHelper.instance.refreshPremadeDecks(null, currentLocale);
-
-    if (!mounted) return;
-
-    // 3. Plynulá aktualizácia zoznamu
-    final updatedDecks = await DatabaseHelper.instance.getDecks();
-    final Map<int, int> updatedCounts = {};
-    for (var deck in updatedDecks) {
-      if (deck.id != null) {
-        updatedCounts[deck.id!] = await DatabaseHelper.instance.getCardCountForDeck(deck.id!);
-      }
-    }
-
-    final Map<String, Deck> newUniquePremadeMap = {};
-    for (var d in updatedDecks.where((d) => d.isPremade)) {
-      newUniquePremadeMap.putIfAbsent(d.name, () => d);
-    }
-
-    if (!mounted) return;
-
-    setState(() {
-      myDecks = updatedDecks.where((d) => !d.isPremade).toList();
-      premadeDecks = newUniquePremadeMap.values.toList();
-      deckCardCounts = updatedCounts;
       isPremadeLoading = false;
     });
   }
@@ -1171,7 +1148,7 @@ class _DeckManagerScreenState extends State<DeckManagerScreen> with SingleTicker
             child: ClipRRect(
               borderRadius: currentTheme.cardBorderRadius,
               child: ExpansionTile(
-                initiallyExpanded: true,
+                initiallyExpanded: false, // 🟢 ZMENENÉ: Všetky kategórie sú pri prvom načítaní zbalené
                 shape: const Border(),
                 collapsedShape: const Border(),
                 leading: Container(

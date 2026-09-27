@@ -7,6 +7,7 @@ import '../themes/app_themes.dart';
 import 'deck_manager_screen.dart';
 import '../themes/themed_background.dart';
 import '../services/languages.dart';
+import '../services/locale_provider.dart';
 
 class TestSetupScreen extends StatefulWidget {
   const TestSetupScreen({super.key});
@@ -21,7 +22,6 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
   int? _activeDeckId;
   String _activeDeckName = "...";
   int _availableCardCount = 10;
-  String _currentLanguageCode = 'sk';
 
   // --- STAV PRE KVÍZ ---
   double _questionCount = 10;
@@ -53,7 +53,6 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
   Future<void> _loadSettings() async {
     try {
       _prefs = await SharedPreferences.getInstance();
-      _currentLanguageCode = _prefs!.getString('app_language') ?? 'sk';
       
       final decks = await DatabaseHelper.instance.getDecks();
       final activeDeckId = _prefs!.getInt('active_test_deck_id');
@@ -234,7 +233,8 @@ class _TestSetupScreenState extends State<TestSetupScreen> {
     final bool isSoft = currentTheme.id == 1;
     final bool isCyber = currentTheme.id == 0;
 
-    final AppTexts texts = _currentLanguageCode == 'en' ? textsEn : textsSk;
+    final currentLanguageCode = context.watch<LocaleProvider>().locale;
+    final AppTexts texts = currentLanguageCode == 'en' ? textsEn : textsSk;
 
     final List<String> timeLabels = [texts.timeLabelNoLimit, "30 s", "25 s", "20 s", "15 s", "10 s"];
 

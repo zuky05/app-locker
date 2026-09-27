@@ -4,8 +4,8 @@
 
 <div align="center">
 
-  <img src="https://raw.githubusercontent.com/zuky05/flashpass/main/assets/banner.png" alt="FlashPass Banner" width="100%" />
-
+  <img src="screenshots/app_icon.png" alt="FlashPass Icon" width="150" />
+  
   <p align="center">
     <strong>Unlock addictive apps with your own knowledge. Swap mindless doomscrolling for micro-learning.</strong>
   </p>
@@ -54,9 +54,9 @@ Built natively in Flutter for the **RevenueCat Shipaton 2026**.
 
 <div align="center">
 
-| Dashboard & Goal Tracker | Deck Management | Native RevenueCat Paywall |
+| Dashboard | Deck Management | Native RevenueCat Paywall |
 |:---:|:---:|:---:|
-| <img src="screenshots/home.png" width="240" alt="Dashboard & Goal Tracker"/> | <img src="screenshots/decks.png" width="240" alt="Deck Management"/> | <img src="screenshots/paywall.png" width="240" alt="Native RevenueCat Paywall"/> |
+| <img src="screenshots/dash.png" width="240" alt="Dashboard & Goal Tracker"/> | <img src="screenshots/decks.png" width="240" alt="Deck Management"/> | <img src="screenshots/paywall.png" width="240" alt="Native RevenueCat Paywall"/> |
 
 | App Selector | Test Setup & Overlays | Themes Preview |
 |:---:|:---:|:---:|
